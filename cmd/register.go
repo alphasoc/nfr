@@ -2,14 +2,10 @@ package cmd
 
 import (
 	"bufio"
-	"namescore/AlphaSocAPI"
-	"namescore/config"
-	"namescore/daemon"
-
 	"fmt"
-
-	"log/syslog"
-
+	"namescore/asoc"
+	"namescore/config"
+	"namescore/utils"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -18,14 +14,9 @@ import (
 // registerCmd represents the register command
 var registerCmd = &cobra.Command{
 	Use:   "register",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: register,
+	Short: "Acquire and register API key.",
+	Long:  `Acquire and register API key.`,
+	Run:   register,
 }
 
 func init() {
@@ -33,34 +24,33 @@ func init() {
 }
 
 func register(cmd *cobra.Command, args []string) {
-	if daemon.IsRoot() == false {
+	if utils.IsRoot() == false {
 		fmt.Println("This command must be run with root privileges.")
 		os.Exit(0)
 	}
 
-	l, err := syslog.New(syslog.LOG_USER|syslog.LOG_ERR, "namescore")
-	if err != nil {
-		fmt.Println("Cannot connect to syslog")
-		os.Exit(1)
-	}
-	l.Info("namescore register called")
-	defer l.Close()
+	log := utils.Newlog()
+	defer log.Close()
+
+	log.Infov("namescore register")
 
 	cfg := config.Get()
 	if cfg.ConfigFileExists() {
 		if err := cfg.ReadFromFile(); err != nil {
-			logfail(l, err, "Failed to read configuration file.")
+			log.Warningv("Failed to read configuration file.", err)
+			os.Exit(1)
 		}
 	}
 
-	client := AlphaSocAPI.Client{Server: cfg.GetAlphaSocAddress()}
+	client := asoc.Client{Server: cfg.GetAlphaSocAddress()}
 	newKey := false
 	if cfg.APIKey == "" {
 		key, err := client.KeyRequest()
 		if err != nil {
-			logfail(l, err, "Failed to get new API key from server.")
+			log.Warningv("Failed to get new API key from server.", err)
+			os.Exit(1)
 		}
-		l.Info("New API key retrieved.")
+		log.Infov("New API key retrieved.")
 		cfg.APIKey = key
 		newKey = true
 	}
@@ -72,13 +62,15 @@ func register(cmd *cobra.Command, args []string) {
 	}
 
 	if err := cfg.SaveToFile(); err != nil {
-		logfail(l, err, "Failed to save config file.")
+		log.Warningv("Failed to save config file.", err)
+		os.Exit(1)
 	}
 
 	if newKey == false {
 		status, err := client.AccountStatus()
 		if err != nil {
-			logfail(l, err, "Failed to check account status.")
+			log.Warningv("Failed to check account status.", err)
+			os.Exit(1)
 		}
 		if status.Registered == true {
 			fmt.Println("Account is already registered.")
@@ -88,21 +80,16 @@ func register(cmd *cobra.Command, args []string) {
 
 	data := readRegisterData()
 	if err := client.Register(data); err != nil {
-		logfail(l, err, "Failed to register account")
+		log.Warningv("Failed to register account", err)
+		os.Exit(1)
 	}
 
-	fmt.Println("Account was successfully registered.")
+	log.Infov("Account was successfully registered.")
 }
 
-func logfail(w *syslog.Writer, e error, msg string) {
-	fmt.Println(msg)
-	w.Warning("register: " + e.Error())
-	os.Exit(1)
-}
-
-func readRegisterData() *AlphaSocAPI.RegisterReq {
+func readRegisterData() *asoc.RegisterReq {
 	fmt.Println("Provide necessary data for API key registration.")
-	data := AlphaSocAPI.RegisterReq{}
+	data := asoc.RegisterReq{}
 	scanner := bufio.NewScanner(os.Stdin)
 
 	fmt.Printf("Name: ")

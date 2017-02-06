@@ -4,10 +4,9 @@ package cmd
 
 import (
 	"fmt"
-	"log/syslog"
-	"namescore/DNSSniffer"
 	"namescore/config"
-	"namescore/daemon"
+	"namescore/dns"
+	"namescore/utils"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -31,40 +30,35 @@ func init() {
 }
 
 func listen(cmd *cobra.Command, args []string) {
-	l, err := syslog.New(syslog.LOG_USER|syslog.LOG_ERR, "namescore")
-	if err != nil {
-		fmt.Println("Cannot connect to syslog")
-		os.Exit(1)
-	}
-	defer l.Close()
+	log := utils.Newlog()
+	defer log.Close()
 
-	if daemon.IsRoot() == false {
-		l.Warning("daemon was not started with root privileges.")
+	if utils.IsRoot() == false {
+		log.Warning("daemon was not started with root privileges.")
 		os.Exit(1)
 	}
 
 	cfg := config.Get()
 	if cfg.ConfigFileExists() == false {
-		l.Warning("No configuration file present.")
+		log.Warning("No configuration file present.")
 		os.Exit(1)
 	}
 
 	if err := cfg.ReadFromFile(); err != nil {
-		l.Warning("Failed to read config: " + err.Error())
+		log.Warning("Failed to read config: " + err.Error())
 		os.Exit(1)
 	}
 
-	s, err := DNSSniffer.Start(cfg.NetworkInterface)
+	s, err := dns.Start(cfg.NetworkInterface)
 	if err != nil {
-		l.Warning("Failed to start sniffer " + err.Error())
+		log.Warning("Failed to start sniffer " + err.Error())
 		os.Exit(1)
 	}
 
-	l.Info("daemon started")
+	log.Info("namescore daemon started")
 	for {
 		fmt.Println(s.GetDNS())
 
 	}
 
-	// to discuss
 }

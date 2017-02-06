@@ -1,4 +1,4 @@
-package AlphaSocAPI
+package asoc
 
 import "testing"
 import "strings"

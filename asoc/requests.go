@@ -1,9 +1,15 @@
-package AlphaSocAPI
+package asoc
 
 import (
 	"fmt"
 	"syscall"
 )
+
+type Entry [4]string
+
+type QueriesReq struct {
+	Data []Entry `json:"data"`
+}
 
 type keyRequestReq struct {
 	Platform struct {

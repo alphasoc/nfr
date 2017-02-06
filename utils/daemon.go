@@ -1,4 +1,4 @@
-package daemon
+package utils
 
 import "net"
 import "os"
@@ -14,6 +14,7 @@ func LockSocket() error {
 	return nil
 }
 
+// IsRoot checks whether process was run by superuser.
 func IsRoot() bool {
 	return os.Getuid() == 0
 }

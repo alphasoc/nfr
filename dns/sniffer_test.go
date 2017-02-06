@@ -1,4 +1,4 @@
-package DNSSniffer
+package dns
 
 import (
 	"net"
@@ -19,6 +19,7 @@ func TestSnifferWrongInterface(t *testing.T) {
 	}
 }
 
+// Idea to improve test: create fake server and send hardcoded DNS request on loopback device
 func TestSniffer(t *testing.T) {
 
 	lookup := "google.com"
@@ -49,23 +50,22 @@ func TestSniffer(t *testing.T) {
 		t.Errorf("GetDNS() expected one request, but got %d", l)
 	}
 
-	if dns[0].FQDN != lookup {
-		t.Errorf("GetDNS() FQDN=%q, expected %q", dns[0].FQDN, lookup)
-	}
-
-	if dns[0].QType != qtype {
-		t.Errorf("GetDNS() QType=%q, expected %q", dns[0].QType, qtype)
-	}
-
-	if dns[0].Time == "" {
+	if dns[0][0] == "" {
 		t.Errorf("GetDNS() Time is empty")
 	}
 
-	srcIP := net.ParseIP(dns[0].SourceIP)
+	srcIP := net.ParseIP(dns[0][1])
 	if srcIP.To4() == nil && srcIP.To16 == nil {
-		t.Errorf("GetDNS() SourceIP is not IPv4 or IPv6")
+		t.Errorf("GetDNS() SourceIP=%q is not IPv4 or IPv6", dns[0][1])
 	}
 
+	if dns[0][2] != qtype {
+		t.Errorf("GetDNS() QType=%q, expected %q", dns[0][2], qtype)
+	}
+
+	if dns[0][3] != lookup {
+		t.Errorf("GetDNS() FQDN=%q, expected %q", dns[0][3], lookup)
+	}
 }
 
 func getIface() string {

@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"namescore/AlphaSocAPI"
+	"namescore/asoc"
 	"namescore/config"
-	"namescore/daemon"
+	"namescore/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -12,12 +12,11 @@ import (
 var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Shows status of namescore",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Long: `This command return status of current namescore setup.
+Following informations are provided:
+- If configuration is correct.
+- API key status.
+- State of namescore process .`,
 	Run: status,
 }
 
@@ -27,7 +26,8 @@ func status(cmd *cobra.Command, args []string) {
 	cfg := config.Get()
 
 	if cfg.ConfigFileExists() == false {
-		fmt.Println("error: no config file present")
+		fmt.Println("error: no config file present.")
+		fmt.Println("Run \"namescore register\" first.")
 		return
 	}
 
@@ -36,20 +36,19 @@ func status(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	key := cfg.APIKey
-	if key == "" {
+	if cfg.APIKey == "" {
 		fmt.Println("error: no API key set.")
-		fmt.Println("Please create new with \"namescore register\"")
+		fmt.Println("Create new with \"namescore register\"")
 		return
-	} else if AlphaSocAPI.VerifyKey(key) == false {
+	} else if asoc.VerifyKey(cfg.APIKey) == false {
 		fmt.Println("error: API key does not meet requirements.")
 		return
 	} else {
 		fmt.Println("API key present")
 	}
 
-	client := AlphaSocAPI.Client{Server: cfg.GetAlphaSocAddress()}
-	client.SetKey(key)
+	client := asoc.Client{Server: cfg.GetAlphaSocAddress()}
+	client.SetKey(cfg.APIKey)
 
 	status, err := client.AccountStatus()
 	if err != nil {
@@ -59,7 +58,7 @@ func status(cmd *cobra.Command, args []string) {
 	fmt.Println("Account registered:", status.Registered)
 	fmt.Println("Account expired:", status.Expired)
 
-	if daemon.LockSocket() != nil {
+	if utils.LockSocket() != nil {
 		fmt.Println("namescore is running")
 	} else {
 		fmt.Println("namescore is not running")

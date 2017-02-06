@@ -1,7 +1,7 @@
-package DNSSniffer
+package dns
 
 import (
-	"namescore/DNSContainer"
+	"namescore/asoc"
 	"net"
 	"syscall"
 	"time"
@@ -44,11 +44,9 @@ func Start(iface string) (s *Sniffer, err error) {
 	return s, nil
 }
 
-//todo return slice
-func (s *Sniffer) GetDNS() []DNSContainer.Entry {
+func (s *Sniffer) GetDNS() []asoc.Entry {
 	for {
-		_, _, err := syscall.Recvfrom(s.fd, s.buffer, 0)
-		if err != nil {
+		if _, _, err := syscall.Recvfrom(s.fd, s.buffer, 0); err != nil {
 			continue
 		}
 
@@ -63,6 +61,7 @@ func (s *Sniffer) GetDNS() []DNSContainer.Entry {
 			continue
 		}
 
+		//todo IPv6 test
 		var IP string
 		if IP4layer := packet.Layer(layers.LayerTypeIPv4); IP4layer != nil {
 			ip, _ := IP4layer.(*layers.IPv4)
@@ -77,14 +76,14 @@ func (s *Sniffer) GetDNS() []DNSContainer.Entry {
 			continue
 		}
 
-		r := make([]DNSContainer.Entry, len(dns.Questions))
+		r := make([]asoc.Entry, len(dns.Questions))
 		t := time.Now().Format(time.RFC3339)
 
 		for i := range dns.Questions {
-			r[i].FQDN = string(dns.Questions[i].Name)
-			r[i].QType = dns.Questions[i].Type.String()
-			r[i].Time = t
-			r[i].SourceIP = IP
+			r[i][0] = t
+			r[i][1] = IP
+			r[i][2] = dns.Questions[i].Type.String()
+			r[i][3] = string(dns.Questions[i].Name)
 		}
 
 		return r
