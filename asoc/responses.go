@@ -3,6 +3,8 @@ package asoc
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"strings"
 )
 
 type errorResponse struct {
@@ -47,6 +49,29 @@ type EventsResp struct {
 	More    bool                  `json:"more"`
 	Events  []EventDetail         `json:"events"`
 	Threats map[string]ThreatInfo `json:"threats"`
+}
+
+// Strings returns events in format as following:
+// timestamp;ip;record_type;domain;severity;threat_definition;flags
+func (e *EventsResp) Strings() []string {
+	var lines []string
+
+	for _, event := range e.Events {
+		for _, t := range event.Ts {
+
+			var defs []string
+			for _, d := range event.Threats {
+				defs = append(defs, e.Threats[d].Title)
+			}
+
+			f := fmt.Sprintf("%s;%s;%s;%s;%s;%s",
+				t, event.IP, event.QType, event.FQDN, strings.Join(defs, ","), strings.Join(event.Flags, ","))
+
+			lines = append(lines, f)
+		}
+	}
+
+	return lines
 }
 
 func payloadToError(payload []byte) error {

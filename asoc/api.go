@@ -3,7 +3,6 @@ package asoc
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -155,8 +154,6 @@ func (c *Client) Events(follow string) (*EventsResp, error) {
 
 	r := &EventsResp{}
 
-	fmt.Printf("%s\n", respBody)
-
 	if err := json.Unmarshal(respBody, r); err != nil {
 		return nil, err
 	}
@@ -194,6 +191,7 @@ func (c *Client) Queries(q QueriesReq) error {
 	return nil
 }
 
+// VerifyKey check whether key meets internal requirements.
 func VerifyKey(key string) bool {
 	if len(key) < 15 {
 		return false

@@ -1,5 +1,3 @@
-//todo check apache license
-
 package cmd
 
 import (

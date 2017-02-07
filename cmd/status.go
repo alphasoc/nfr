@@ -6,6 +6,8 @@ import (
 	"namescore/config"
 	"namescore/utils"
 
+	"os"
+
 	"github.com/spf13/cobra"
 )
 
@@ -21,28 +23,28 @@ Following informations are provided:
 }
 
 func status(cmd *cobra.Command, args []string) {
-	fmt.Println("namescore status:")
+	fmt.Println("namescore status")
 	fmt.Println()
 	cfg := config.Get()
 
 	if cfg.ConfigFileExists() == false {
 		fmt.Println("error: no config file present.")
 		fmt.Println("Run \"namescore register\" first.")
-		return
+		os.Exit(1)
 	}
 
 	if cfg.ReadFromFile() != nil {
 		fmt.Println("error: failed to read configuration file")
-		return
+		os.Exit(1)
 	}
 
 	if cfg.APIKey == "" {
 		fmt.Println("error: no API key set.")
 		fmt.Println("Create new with \"namescore register\"")
-		return
+		os.Exit(1)
 	} else if asoc.VerifyKey(cfg.APIKey) == false {
 		fmt.Println("error: API key does not meet requirements.")
-		return
+		os.Exit(1)
 	} else {
 		fmt.Println("API key present")
 	}
@@ -53,6 +55,7 @@ func status(cmd *cobra.Command, args []string) {
 	status, err := client.AccountStatus()
 	if err != nil {
 		fmt.Println("error: Failed to check account status")
+		os.Exit(1)
 	}
 
 	fmt.Println("Account registered:", status.Registered)
