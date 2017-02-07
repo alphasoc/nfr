@@ -19,7 +19,7 @@ func TestSnifferWrongInterface(t *testing.T) {
 	}
 }
 
-// Idea to improve test: create fake server and send hardcoded DNS request on loopback device
+// todo Idea to improve test: create fake server and send hardcoded DNS request on loopback device
 func TestSniffer(t *testing.T) {
 
 	lookup := "google.com"

@@ -37,7 +37,9 @@ func (a *AlertStore) Close() error {
 	return nil
 }
 
-func (a *AlertStore) Write(alert string) {
-	a.buf.WriteString(alert)
-	a.buf.WriteByte('\n')
+func (a *AlertStore) Write(alerts []string) {
+	for _, l := range alerts {
+		a.buf.WriteString(l)
+		a.buf.WriteByte('\n')
+	}
 }

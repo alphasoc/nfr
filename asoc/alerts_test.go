@@ -47,8 +47,7 @@ func TestContent(t *testing.T) {
 		t.Fatalf("Open(%q), unexpected error %v", file, err)
 	}
 
-	write(store, linesWrite)
-
+	store.Write(linesWrite)
 	if err := store.Close(); err != nil {
 		t.Fatalf("Close(), unexpected error %v", err)
 	}
@@ -62,7 +61,7 @@ func TestContent(t *testing.T) {
 		t.Fatalf("Open(%q), unexpected error %v", file, err)
 	}
 
-	write(store, linesAppend)
+	store.Write(linesAppend)
 	if err := store.Close(); err != nil {
 		t.Fatalf("Close(), unexpected error %v", err)
 	}
@@ -71,12 +70,6 @@ func TestContent(t *testing.T) {
 		t.Fatalf("Unexpected file content err=%v", err)
 	}
 
-}
-
-func write(s *AlertStore, c []string) {
-	for _, l := range c {
-		s.Write(l)
-	}
 }
 
 func compareFileContent(file string, content []string) error {
