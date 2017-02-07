@@ -9,6 +9,8 @@ import (
 
 	"io/ioutil"
 
+	"namescore/utils"
+
 	"github.com/BurntSushi/toml"
 )
 
@@ -53,10 +55,7 @@ func (c *Config) ReadFromFile() error {
 }
 
 func (c *Config) ConfigFileExists() bool {
-	if _, err := os.Stat(c.configFilePath); err == nil {
-		return true
-	}
-	return false
+	return utils.FileExists(c.configFilePath)
 }
 
 func (c *Config) SaveToFile() error {
@@ -67,7 +66,12 @@ func (c *Config) SaveToFile() error {
 		return fmt.Errorf("SaveToFile() encoding %v", err)
 	}
 
-	//todo bug check if dir exists if not -> "mkdir -p"
+	if utils.FileExists(c.configFilePath) == false {
+		if err := utils.CreateDirForFile(c.configFilePath); err != nil {
+			return err
+		}
+	}
+
 	if err := ioutil.WriteFile(c.configFilePath, buf.Bytes(), 0640); err != nil {
 		return fmt.Errorf("SaveToFile() saving %v", err)
 	}
