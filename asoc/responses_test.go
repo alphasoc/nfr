@@ -5,14 +5,14 @@ import "testing"
 func TestEventsRespSmall(t *testing.T) {
 	eventOne := EventDetail{
 		Type:  "alert",
-		Risk:  3,
+		Risk:  1,
 		FQDN:  "alphasoc.com",
 		IP:    "127.0.0.1",
 		QType: "TXT",
 		Ts:    []string{"2015-06-09T16:54:59Z"},
 	}
 
-	expected := "2015-06-09T16:54:59Z;127.0.0.1;TXT;alphasoc.com;;"
+	expected := "2015-06-09T16:54:59Z;127.0.0.1;TXT;alphasoc.com;1;;"
 
 	resp := EventsResp{Events: []EventDetail{eventOne}}
 	events := resp.Strings()
@@ -29,7 +29,7 @@ func TestEventsRespSmall(t *testing.T) {
 func TestEventsRespEmpty(t *testing.T) {
 	eventOne := EventDetail{
 		Type:  "alert",
-		Risk:  3,
+		Risk:  2,
 		IP:    "127.0.0.1",
 		QType: "TXT",
 	}
@@ -52,7 +52,7 @@ func TestEventsRespMultiFlag(t *testing.T) {
 		Ts:    []string{"2015-06-09T16:54:59Z"},
 	}
 
-	expected := "2015-06-09T16:54:59Z;127.0.0.1;TXT;alphasoc.com;;flag1,flag2"
+	expected := "2015-06-09T16:54:59Z;127.0.0.1;TXT;alphasoc.com;3;;flag1,flag2"
 
 	resp := EventsResp{Events: []EventDetail{eventOne}}
 	events := resp.Strings()
@@ -70,7 +70,7 @@ func TestEventsRespDefinition(t *testing.T) {
 
 	eventOne := EventDetail{
 		Type:    "alert",
-		Risk:    3,
+		Risk:    4,
 		FQDN:    "alphasoc.com",
 		IP:      "127.0.0.1",
 		QType:   "TXT",
@@ -83,7 +83,7 @@ func TestEventsRespDefinition(t *testing.T) {
 		"maniacs": ThreatInfo{Title: "site maintained by hackers", Severity: 666},
 	}
 
-	expected := "2015-06-09T16:54:59Z;127.0.0.1;TXT;alphasoc.com;site maintained by hackers;flag1"
+	expected := "2015-06-09T16:54:59Z;127.0.0.1;TXT;alphasoc.com;4;site maintained by hackers;flag1"
 
 	resp := EventsResp{Events: []EventDetail{eventOne}, Threats: threats}
 	events := resp.Strings()
@@ -100,7 +100,7 @@ func TestEventsRespDefinition(t *testing.T) {
 func TestEventsRespMulti(t *testing.T) {
 	eventOne := EventDetail{
 		Type:    "alert",
-		Risk:    3,
+		Risk:    5,
 		FQDN:    "alphasoc.com",
 		IP:      "127.0.0.1",
 		QType:   "TXT",
@@ -111,7 +111,7 @@ func TestEventsRespMulti(t *testing.T) {
 
 	eventTwo := EventDetail{
 		Type:    "alert",
-		Risk:    3,
+		Risk:    6,
 		FQDN:    "google.com",
 		IP:      "127.0.1.1",
 		QType:   "A",
@@ -129,10 +129,10 @@ func TestEventsRespMulti(t *testing.T) {
 	resp := EventsResp{Events: []EventDetail{eventOne, eventTwo}, Threats: threats}
 
 	expected := []string{
-		"2015-06-09T16:54:59Z;127.0.0.1;TXT;alphasoc.com;site maintained by hackers,possible boobs;hackers",
-		"2015-06-09T16:55:19Z;127.0.0.1;TXT;alphasoc.com;site maintained by hackers,possible boobs;hackers",
-		"2015-06-09T16:14:59Z;127.0.1.1;A;google.com;search engine,;google,gmail,dancers",
-		"2015-06-09T16:11:59Z;127.0.1.1;A;google.com;search engine,;google,gmail,dancers",
+		"2015-06-09T16:54:59Z;127.0.0.1;TXT;alphasoc.com;5;site maintained by hackers,possible boobs;hackers",
+		"2015-06-09T16:55:19Z;127.0.0.1;TXT;alphasoc.com;5;site maintained by hackers,possible boobs;hackers",
+		"2015-06-09T16:14:59Z;127.0.1.1;A;google.com;6;search engine,;google,gmail,dancers",
+		"2015-06-09T16:11:59Z;127.0.1.1;A;google.com;6;search engine,;google,gmail,dancers",
 	}
 
 	str := resp.Strings()

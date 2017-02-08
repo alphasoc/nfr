@@ -64,8 +64,8 @@ func (e *EventsResp) Strings() []string {
 				defs = append(defs, e.Threats[d].Title)
 			}
 
-			f := fmt.Sprintf("%s;%s;%s;%s;%s;%s",
-				t, event.IP, event.QType, event.FQDN, strings.Join(defs, ","), strings.Join(event.Flags, ","))
+			f := fmt.Sprintf("%s;%s;%s;%s;%d;%s;%s",
+				t, event.IP, event.QType, event.FQDN, event.Risk, strings.Join(defs, ","), strings.Join(event.Flags, ","))
 
 			lines = append(lines, f)
 		}
