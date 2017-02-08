@@ -43,3 +43,7 @@ func (a *AlertStore) Write(alerts []string) {
 		a.buf.WriteByte('\n')
 	}
 }
+
+func (a *AlertStore) Flush() {
+	a.buf.Flush()
+}

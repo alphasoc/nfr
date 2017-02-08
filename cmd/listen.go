@@ -1,11 +1,14 @@
 package cmd
 
 import (
-	"fmt"
 	"namescore/config"
 	"namescore/dns"
 	"namescore/utils"
 	"os"
+
+	"namescore/asoc"
+
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -44,16 +47,54 @@ func listen(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	client := asoc.Client{Server: cfg.GetAlphaSocAddress()}
+	client.SetKey(cfg.APIKey)
+
 	s, err := dns.Start(cfg.NetworkInterface)
 	if err != nil {
 		log.Warning("Failed to start sniffer " + err.Error())
 		os.Exit(1)
 	}
-
 	log.Info("namescore daemon started")
-	for {
-		fmt.Println(s.GetDNS())
 
+	//gorutine for event retrieving
+	go func() {
+		alertStore, err := asoc.OpenAlerts(cfg.GetAlertFilePath())
+		if err != nil {
+			log.Warning("Failed to open alert file: " + err.Error())
+			return
+		}
+		defer alertStore.Close()
+
+		follow := asoc.ReadFollow(cfg.GetFollowFilePath())
+
+		for {
+			if r, err := client.Events(follow); err == nil {
+				alertStore.Write(r.Strings())
+				alertStore.Flush()
+				follow = r.Follow
+			}
+			time.Sleep(time.Second * cfg.GetAlertRequestInterval())
+		}
+	}()
+
+	send := func(e []asoc.Entry) {
+		if len(e) == 0 {
+			return
+		}
+		if err := client.Queries(asoc.QueriesReq{Data: e}); err != nil {
+			//errorhandling
+		}
+	}
+
+	var container []asoc.Entry
+	for {
+		dns := s.GetDNS()
+		container = append(container, dns...)
+		if len(container) > cfg.GetSendIntervalAmount() {
+			go send(container)
+			container = nil
+		}
 	}
 
 }

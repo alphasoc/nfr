@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 
 	"io/ioutil"
 
@@ -21,9 +22,9 @@ type Config struct {
 	alertFilePath        string
 	configFilePath       string
 	alphaSocAddress      string
-	sendIntervalTime     uint
-	sendIntervalAmount   uint
-	alertRequestInterval uint
+	sendIntervalTime     time.Duration
+	sendIntervalAmount   int
+	alertRequestInterval time.Duration
 }
 
 type AsocFileConfig struct {
@@ -100,14 +101,14 @@ func (c *Config) GetConfigFilePath() string {
 	return c.configFilePath
 }
 
-func (c *Config) GetSendIntervalTime() uint {
+func (c *Config) GetSendIntervalTime() time.Duration {
 	return c.sendIntervalTime
 }
 
-func (c *Config) GetSendIntervalAmount() uint {
+func (c *Config) GetSendIntervalAmount() int {
 	return c.sendIntervalAmount
 }
 
-func (c *Config) GetAlertRequestInterval() uint {
+func (c *Config) GetAlertRequestInterval() time.Duration {
 	return c.alertRequestInterval
 }
