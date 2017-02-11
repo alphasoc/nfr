@@ -2,8 +2,9 @@ package asoc
 
 import (
 	"io/ioutil"
-	"namescore/utils"
 	"os"
+
+	"github.com/alphasoc/namescore/internal/utils"
 )
 
 func WriteFollow(file, follow string) error {

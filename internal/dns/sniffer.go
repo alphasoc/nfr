@@ -1,11 +1,11 @@
 package dns
 
 import (
-	"namescore/asoc"
 	"net"
 	"syscall"
 	"time"
 
+	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )

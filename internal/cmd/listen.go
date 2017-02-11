@@ -1,15 +1,13 @@
 package cmd
 
 import (
-	"namescore/config"
-	"namescore/dns"
-	"namescore/utils"
 	"os"
-
-	"namescore/asoc"
-
 	"time"
 
+	"github.com/alphasoc/namescore/internal/asoc"
+	"github.com/alphasoc/namescore/internal/config"
+	"github.com/alphasoc/namescore/internal/dns"
+	"github.com/alphasoc/namescore/internal/utils"
 	"github.com/spf13/cobra"
 )
 

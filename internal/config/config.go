@@ -3,16 +3,13 @@ package config
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"time"
 
-	"io/ioutil"
-
-	"namescore/utils"
-
 	"github.com/BurntSushi/toml"
+	"github.com/alphasoc/namescore/internal/utils"
 )
 
 type Config struct {
@@ -47,7 +44,7 @@ func Get() *Config {
 func (c *Config) ReadFromFile() error {
 	cfg := AsocFileConfig{}
 	if _, err := toml.DecodeFile(c.configFilePath, &cfg); err != nil {
-		return fmt.Errorf("ReadFromFile() %v", err)
+		return err
 	}
 	c.APIKey = cfg.Key
 	c.NetworkInterface = cfg.Iface
@@ -64,7 +61,7 @@ func (c *Config) SaveToFile() error {
 
 	buf := new(bytes.Buffer)
 	if err := toml.NewEncoder(buf).Encode(content); err != nil {
-		return fmt.Errorf("SaveToFile() encoding %v", err)
+		return err
 	}
 
 	if utils.FileExists(c.configFilePath) == false {
@@ -74,7 +71,7 @@ func (c *Config) SaveToFile() error {
 	}
 
 	if err := ioutil.WriteFile(c.configFilePath, buf.Bytes(), 0640); err != nil {
-		return fmt.Errorf("SaveToFile() saving %v", err)
+		return err
 	}
 	return nil
 }

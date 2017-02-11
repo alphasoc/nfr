@@ -2,12 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"namescore/asoc"
-	"namescore/config"
-	"namescore/utils"
-
 	"os"
 
+	"github.com/alphasoc/namescore/internal/asoc"
+	"github.com/alphasoc/namescore/internal/config"
+	"github.com/alphasoc/namescore/internal/utils"
 	"github.com/spf13/cobra"
 )
 

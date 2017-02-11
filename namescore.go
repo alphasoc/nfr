@@ -1,6 +1,6 @@
 package main
 
-import "namescore/cmd"
+import "github.com/alphasoc/namescore/internal/cmd"
 
 func main() {
 	cmd.Execute()

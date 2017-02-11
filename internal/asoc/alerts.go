@@ -2,8 +2,9 @@ package asoc
 
 import (
 	"bufio"
-	"namescore/utils"
 	"os"
+
+	"github.com/alphasoc/namescore/internal/utils"
 )
 
 type AlertStore struct {
