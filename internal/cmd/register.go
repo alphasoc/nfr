@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/syslog"
 	"os"
 
 	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/alphasoc/namescore/internal/config"
-	"github.com/alphasoc/namescore/internal/utils"
+	log "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 )
 
@@ -60,19 +61,24 @@ func init() {
 }
 
 func register(cmd *cobra.Command, args []string) {
+	logger := log.New()
+	if sysloghandler, err := log.SyslogHandler(syslog.LOG_USER|syslog.LOG_ERR, "namescore/register", log.TerminalFormat()); err != nil {
+		logger.SetHandler(log.DiscardHandler())
+	} else {
+		logger.SetHandler(sysloghandler)
+	}
 
-	log := utils.Newlog()
-	defer log.Close()
-
-	log.Infov("namescore register")
+	fmt.Println("namescore register")
 
 	cfg := config.Get()
 	if exist, err := cfg.ConfigFileExists(); err != nil {
-		log.Warningv("failed to check if config file exists", err)
+		logger.Warn("Checking existence of config file failed", "err:", err)
+		fmt.Println("error: failed to check if config file exists.")
 		os.Exit(1)
 	} else if exist == true {
 		if err := cfg.ReadFromFile(); err != nil {
-			log.Warningv("Failed to read configuration file.", err)
+			logger.Warn("Failed to read configuration file.", "err:", err)
+			fmt.Println("Failed to read configuration file.")
 			os.Exit(1)
 		}
 	}
@@ -82,7 +88,8 @@ func register(cmd *cobra.Command, args []string) {
 		client.SetKey(cfg.APIKey)
 		status, err := client.AccountStatus()
 		if err != nil {
-			log.Warningv("Failed to check account status.", err)
+			logger.Warn("Failed to check account status.", "err:", err)
+			fmt.Println("Failed to check account status.")
 			os.Exit(1)
 		}
 		if status.Registered == true {
@@ -105,25 +112,29 @@ func register(cmd *cobra.Command, args []string) {
 	if cfg.APIKey == "" {
 		key, err := client.KeyRequest()
 		if err != nil {
-			log.Warningv("Failed to get new API key from server.", err)
+			logger.Warn("Failed to get new API key from server.", "err:", err)
+			fmt.Println("Failed to get new API key from server.")
 			os.Exit(1)
 		}
-		log.Infov("New API key retrieved.")
+		logger.Info("New API key retrieved.")
 		cfg.APIKey = key
 	}
 	client.SetKey(cfg.APIKey)
 
 	if err := cfg.SaveToFile(); err != nil {
-		log.Warningv("Failed to save config file.", err)
+		logger.Warn("Failed to save config file.", "err:", err)
+		fmt.Println("Failed to save config file.")
 		os.Exit(1)
 	}
 
 	if err := client.Register(data); err != nil {
-		log.Warningv("Failed to register account", err)
+		logger.Warn("Failed to register account.", "err:", err)
+		fmt.Println("Failed to register account.")
 		os.Exit(1)
 	}
 
-	log.Infov("Account was successfully registered.")
+	logger.Info("Account was successfully registered.")
+	fmt.Println("Account was successfully registered.")
 }
 
 func readRegisterData(userIn *userInput) (rq *asoc.RegisterReq, err error) {
