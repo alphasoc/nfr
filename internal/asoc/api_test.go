@@ -1,6 +1,7 @@
 package asoc
 
 import (
+	"net"
 	"os"
 	"testing"
 	"time"
@@ -113,19 +114,11 @@ func TestStatusSick(t *testing.T) {
 	}
 	follow := eventzero.Follow
 
-	query := QueriesReq{Data: make([]Entry, 2)}
+	query := &QueriesReq{}
+	query.Data = append(query.Data, &Entry{FQDN: "possible-dga.com", IP: net.ParseIP("1.1.1.1"), QType: "A", Time: time.Now()})
+	query.Data = append(query.Data, &Entry{FQDN: "google.com", IP: net.ParseIP("1.5.2.1"), QType: "TXT", Time: time.Now()})
 
-	var (
-		date1 = "2015-06-09T16:54:59Z"
-		date2 = "2015-06-09T16:55:59Z"
-		ip    = "192.168.1.4"
-		qtype = "A"
-		fqdn  = "possible-dga.com"
-	)
-	query.Data[0] = Entry{date1, ip, qtype, fqdn}
-	query.Data[1] = Entry{date2, ip, qtype, fqdn}
-
-	qresp, errquery := c.Queries(&query)
+	qresp, errquery := c.Queries(query)
 	if errquery != nil {
 		t.Fatalf("Queries() unexpected err=%v", errquery)
 	}

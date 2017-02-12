@@ -1,14 +1,22 @@
 package asoc
 
 import (
+	"bytes"
 	"fmt"
+	"net"
 	"syscall"
+	"time"
 )
 
-type Entry [4]string
+type Entry struct {
+	Time  time.Time
+	IP    net.IP
+	QType string
+	FQDN  string
+}
 
 type QueriesReq struct {
-	Data []Entry `json:"data"`
+	Data []*Entry `json:"data"`
 }
 
 type keyRequestReq struct {
@@ -57,4 +65,11 @@ func uname() string {
 		int8tostr(u.Release),
 		int8tostr(u.Version),
 		int8tostr(u.Machine))
+}
+
+func (e *Entry) MarshalJSON() ([]byte, error) {
+	buffer := bytes.NewBufferString("[")
+	str := fmt.Sprintf(`"%s","%s","%s","%s"]`, e.Time.Format(time.RFC3339), e.IP.String(), e.QType, e.FQDN)
+	buffer.WriteString(str)
+	return buffer.Bytes(), nil
 }

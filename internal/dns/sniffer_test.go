@@ -50,21 +50,16 @@ func TestSniffer(t *testing.T) {
 		t.Errorf("GetDNS() expected one request, but got %d", l)
 	}
 
-	if dns[0][0] == "" {
-		t.Errorf("GetDNS() Time is empty")
+	if dns[0].IP.To4() == nil && dns[0].IP.To16 == nil {
+		t.Errorf("GetDNS() SourceIP=%q is not IPv4 or IPv6", dns[0].IP.String())
 	}
 
-	srcIP := net.ParseIP(dns[0][1])
-	if srcIP.To4() == nil && srcIP.To16 == nil {
-		t.Errorf("GetDNS() SourceIP=%q is not IPv4 or IPv6", dns[0][1])
+	if dns[0].QType != qtype {
+		t.Errorf("GetDNS() QType=%q, expected %q", dns[0].QType, qtype)
 	}
 
-	if dns[0][2] != qtype {
-		t.Errorf("GetDNS() QType=%q, expected %q", dns[0][2], qtype)
-	}
-
-	if dns[0][3] != lookup {
-		t.Errorf("GetDNS() FQDN=%q, expected %q", dns[0][3], lookup)
+	if dns[0].FQDN != lookup {
+		t.Errorf("GetDNS() FQDN=%q, expected %q", dns[0].FQDN, lookup)
 	}
 }
 
