@@ -14,19 +14,19 @@ const (
 	// - Network interface which should namescore bind to
 	ConfigFilePath = "/home/phob0s/alphasoc/namescore.toml"
 
-	// AlphaSoc server address
+	// AlphaSOC server address
 	AlphaSocAddress = "http://127.0.0.1:8080"
 
 	// Time interval in seconds which determines how often queries are sent
-	// to AlhaSoc
+	// to AlphaSOC cloud
 	SendIntervalTime = 60
 
 	// Amount interval which determines how many DNS requests are needed
-	// to be collected to send data to alphasoc
+	// to be collected to send data to AlphaSOC
 	// It has higher priority than time interval parameter.
 	SendIntervalAmount = 1000
 
 	// Time interval determining how often alerts are collected from
-	// AlphaSoc
+	// AlphaSOC cloud
 	AlertRequestInterval = 300
 )
