@@ -125,8 +125,13 @@ func TestStatusSick(t *testing.T) {
 	query.Data[0] = Entry{date1, ip, qtype, fqdn}
 	query.Data[1] = Entry{date2, ip, qtype, fqdn}
 
-	if err := c.Queries(query); err != nil {
-		t.Fatalf("Queries() unexpected err=%v", err)
+	qresp, errquery := c.Queries(&query)
+	if errquery != nil {
+		t.Fatalf("Queries() unexpected err=%v", errquery)
+	}
+
+	if qresp.Received != len(query.Data) {
+		t.Fatalf("Queries() data len=%d, but received=%d", len(query.Data), qresp.Received)
 	}
 
 	eventone, errone := c.Events(follow)
@@ -137,5 +142,83 @@ func TestStatusSick(t *testing.T) {
 	if eventone == nil {
 		t.Fatalf("Events() unexpected eventone=nil")
 	}
+}
 
+func TestWrongServer(t *testing.T) {
+
+	var (
+		server = "invalid address"
+	)
+
+	client := Client{Server: server}
+
+	if status, err := client.AccountStatus(); err == nil {
+		t.Fatalf("AccountStatus() expected error")
+	} else if status != nil {
+		t.Fatalf("AccountStatus() expected nil status")
+	}
+
+	if events, err := client.Events(""); err == nil {
+		t.Fatalf("Events() expected error")
+	} else if events != nil {
+		t.Fatalf("Events() expected nil events")
+	}
+
+	if key, err := client.KeyRequest(); err == nil {
+		t.Fatalf("KeyRequest() expected error")
+	} else if key != "" {
+		t.Fatalf("KeyRequest() expected empty key")
+	}
+
+	reg := &RegisterReq{}
+	if err := client.Register(reg); err == nil {
+		t.Fatalf("Register() expected error")
+	}
+
+	qry := &QueriesReq{}
+	if qresp, err := client.Queries(qry); err == nil {
+		t.Fatalf("Queries() expected error")
+	} else if qresp != nil {
+		t.Fatalf("Queries() expected nil response")
+	}
+}
+
+func TestWrongServerWithKey(t *testing.T) {
+	var (
+		server = "invalid address"
+		key    = "key"
+	)
+
+	client := Client{Server: server}
+	client.SetKey(key)
+
+	if status, err := client.AccountStatus(); err == nil {
+		t.Fatalf("AccountStatus() expected error")
+	} else if status != nil {
+		t.Fatalf("AccountStatus() expected nil status")
+	}
+
+	if events, err := client.Events(""); err == nil {
+		t.Fatalf("Events() expected error")
+	} else if events != nil {
+		t.Fatalf("Events() expected nil events")
+	}
+
+	if key, err := client.KeyRequest(); err == nil {
+		t.Fatalf("KeyRequest() expected error")
+	} else if key != "" {
+		t.Fatalf("KeyRequest() expected empty key")
+	}
+
+	reg := &RegisterReq{}
+	if err := client.Register(reg); err == nil {
+		t.Fatalf("Register() expected error")
+	}
+
+	qry := &QueriesReq{}
+	if qresp, err := client.Queries(qry); err == nil {
+		t.Fatalf("Queries() expected error")
+	} else if qresp != nil {
+		t.Fatalf("Queries() expected nil response")
+	}
 }

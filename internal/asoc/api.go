@@ -162,33 +162,39 @@ func (c *Client) Events(follow string) (*EventsResp, error) {
 }
 
 // Queries handles /v1/queries API call.
-func (c *Client) Queries(q QueriesReq) error {
+func (c *Client) Queries(q *QueriesReq) (*QueriesResp, error) {
 	payload, errjson := json.Marshal(q)
 	if errjson != nil {
-		return errjson
+		return nil, errjson
 	}
 
 	req, errrq := http.NewRequest("POST", c.Server+queries, bytes.NewReader(payload))
 	if errrq != nil {
-		return errrq
+		return nil, errrq
 	}
 	req.SetBasicAuth(c.key, "")
 
 	response, errdo := c.httpClient.Do(req)
 	if errdo != nil {
-		return errdo
+		return nil, errdo
 	}
+	respBody, errread := ioutil.ReadAll(response.Body)
 	defer response.Body.Close()
+	if errread != nil {
+		return nil, errread
+	}
 
 	if response.StatusCode != 200 {
-		respBody, errread := ioutil.ReadAll(response.Body)
-		if errread != nil {
-			return errread
-		}
-		return payloadToError(respBody)
+		return nil, payloadToError(respBody)
 	}
 
-	return nil
+	r := &QueriesResp{}
+
+	if err := json.Unmarshal(respBody, r); err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
 // VerifyKey check whether key meets internal requirements.

@@ -51,6 +51,18 @@ type EventsResp struct {
 	Threats map[string]ThreatInfo `json:"threats"`
 }
 
+type RejectedResp struct {
+	BadNames       int `json:"bad_names"`
+	IgnoredDomains int `json:"ignored_domains"`
+	Duplicates     int `json:"duplicates"`
+}
+
+type QueriesResp struct {
+	Received int          `json:"received"`
+	Accepted int          `json:"accepted"`
+	Rejected RejectedResp `json:"rejected"`
+}
+
 // Strings returns events in format as following:
 // timestamp;ip;record_type;domain;severity;threat_definition;flags
 func (e *EventsResp) Strings() []string {
