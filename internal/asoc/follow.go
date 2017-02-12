@@ -8,7 +8,9 @@ import (
 )
 
 func WriteFollow(file, follow string) error {
-	if utils.FileExists(file) == false {
+	if exist, err := utils.FileExists(file); err != nil {
+		return err
+	} else if exist == false {
 		if err := utils.CreateDirForFile(file); err != nil {
 			return err
 		}

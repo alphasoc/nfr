@@ -6,11 +6,13 @@ import (
 )
 
 //FileExists checks whether file exists or not.
-func FileExists(path string) bool {
+func FileExists(path string) (bool, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return false
+		return false, nil
+	} else if err != nil {
+		return false, err
 	}
-	return true
+	return true, nil
 }
 
 // CreateDirForFile creates proper directory structure for file
@@ -18,8 +20,5 @@ func FileExists(path string) bool {
 // will create /var/test/dir directory.
 func CreateDirForFile(file string) error {
 	dir, _ := filepath.Split(file)
-	if FileExists(dir) == false {
-		return os.MkdirAll(dir, 0750)
-	}
-	return nil
+	return os.MkdirAll(dir, 0750)
 }

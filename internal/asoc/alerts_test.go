@@ -3,17 +3,14 @@ package asoc
 import (
 	"bufio"
 	"fmt"
-	"namescore/utils"
 	"os"
 	"testing"
+
+	"github.com/alphasoc/namescore/internal/utils"
 )
 
 func TestNoExistFile(t *testing.T) {
 	file := "/tmp/namescore_test_alerts"
-
-	if utils.FileExists(file) {
-		os.Remove(file)
-	}
 
 	defer os.Remove(file)
 	store, err := OpenAlerts(file)
@@ -30,7 +27,9 @@ func TestNoExistFile(t *testing.T) {
 		t.Fatalf("Close(), unexpected error %v", err)
 	}
 
-	if utils.FileExists(file) == false {
+	if exist, err := utils.FileExists(file); err != nil {
+		t.Fatalf("FileExists(%q), unexpected error %v", file, err)
+	} else if exist == false {
 		t.Fatalf("File %q was not created.", file)
 	}
 }

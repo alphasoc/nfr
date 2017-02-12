@@ -13,20 +13,20 @@ type AlertStore struct {
 }
 
 func OpenAlerts(file string) (a *AlertStore, err error) {
-	if utils.FileExists(file) == false {
+	if exist, err := utils.FileExists(file); err != nil {
+		return nil, err
+	} else if exist == false {
 		if err = utils.CreateDirForFile(file); err != nil {
 			return nil, err
 		}
 	}
 
 	a = &AlertStore{}
-
 	if a.file, err = os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err != nil {
 		return nil, err
 	}
 
 	a.buf = bufio.NewWriter(a.file)
-
 	return a, nil
 }
 
@@ -43,8 +43,5 @@ func (a *AlertStore) Write(alerts []string) {
 		a.buf.WriteString(l)
 		a.buf.WriteByte('\n')
 	}
-}
-
-func (a *AlertStore) Flush() {
 	a.buf.Flush()
 }

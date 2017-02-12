@@ -52,7 +52,7 @@ func (c *Config) ReadFromFile() error {
 	return nil
 }
 
-func (c *Config) ConfigFileExists() bool {
+func (c *Config) ConfigFileExists() (bool, error) {
 	return utils.FileExists(c.configFilePath)
 }
 
@@ -64,7 +64,9 @@ func (c *Config) SaveToFile() error {
 		return err
 	}
 
-	if utils.FileExists(c.configFilePath) == false {
+	if exist, err := utils.FileExists(c.configFilePath); err != nil {
+		return err
+	} else if exist == false {
 		if err := utils.CreateDirForFile(c.configFilePath); err != nil {
 			return err
 		}

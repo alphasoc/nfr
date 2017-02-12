@@ -26,7 +26,10 @@ func status(cmd *cobra.Command, args []string) {
 	fmt.Println()
 	cfg := config.Get()
 
-	if cfg.ConfigFileExists() == false {
+	if exist, err := cfg.ConfigFileExists(); err != nil {
+		fmt.Println("error: failed to check if config file exists.")
+		os.Exit(1)
+	} else if exist == false {
 		fmt.Println("error: no config file present.")
 		fmt.Println("Run \"namescore register\" first.")
 		os.Exit(1)
@@ -65,7 +68,6 @@ func status(cmd *cobra.Command, args []string) {
 	} else {
 		fmt.Println("namescore is not running")
 	}
-
 }
 
 func init() {

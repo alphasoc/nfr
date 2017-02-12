@@ -2,7 +2,9 @@ package asoc
 
 import "testing"
 import "os"
-import "namescore/utils"
+import "github.com/alphasoc/namescore/internal/utils"
+import "io/ioutil"
+import "bytes"
 
 func TestFollowNonExist(t *testing.T) {
 	var (
@@ -30,8 +32,41 @@ func TestFollow(t *testing.T) {
 		t.Fatalf("ReadFollow(%q), expected %q, got %q", followFile, follow, f)
 	}
 
-	if utils.FileExists(followFileTmp) {
+	if exist, err := utils.FileExists(followFileTmp); err != nil {
+		t.Fatalf("FileExists(%q), unexpected error=%v", followFileTmp, err)
+	} else if exist == true {
 		os.Remove(followFileTmp)
 		t.Fatalf("Temporary file %q shouldn't exist", followFileTmp)
 	}
+}
+
+func TestFollowOverride(t *testing.T) {
+	var (
+		followFile      = "/tmp/namescore_follow.test"
+		content         = "content_of_follow"
+		contentOverride = "overridden_follow"
+	)
+
+	defer os.Remove(followFile)
+
+	if err := WriteFollow(followFile, content); err != nil {
+		t.Fatalf("WriteFollow(%q, %q) failed: %v", followFile, content, err)
+	}
+
+	if c, err := ioutil.ReadFile(followFile); err != nil {
+		t.Fatalf("ReadFile(%q) enexpected error=%v", followFile, err)
+	} else if bytes.Compare([]byte(content), c) != 0 {
+		t.Fatalf("%q file content mismatch %s != %s", followFile, content, c)
+	}
+
+	if err := WriteFollow(followFile, contentOverride); err != nil {
+		t.Fatalf("WriteFollow(%q, %q) failed: %v", followFile, contentOverride, err)
+	}
+
+	if c, err := ioutil.ReadFile(followFile); err != nil {
+		t.Fatalf("ReadFile(%q) enexpected error=%v", followFile, err)
+	} else if bytes.Compare([]byte(contentOverride), c) != 0 {
+		t.Fatalf("%q file content mismatch %s != %s", followFile, contentOverride, c)
+	}
+
 }

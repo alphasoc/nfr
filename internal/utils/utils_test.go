@@ -11,19 +11,28 @@ func TestDirectoryCreate(t *testing.T) {
 		nonExistFileDir = "/tmp/namescore_test_dir/"
 	)
 
-	if FileExists(realFile) {
+	if exist, err := FileExists(realFile); err != nil {
+		t.Fatalf("FileExists(%q) unexpected error.", realFile)
+
+	} else if exist == true {
 		t.Fatalf("FileExists(%q) unexpected true return.", realFile)
 	}
 
-	if FileExists(nonExistFile) {
+	if exist, err := FileExists(nonExistFile); err != nil {
+		t.Fatalf("FileExists(%q) unexpected error.", nonExistFile)
+	} else if exist == true {
 		t.Fatalf("FileExists(%q) unexpected true return.", nonExistFile)
 	}
 
-	if FileExists(nonExistFileDir) {
+	if exist, err := FileExists(nonExistFileDir); err != nil {
+		t.Fatalf("FileExists(%q) unexpected error.", nonExistFileDir)
+	} else if exist == true {
 		t.Fatalf("FileExists(%q) unexpected true return.", nonExistFileDir)
 	}
 
-	if FileExists(realFileDir) == false {
+	if exist, err := FileExists(realFileDir); err != nil {
+		t.Fatalf("FileExists(%q) unexpected error.", realFileDir)
+	} else if exist == false {
 		t.Fatalf("FileExists(%q) unexpected false return.", realFileDir)
 	}
 
@@ -34,7 +43,10 @@ func TestDirectoryCreate(t *testing.T) {
 	defer f.Close()
 	defer os.Remove(realFile)
 
-	if FileExists(realFile) == false {
+	if exist, err := FileExists(realFile); err != nil {
+		t.Fatalf("FileExists(%q) unexpected error.", realFile)
+
+	} else if exist == false {
 		t.Fatalf("FileExists(%q) unexpected false return.", realFile)
 	}
 
@@ -47,11 +59,15 @@ func TestDirectoryCreate(t *testing.T) {
 	}
 	defer os.Remove(nonExistFileDir)
 
-	if FileExists(nonExistFileDir) == false {
+	if exist, err := FileExists(nonExistFileDir); err != nil {
+		t.Fatalf("FileExists(%q) unexpected error.", nonExistFileDir)
+	} else if exist == false {
 		t.Fatalf("FileExists(%q) unexpected false return after calling CreateDirForFile().", nonExistFileDir)
 	}
 
-	if FileExists(nonExistFile) {
+	if exist, err := FileExists(nonExistFile); err != nil {
+		t.Fatalf("FileExists(%q) unexpected error.", nonExistFileDir)
+	} else if exist == true {
 		os.Remove(nonExistFile)
 		t.Fatalf("FileExists(%q) unexpected true return after calling CreateDirForFile()..", nonExistFile)
 	}

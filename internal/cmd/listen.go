@@ -35,11 +35,6 @@ func listen(cmd *cobra.Command, args []string) {
 	}
 
 	cfg := config.Get()
-	if cfg.ConfigFileExists() == false {
-		log.Warning("No configuration file present.")
-		os.Exit(1)
-	}
-
 	if err := cfg.ReadFromFile(); err != nil {
 		log.Warning("Failed to read config: " + err.Error())
 		os.Exit(1)
@@ -69,7 +64,6 @@ func listen(cmd *cobra.Command, args []string) {
 		for {
 			if r, err := client.Events(follow); err == nil {
 				alertStore.Write(r.Strings())
-				alertStore.Flush()
 				follow = r.Follow
 			}
 			time.Sleep(time.Second * cfg.GetAlertRequestInterval())
