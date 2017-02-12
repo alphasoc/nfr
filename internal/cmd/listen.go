@@ -29,11 +29,6 @@ func listen(cmd *cobra.Command, args []string) {
 	log := utils.Newlog()
 	defer log.Close()
 
-	if utils.IsRoot() == false {
-		log.Warning("daemon was not started with root privileges.")
-		os.Exit(1)
-	}
-
 	cfg := config.Get()
 	if err := cfg.ReadFromFile(); err != nil {
 		log.Warning("Failed to read config: " + err.Error())

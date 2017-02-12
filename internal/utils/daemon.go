@@ -1,7 +1,6 @@
 package utils
 
 import "net"
-import "os"
 
 // LockSocket guarantees that only one instance of process is running.
 // Also allows to check whether proces is already launched.
@@ -12,9 +11,4 @@ func LockSocket() error {
 		return err
 	}
 	return nil
-}
-
-// IsRoot checks whether process was run by superuser.
-func IsRoot() bool {
-	return os.Getuid() == 0
 }
