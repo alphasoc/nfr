@@ -14,6 +14,11 @@ const (
 	// - Network interface which should namescore bind to
 	ConfigFilePath = "/home/phob0s/alphasoc/namescore.toml"
 
+	// WhitelistFilePath stores information about:
+	// - which subnetworks should not be taken into account
+	// - which domains should not been taken into account
+	WhitelistFilePath = "/home/phob0s/alphasoc/whitelist.toml"
+
 	// AlphaSOC server address
 	AlphaSocAddress = "http://127.0.0.1:8080"
 
