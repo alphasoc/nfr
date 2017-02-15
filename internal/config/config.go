@@ -18,7 +18,7 @@ type Config struct {
 	followFilePath       string
 	alertFilePath        string
 	configFilePath       string
-	alphaSocAddress      string
+	alphaSOCAddress      string
 	sendIntervalTime     time.Duration
 	sendIntervalAmount   int
 	alertRequestInterval time.Duration
@@ -31,13 +31,13 @@ type AsocFileConfig struct {
 
 func Get() *Config {
 	return &Config{
-		followFilePath:       FollowFilePath,
-		alertFilePath:        AlertFilePath,
-		configFilePath:       ConfigFilePath,
-		alphaSocAddress:      AlphaSocAddress,
-		sendIntervalTime:     SendIntervalTime,
-		sendIntervalAmount:   SendIntervalAmount,
-		alertRequestInterval: AlertRequestInterval,
+		followFilePath:       followFile,
+		alertFilePath:        alertFile,
+		configFilePath:       configFile,
+		alphaSOCAddress:      alphaSOCCloud,
+		sendIntervalTime:     sendIntervalSecond,
+		sendIntervalAmount:   querySendAmount,
+		alertRequestInterval: alertRequestIntervalSecond,
 	}
 }
 
@@ -92,8 +92,8 @@ func (c *Config) GetFollowFilePath() string {
 	return c.followFilePath
 }
 
-func (c *Config) GetAlphaSocAddress() string {
-	return c.alphaSocAddress
+func (c *Config) GetAlphaSOCAddress() string {
+	return c.alphaSOCAddress
 }
 
 func (c *Config) GetAlertFilePath() string {

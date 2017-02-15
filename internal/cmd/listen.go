@@ -47,7 +47,7 @@ func listen(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	client := asoc.Client{Server: cfg.GetAlphaSocAddress()}
+	client := asoc.Client{Server: cfg.GetAlphaSOCAddress()}
 	client.SetKey(cfg.APIKey)
 
 	// s, err := dns.Start(cfg.NetworkInterface)
