@@ -17,7 +17,7 @@ const (
 	// WhitelistFilePath stores information about:
 	// - which subnetworks should not be taken into account
 	// - which domains should not been taken into account
-	whitelistFilePath = "/home/phob0s/alphasoc/whitelist.toml"
+	whitelistFile = "/home/phob0s/alphasoc/whitelist.toml"
 
 	// AlphaSOC server address
 	alphaSOCCloud = "http://127.0.0.1:8080"

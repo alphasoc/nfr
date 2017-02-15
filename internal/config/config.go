@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/BurntSushi/toml"
@@ -22,6 +23,7 @@ type Config struct {
 	sendIntervalTime     time.Duration
 	sendIntervalAmount   int
 	alertRequestInterval time.Duration
+	whitelistFile        string
 }
 
 type AsocFileConfig struct {
@@ -38,6 +40,7 @@ func Get() *Config {
 		sendIntervalTime:     sendIntervalSecond,
 		sendIntervalAmount:   querySendAmount,
 		alertRequestInterval: alertRequestIntervalSecond,
+		whitelistFile:        whitelistFile,
 	}
 }
 
@@ -64,21 +67,30 @@ func (c *Config) SaveToFile() error {
 		return err
 	}
 
-	if exist, err := utils.FileExists(c.configFilePath); err != nil {
-		return err
-	} else if exist == false {
-		if err := utils.CreateDirForFile(c.configFilePath); err != nil {
-			return err
-		}
-	}
-
 	if err := ioutil.WriteFile(c.configFilePath, buf.Bytes(), 0640); err != nil {
 		return err
 	}
 	return nil
 }
 
+// InitialDirsCreate creates proper directory structure for all files created by namescore
+// For example for file: /var/test/dir/file this function
+// will create /var/test/dir directory if it does not exist.
 func (c *Config) InitialDirsCreate() error {
+	files := []string{c.alertFilePath, c.configFilePath, c.followFilePath, c.whitelistFile}
+
+	for _, file := range files {
+		dir, _ := filepath.Split(file)
+		exist, err := utils.FileExists(dir)
+		if err != nil {
+			return err
+		}
+		if exist == false {
+			if err := os.MkdirAll(dir, 0750); err != nil {
+				return err
+			}
+		}
+	}
 	return nil
 }
 
@@ -114,4 +126,8 @@ func (c *Config) GetSendIntervalAmount() int {
 
 func (c *Config) GetAlertRequestInterval() time.Duration {
 	return c.alertRequestInterval
+}
+
+func (c *Config) GetWhitelistFilePath() string {
+	return c.whitelistFile
 }

@@ -47,6 +47,11 @@ func listen(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	if err := cfg.InitialDirsCreate(); err != nil {
+		logger.Warn("Failed to create proper dir structure", "error", err)
+		os.Exit(1)
+	}
+
 	client := asoc.Client{Server: cfg.GetAlphaSOCAddress()}
 	client.SetKey(cfg.APIKey)
 
@@ -64,6 +69,7 @@ func listen(cmd *cobra.Command, args []string) {
 	handler := &listenHandler{cfg: cfg, quit: quit, client: &client, logger: logger}
 	go handler.getAlerts()
 	go handler.sendQueries()
+	go handler.sendLocalQueries()
 
 	for {
 		s := <-sig

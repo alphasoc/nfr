@@ -76,3 +76,7 @@ func (l *listenHandler) sendQueries() {
 		}
 	}()
 }
+
+func (l *listenHandler) sendLocalQueries() {
+
+}
