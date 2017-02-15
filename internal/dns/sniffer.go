@@ -15,36 +15,58 @@ import (
 */
 import "C"
 
+type FQDNFilter func(string) bool
+type IPFilter func(net.IP) bool
+
+type DNSCapture interface {
+	Start(iface string, queriesMax int) (DNSCapture, chan []asoc.Entry, error)
+	SetFQDNFilter(FQDNFilter)
+	SetIPFilter(IPFilter)
+}
+
 type Sniffer struct {
-	iface  string
-	fd     int
-	buffer []byte
+	fd         int
+	buffer     []byte
+	ready      chan []asoc.Entry
+	queriesMax int
+	ipFilter   IPFilter
+	fqdnFilter FQDNFilter
 }
 
-func Start(iface string) (s *Sniffer, err error) {
-	if _, err = net.InterfaceByName(iface); err != nil {
-		return nil, err
+func Start(iface string, queriesMax int) (*Sniffer, chan []asoc.Entry, error) {
+	if _, err := net.InterfaceByName(iface); err != nil {
+		return nil, nil, err
 	}
 
-	s = &Sniffer{}
-
-	s.fd, err = syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, int(C.htons(syscall.ETH_P_ALL)))
+	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, int(C.htons(syscall.ETH_P_ALL)))
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	err = syscall.BindToDevice(s.fd, iface)
+	err = syscall.BindToDevice(fd, iface)
 	if err != nil {
-		syscall.Close(s.fd)
-		return nil, err
+		syscall.Close(fd)
+		return nil, nil, err
 	}
 
-	s.buffer = make([]byte, 65536)
-
-	return s, nil
+	sniffer := &Sniffer{
+		buffer:     make([]byte, 65536),
+		fd:         fd,
+		ready:      make(chan []asoc.Entry, 10),
+		queriesMax: queriesMax,
+	}
+	return sniffer, sniffer.ready, nil
 }
 
-func (s *Sniffer) GetDNS() []*asoc.Entry {
+func (s *Sniffer) SetFQDNFilter(f FQDNFilter) {
+	s.fqdnFilter = f
+}
+
+func (s *Sniffer) SetIPFilter(f IPFilter) {
+	s.ipFilter = f
+}
+
+func (s *Sniffer) getDNS() []asoc.Entry {
 	for {
 		if _, _, err := syscall.Recvfrom(s.fd, s.buffer, 0); err != nil {
 			continue
@@ -76,24 +98,32 @@ func (s *Sniffer) GetDNS() []*asoc.Entry {
 			continue
 		}
 
-		r := make([]*asoc.Entry, len(dns.Questions))
+		var entries []asoc.Entry
 		t := time.Now()
 
 		for i := range dns.Questions {
-			r[i] = &asoc.Entry{}
-			r[i].Time = t
-			r[i].IP = IP
-			r[i].QType = dns.Questions[i].Type.String()
-			r[i].FQDN = string(dns.Questions[i].Name)
+			if s.fqdnFilter != nil {
+				if s.fqdnFilter(string(dns.Questions[i].Name)) {
+					continue
+				}
+				if s.ipFilter(IP) {
+					continue
+				}
+			}
+			entries = append(entries, asoc.Entry{Time: t, IP: IP, QType: dns.Questions[i].Type.String(), FQDN: string(dns.Questions[i].Name)})
 		}
-
-		return r
+		return entries
 	}
 }
 
-func (s *Sniffer) Close() error {
-	if s.fd == 0 {
-		return nil
+func (s *Sniffer) Sniff() {
+	var buff []asoc.Entry
+	for {
+		dns := s.getDNS()
+		buff = append(buff, dns...)
+		if len(buff) > s.queriesMax {
+			s.ready <- buff
+			buff = nil
+		}
 	}
-	return syscall.Close(s.fd)
 }

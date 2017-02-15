@@ -1,5 +1,6 @@
 package config
 
+//todo small letter
 const (
 	// File where follow ID after each response is stored
 	FollowFilePath = "/home/phob0s/alphasoc/follow"

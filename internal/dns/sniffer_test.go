@@ -9,7 +9,7 @@ import (
 
 func TestSnifferWrongInterface(t *testing.T) {
 	wrongInterface := "invalid_network_interface"
-	sniffer, err := Start(wrongInterface)
+	sniffer, _, err := Start(wrongInterface, 100)
 	if err == nil {
 		t.Errorf("Start(%q) expected err", wrongInterface)
 	}
@@ -34,8 +34,7 @@ func TestSniffer(t *testing.T) {
 		return
 	}
 
-	sniffer, err := Start(ni)
-	defer sniffer.Close()
+	sniffer, _, err := Start(ni, 10)
 	if err != nil {
 		t.Errorf("Start(%q) failed: err=%v", ni, err)
 	}
@@ -45,7 +44,7 @@ func TestSniffer(t *testing.T) {
 		return
 	}
 
-	dns := sniffer.GetDNS()
+	dns := sniffer.getDNS()
 	if l := len(dns); l != 1 {
 		t.Errorf("GetDNS() expected one request, but got %d", l)
 	}

@@ -78,6 +78,10 @@ func (c *Config) SaveToFile() error {
 	return nil
 }
 
+func (c *Config) InitialDirsCreate() error {
+	return nil
+}
+
 func (c *Config) ReadInterface(rd io.Reader) {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()

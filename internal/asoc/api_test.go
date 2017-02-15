@@ -115,8 +115,8 @@ func TestStatusSick(t *testing.T) {
 	follow := eventzero.Follow
 
 	query := &QueriesReq{}
-	query.Data = append(query.Data, &Entry{FQDN: "possible-dga.com", IP: net.ParseIP("1.1.1.1"), QType: "A", Time: time.Now()})
-	query.Data = append(query.Data, &Entry{FQDN: "google.com", IP: net.ParseIP("1.5.2.1"), QType: "TXT", Time: time.Now()})
+	query.Data = append(query.Data, Entry{FQDN: "possible-dga.com", IP: net.ParseIP("1.1.1.1"), QType: "A", Time: time.Now()})
+	query.Data = append(query.Data, Entry{FQDN: "google.com", IP: net.ParseIP("1.5.2.1"), QType: "TXT", Time: time.Now()})
 
 	qresp, errquery := c.Queries(query)
 	if errquery != nil {

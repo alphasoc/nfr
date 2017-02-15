@@ -3,23 +3,13 @@ package asoc
 import (
 	"io/ioutil"
 	"os"
-
-	"github.com/alphasoc/namescore/internal/utils"
 )
 
+// WriteFollow writes follow-id to file.
+// It writes follow to temporary file first, then renames it.
+// ( Renaming is atomic operation on linux )
 func WriteFollow(file, follow string) error {
-	if exist, err := utils.FileExists(file); err != nil {
-		return err
-	} else if exist == false {
-		if err := utils.CreateDirForFile(file); err != nil {
-			return err
-		}
-	}
-
-	var (
-		tmpFile = file + ".tmp"
-	)
-
+	tmpFile := file + ".tmp"
 	if err := ioutil.WriteFile(tmpFile, []byte(follow), 0660); err != nil {
 		return err
 	}
@@ -27,6 +17,8 @@ func WriteFollow(file, follow string) error {
 	return os.Rename(tmpFile, file)
 }
 
+// ReadFollow returns follow ID.
+// If follow ID is not set empty string is returned
 func ReadFollow(path string) string {
 	follow, err := ioutil.ReadFile(path)
 	if err != nil {

@@ -18,6 +18,16 @@ const (
 	wisdom   = "/v1/wisdom"
 )
 
+// AlphaSOCAPI defines interface for public API
+type AlphaSOCAPI interface {
+	KeyRequest() (string, error)
+	SetKey(key string)
+	AccountStatus() (*StatusResp, error)
+	Register(data *RegisterReq) error
+	Events(follow string) (*EventsResp, error)
+	Queries(q *QueriesReq) (*QueriesResp, error)
+}
+
 // Client handles connection to AlphaSoc server.
 // There should be created one client per process.
 type Client struct {

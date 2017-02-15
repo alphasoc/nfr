@@ -16,7 +16,7 @@ type Entry struct {
 }
 
 type QueriesReq struct {
-	Data []*Entry `json:"data"`
+	Data []Entry `json:"data"`
 }
 
 type keyRequestReq struct {
