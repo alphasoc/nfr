@@ -108,6 +108,10 @@ func TestDefaults(t *testing.T) {
 		t.Errorf("whitelistFile is empty")
 	}
 
+	if c.failedQueriesDir == "" {
+		t.Errorf("failedQueriesDir is empty")
+	}
+
 	if c.alertRequestInterval == 0 {
 		t.Errorf("alertRequestInterval is 0")
 	}
@@ -128,14 +132,17 @@ func TestInitialDirsCreate(t *testing.T) {
 		dir3    = "/tmp/namescore_test/dir3/"
 		file4   = "/tmp/namescore_test/dir4/file4.txt"
 		dir4    = "/tmp/namescore_test/dir4/"
+		dir5    = "/tmp/namescore_test/dir5/"
 	)
 
 	cfg := Config{
-		alertFilePath:  file1,
-		configFilePath: file2,
-		followFilePath: file3,
-		whitelistFile:  file4,
+		alertFilePath:    file1,
+		configFilePath:   file2,
+		followFilePath:   file3,
+		whitelistFile:    file4,
+		failedQueriesDir: dir5,
 	}
+	defer os.RemoveAll(testDir)
 
 	if err := cfg.InitialDirsCreate(); err != nil {
 		t.Fatalf("InitialDirsCreate(), unexpected error %v", err)
@@ -157,5 +164,7 @@ func TestInitialDirsCreate(t *testing.T) {
 		t.Fatalf("%q, was not created!", dir4)
 	}
 
-	defer os.RemoveAll(testDir)
+	if exist, _ := utils.FileExists(dir5); exist == false {
+		t.Fatalf("%q, was not created!", dir5)
+	}
 }

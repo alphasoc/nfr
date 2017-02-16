@@ -3,6 +3,8 @@ package cmd
 import (
 	"time"
 
+	"os"
+
 	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/alphasoc/namescore/internal/config"
 	"github.com/alphasoc/namescore/internal/dns"
@@ -10,12 +12,13 @@ import (
 )
 
 type listenHandler struct {
-	logger  log.Logger
-	client  asoc.AlphaSOCAPI
-	sniffer dns.DNSCapture
-	cfg     *config.Config
-	quit    chan bool
-	queries chan []asoc.Entry
+	logger     log.Logger
+	client     asoc.AlphaSOCAPI
+	queryStore *asoc.QueryStore
+	sniffer    dns.DNSCapture
+	cfg        *config.Config
+	quit       chan bool
+	queries    chan []asoc.Entry
 }
 
 func (l *listenHandler) getAlerts() {
@@ -70,9 +73,12 @@ func (l *listenHandler) sendQueries() {
 			return
 		}
 
-		resp, err := l.client.Queries(&asoc.QueriesReq{Data: senddata})
+		request := &asoc.QueriesReq{Data: senddata}
+		resp, err := l.client.Queries(request)
 		if err != nil {
-			//todo errorhandling dumping to file
+			if err != l.queryStore.Store(request) {
+				l.logger.Warn("Storing queries failed.", "err", err)
+			}
 		}
 		if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
 			l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
@@ -81,6 +87,27 @@ func (l *listenHandler) sendQueries() {
 }
 
 func (l *listenHandler) sendLocalQueries() {
+	for {
+		time.Sleep(60 * time.Second)
+		files := l.queryStore.GetQueryFiles()
+
+		for _, file := range files {
+			query, err := l.queryStore.Read(file)
+			if err != nil {
+				l.logger.Warn("Reading queries failed.", "err", err)
+				os.Remove(file)
+				continue
+			}
+			resp, err := l.client.Queries(query)
+			if err != nil {
+				continue
+			}
+			if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
+				l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
+			}
+			os.Remove(file)
+		}
+	}
 
 }
 

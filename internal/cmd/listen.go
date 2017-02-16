@@ -68,11 +68,14 @@ func listen(cmd *cobra.Command, args []string) {
 	quit := make(chan bool)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 
+	store := asoc.NewQueryStore(cfg.GetFailedQueriesLimit(), cfg.GetFailedQueriesDir())
+
 	handler := &listenHandler{cfg: cfg,
-		quit:    quit,
-		client:  &client,
-		logger:  logger,
-		sniffer: sniffer,
+		quit:       quit,
+		client:     &client,
+		logger:     logger,
+		sniffer:    sniffer,
+		queryStore: store,
 	}
 
 	go handler.sniff()

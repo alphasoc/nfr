@@ -24,6 +24,8 @@ type Config struct {
 	sendIntervalAmount   int
 	alertRequestInterval time.Duration
 	whitelistFile        string
+	failedQueriesDir     string
+	failedQueriesLimit   uint
 }
 
 type AsocFileConfig struct {
@@ -41,6 +43,8 @@ func Get() *Config {
 		sendIntervalAmount:   querySendAmount,
 		alertRequestInterval: alertRequestIntervalSecond,
 		whitelistFile:        whitelistFile,
+		failedQueriesDir:     failedQueriesDirPath,
+		failedQueriesLimit:   failedQueriesCountLimit,
 	}
 }
 
@@ -91,6 +95,10 @@ func (c *Config) InitialDirsCreate() error {
 			}
 		}
 	}
+	if err := os.MkdirAll(c.failedQueriesDir, 0750); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -130,4 +138,12 @@ func (c *Config) GetAlertRequestInterval() time.Duration {
 
 func (c *Config) GetWhitelistFilePath() string {
 	return c.whitelistFile
+}
+
+func (c *Config) GetFailedQueriesDir() string {
+	return c.failedQueriesDir
+}
+
+func (c *Config) GetFailedQueriesLimit() uint {
+	return c.failedQueriesLimit
 }

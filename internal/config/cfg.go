@@ -14,6 +14,9 @@ const (
 	// - Network interface which should namescore bind to
 	configFile = "/home/phob0s/alphasoc/namescore.toml"
 
+	// Directory where are stored queries which sending failed.
+	failedQueriesDirPath = "/home/phob0s/alphasoc/backup"
+
 	// WhitelistFilePath stores information about:
 	// - which subnetworks should not be taken into account
 	// - which domains should not been taken into account
@@ -34,4 +37,9 @@ const (
 	// Time interval determining how often alerts are collected from
 	// AlphaSOC cloud
 	alertRequestIntervalSecond = 300
+
+	// Number of chunks of failed queries which are stored locally
+	// Total amout of possible stored queries on disk can be calculated with:
+	//  failedQueriesCountLimit * querySendAmount
+	failedQueriesCountLimit = 100
 )

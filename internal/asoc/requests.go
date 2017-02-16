@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -72,4 +73,33 @@ func (e *Entry) MarshalJSON() ([]byte, error) {
 	str := fmt.Sprintf(`"%s","%s","%s","%s"]`, e.Time.Format(time.RFC3339), e.IP.String(), e.QType, e.FQDN)
 	buffer.WriteString(str)
 	return buffer.Bytes(), nil
+}
+func (e *Entry) UnmarshalJSON(data []byte) error {
+	if data == nil {
+		return fmt.Errorf("Entry: data is empty")
+	}
+
+	str := string(data)
+	str = strings.TrimPrefix(str, "[")
+	str = strings.TrimSuffix(str, "]")
+	str = strings.Replace(str, ",", " ", -1)
+	str = strings.Replace(str, "\"", "", -1)
+
+	var tim string
+	var ip string
+	var qtype string
+	var fqdn string
+	fmt.Sscanf(str, "%s %s %s %s", &tim, &ip, &qtype, &fqdn)
+
+	e.FQDN = fqdn
+	e.IP = net.ParseIP(ip)
+	e.QType = qtype
+
+	if t, err := time.Parse(time.RFC3339, tim); err != nil {
+		return err
+	} else {
+		e.Time = t
+	}
+
+	return nil
 }
