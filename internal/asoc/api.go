@@ -28,7 +28,7 @@ type AlphaSOCAPI interface {
 	Queries(q *QueriesReq) (*QueriesResp, error)
 }
 
-// Client handles connection to AlphaSoc server.
+// Client handles connection to AlphaSOC server.
 // There should be created one client per process.
 type Client struct {
 	Server     string

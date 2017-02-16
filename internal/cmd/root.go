@@ -10,7 +10,7 @@ import (
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "test",
-	Short: "AlphaSoc namescore client.",
+	Short: "AlphaSOC namescore client.",
 	Long: `namescore is application which captures DNS requests and provides
 deep analysis and alerting of suspicious events,
 identifying gaps in your security controls and highlighting targeted attacks.`,
