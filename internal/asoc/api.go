@@ -138,7 +138,6 @@ func (c *Client) Register(data *RegisterReq) error {
 
 // Events handles /v1/events API call.
 func (c *Client) Events(follow string) (*EventsResp, error) {
-	// todo what follow use to get all threats map without events
 	url := c.Server + events + "?follow=" + follow
 
 	req, errrq := http.NewRequest("GET", url, nil)
