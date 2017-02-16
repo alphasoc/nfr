@@ -90,7 +90,7 @@ func (l *listenHandler) sniff() {
 
 	for {
 		packet := l.sniffer.Sniff()
-		if entries := l.sniffer.PacketToDNS(packet); entries != nil {
+		if entries := l.sniffer.PacketToEntry(packet); entries != nil {
 			buffer = append(buffer, entries...)
 			if len(buffer) > l.cfg.GetSendIntervalAmount() {
 				l.queries <- buffer

@@ -2,49 +2,42 @@ package dns
 
 import (
 	"net"
-	"syscall"
 	"time"
 
 	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/google/gopacket/pcap"
 )
-
-/*
-#include <arpa/inet.h>
-*/
-import "C"
 
 type FQDNFilter func(string) bool
 type IPFilter func(net.IP) bool
 
 type DNSCapture interface {
-	PacketToDNS(rawpacket []byte) []asoc.Entry
-	Sniff() []byte
+	Sniff() gopacket.Packet
+	PacketToEntry(packet gopacket.Packet) []asoc.Entry
 }
 
 type Sniffer struct {
-	fd         int
+	handle     *pcap.Handle
+	source     *gopacket.PacketSource
 	ipFilter   IPFilter
 	fqdnFilter FQDNFilter
 }
 
 func Start(iface string) (*Sniffer, error) {
-	if _, err := net.InterfaceByName(iface); err != nil {
-		return nil, err
-	}
-
-	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, int(C.htons(syscall.ETH_P_ALL)))
+	handle, err := pcap.OpenLive(iface, 1600, false, pcap.BlockForever)
 	if err != nil {
 		return nil, err
 	}
 
-	err = syscall.BindToDevice(fd, iface)
-	if err != nil {
-		syscall.Close(fd)
+	if err := handle.SetBPFFilter("udp dst port 53"); err != nil {
+		handle.Close()
 		return nil, err
 	}
-	return &Sniffer{fd: fd}, nil
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+
+	return &Sniffer{source: packetSource, handle: handle}, nil
 }
 
 func (s *Sniffer) SetFQDNFilter(f FQDNFilter) {
@@ -55,24 +48,21 @@ func (s *Sniffer) SetIPFilter(f IPFilter) {
 	s.ipFilter = f
 }
 
-func (s *Sniffer) Sniff() []byte {
-	buffer := make([]byte, 65536)
+func (s *Sniffer) Sniff() gopacket.Packet {
 	for {
-		if _, _, err := syscall.Recvfrom(s.fd, buffer, 0); err != nil {
+		packet, err := s.source.NextPacket()
+		if err != nil {
 			continue
 		}
-		return buffer
+		return packet
 	}
-
 }
 
-func (s *Sniffer) PacketToDNS(rawpacket []byte) []asoc.Entry {
-	packet := gopacket.NewPacket(rawpacket, layers.LayerTypeEthernet, gopacket.Default)
+func (s *Sniffer) PacketToEntry(packet gopacket.Packet) []asoc.Entry {
 	dnsLayer := packet.Layer(layers.LayerTypeDNS)
 	if dnsLayer == nil {
 		return nil
 	}
-
 	dns, _ := dnsLayer.(*layers.DNS)
 	if dns.QR {
 		return nil
@@ -86,10 +76,8 @@ func (s *Sniffer) PacketToDNS(rawpacket []byte) []asoc.Entry {
 		ip, _ := IP6layer.(*layers.IPv6)
 		IP = ip.SrcIP
 	}
-
 	var entries []asoc.Entry
 	t := time.Now()
-
 	for i := range dns.Questions {
 		if s.fqdnFilter != nil {
 			if s.fqdnFilter(string(dns.Questions[i].Name)) {
@@ -102,4 +90,5 @@ func (s *Sniffer) PacketToDNS(rawpacket []byte) []asoc.Entry {
 		entries = append(entries, asoc.Entry{Time: t, IP: IP, QType: dns.Questions[i].Type.String(), FQDN: string(dns.Questions[i].Name)})
 	}
 	return entries
+
 }

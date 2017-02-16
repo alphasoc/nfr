@@ -38,6 +38,7 @@ func TestSniffer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Start(%q) failed: err=%v", ni, err)
 	}
+	defer sniffer.handle.Close()
 
 	cmd := exec.Command("nslookup", lookup)
 	if err := cmd.Run(); err != nil {
@@ -48,11 +49,11 @@ func TestSniffer(t *testing.T) {
 
 	for {
 		packet := sniffer.Sniff()
-		if len(packet) == 0 {
+		if packet == nil {
 			t.Fatalf("Sniff() returned empty packet")
 		}
 
-		if dns = sniffer.PacketToDNS(packet); dns != nil {
+		if dns = sniffer.PacketToEntry(packet); dns != nil {
 			break
 		}
 
@@ -72,6 +73,26 @@ func TestSniffer(t *testing.T) {
 
 	if dns[0].FQDN != lookup {
 		t.Errorf("GetDNS() FQDN=%q, expected %q", dns[0].FQDN, lookup)
+	}
+}
+
+func BenchmarkSniffer(b *testing.B) {
+	ni := getIface()
+	sniffer, err := Start(ni)
+	if err != nil {
+		b.Fatalf("Start(%q) failed: err=%v", ni, err)
+	}
+	defer sniffer.handle.Close()
+
+	cmd := exec.Command("nslookup", "google.pl")
+	if err := cmd.Run(); err != nil {
+		return
+	}
+	packet := sniffer.Sniff()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		sniffer.PacketToEntry(packet)
 	}
 }
 
