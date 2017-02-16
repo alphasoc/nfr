@@ -103,15 +103,3 @@ func (s *Sniffer) PacketToDNS(rawpacket []byte) []asoc.Entry {
 	}
 	return entries
 }
-
-// func (s *Sniffer) Sniff() {
-// 	var buff []asoc.Entry
-// 	for {
-// 		dns := s.getDNS()
-// 		buff = append(buff, dns...)
-// 		if len(buff) > s.queriesMax {
-// 			s.ready <- buff
-// 			buff = nil
-// 		}
-// 	}
-// }
