@@ -5,11 +5,13 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/alphasoc/namescore/internal/asoc"
 )
 
 func TestSnifferWrongInterface(t *testing.T) {
 	wrongInterface := "invalid_network_interface"
-	sniffer, _, err := Start(wrongInterface, 100)
+	sniffer, err := Start(wrongInterface)
 	if err == nil {
 		t.Errorf("Start(%q) expected err", wrongInterface)
 	}
@@ -34,9 +36,9 @@ func TestSniffer(t *testing.T) {
 		return
 	}
 
-	sniffer, _, err := Start(ni, 10)
+	sniffer, err := Start(ni)
 	if err != nil {
-		t.Errorf("Start(%q) failed: err=%v", ni, err)
+		t.Fatalf("Start(%q) failed: err=%v", ni, err)
 	}
 
 	cmd := exec.Command("nslookup", lookup)
@@ -44,12 +46,25 @@ func TestSniffer(t *testing.T) {
 		return
 	}
 
-	dns := sniffer.getDNS()
+	var dns []asoc.Entry
+
+	for {
+		packet := sniffer.Sniff()
+		if len(packet) == 0 {
+			t.Fatalf("Sniff() returned empty packet")
+		}
+
+		if dns = sniffer.PacketToDNS(packet); dns != nil {
+			break
+		}
+
+	}
+
 	if l := len(dns); l != 1 {
 		t.Errorf("GetDNS() expected one request, but got %d", l)
 	}
 
-	if dns[0].IP.To4() == nil && dns[0].IP.To16 == nil {
+	if dns[0].IP.To4() == nil && dns[0].IP.To16() == nil {
 		t.Errorf("GetDNS() SourceIP=%q is not IPv4 or IPv6", dns[0].IP.String())
 	}
 

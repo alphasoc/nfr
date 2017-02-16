@@ -5,12 +5,14 @@ import (
 
 	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/alphasoc/namescore/internal/config"
+	"github.com/alphasoc/namescore/internal/dns"
 	log "github.com/inconshreveable/log15"
 )
 
 type listenHandler struct {
 	logger  log.Logger
 	client  asoc.AlphaSOCAPI
+	sniffer dns.DNSCapture
 	cfg     *config.Config
 	quit    chan bool
 	queries chan []asoc.Entry
@@ -69,7 +71,7 @@ func (l *listenHandler) sendQueries() {
 
 		resp, err := l.client.Queries(&asoc.QueriesReq{Data: senddata})
 		if err != nil {
-			//errorhandling
+			//todo errorhandling dumping to file
 		}
 		if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
 			l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
@@ -79,4 +81,21 @@ func (l *listenHandler) sendQueries() {
 
 func (l *listenHandler) sendLocalQueries() {
 
+}
+
+func (l *listenHandler) sniff() {
+	l.queries = make(chan []asoc.Entry, 10)
+	var buffer []asoc.Entry
+
+	for {
+		packet := l.sniffer.Sniff()
+		if entries := l.sniffer.PacketToDNS(packet); entries != nil {
+			buffer = append(buffer, entries...)
+			if len(buffer) > l.cfg.GetSendIntervalAmount() {
+				l.queries <- buffer
+				buffer = nil
+			}
+		}
+
+	}
 }

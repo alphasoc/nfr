@@ -10,6 +10,7 @@ import (
 
 	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/alphasoc/namescore/internal/config"
+	"github.com/alphasoc/namescore/internal/dns"
 	log "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 )
@@ -55,20 +56,28 @@ func listen(cmd *cobra.Command, args []string) {
 	client := asoc.Client{Server: cfg.GetAlphaSOCAddress()}
 	client.SetKey(cfg.APIKey)
 
-	// s, err := dns.Start(cfg.NetworkInterface)
-	// if err != nil {
-	// 	logger.Warn("Failed to start sniffer", "err", err)
-	// 	os.Exit(1)
-	// }
+	sniffer, err := dns.Start(cfg.NetworkInterface)
+	if err != nil {
+		logger.Warn("Failed to start sniffer", "err", err)
+		os.Exit(1)
+	}
+
 	logger.Info("namescore daemon started")
 
 	sig := make(chan os.Signal)
 	quit := make(chan bool)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 
-	handler := &listenHandler{cfg: cfg, quit: quit, client: &client, logger: logger}
-	go handler.getAlerts()
+	handler := &listenHandler{cfg: cfg,
+		quit:    quit,
+		client:  &client,
+		logger:  logger,
+		sniffer: sniffer,
+	}
+
+	go handler.sniff()
 	go handler.sendQueries()
+	go handler.getAlerts()
 	go handler.sendLocalQueries()
 
 	for {

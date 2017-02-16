@@ -19,43 +19,32 @@ type FQDNFilter func(string) bool
 type IPFilter func(net.IP) bool
 
 type DNSCapture interface {
-	Start(iface string, queriesMax int) (DNSCapture, chan []asoc.Entry, error)
-	SetFQDNFilter(FQDNFilter)
-	SetIPFilter(IPFilter)
+	PacketToDNS(rawpacket []byte) []asoc.Entry
+	Sniff() []byte
 }
 
 type Sniffer struct {
 	fd         int
-	buffer     []byte
-	ready      chan []asoc.Entry
-	queriesMax int
 	ipFilter   IPFilter
 	fqdnFilter FQDNFilter
 }
 
-func Start(iface string, queriesMax int) (*Sniffer, chan []asoc.Entry, error) {
+func Start(iface string) (*Sniffer, error) {
 	if _, err := net.InterfaceByName(iface); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	fd, err := syscall.Socket(syscall.AF_PACKET, syscall.SOCK_RAW, int(C.htons(syscall.ETH_P_ALL)))
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	err = syscall.BindToDevice(fd, iface)
 	if err != nil {
 		syscall.Close(fd)
-		return nil, nil, err
+		return nil, err
 	}
-
-	sniffer := &Sniffer{
-		buffer:     make([]byte, 65536),
-		fd:         fd,
-		ready:      make(chan []asoc.Entry, 10),
-		queriesMax: queriesMax,
-	}
-	return sniffer, sniffer.ready, nil
+	return &Sniffer{fd: fd}, nil
 }
 
 func (s *Sniffer) SetFQDNFilter(f FQDNFilter) {
@@ -66,64 +55,63 @@ func (s *Sniffer) SetIPFilter(f IPFilter) {
 	s.ipFilter = f
 }
 
-func (s *Sniffer) getDNS() []asoc.Entry {
+func (s *Sniffer) Sniff() []byte {
+	buffer := make([]byte, 65536)
 	for {
-		if _, _, err := syscall.Recvfrom(s.fd, s.buffer, 0); err != nil {
+		if _, _, err := syscall.Recvfrom(s.fd, buffer, 0); err != nil {
 			continue
 		}
+		return buffer
+	}
 
-		packet := gopacket.NewPacket(s.buffer, layers.LayerTypeEthernet, gopacket.Default)
-		dnsLayer := packet.Layer(layers.LayerTypeDNS)
-		if dnsLayer == nil {
-			continue
-		}
+}
 
-		dns, _ := dnsLayer.(*layers.DNS)
-		if dns.QR {
-			continue
-		}
+func (s *Sniffer) PacketToDNS(rawpacket []byte) []asoc.Entry {
+	packet := gopacket.NewPacket(rawpacket, layers.LayerTypeEthernet, gopacket.Default)
+	dnsLayer := packet.Layer(layers.LayerTypeDNS)
+	if dnsLayer == nil {
+		return nil
+	}
 
-		//todo IPv6 test
-		var IP net.IP
-		if IP4layer := packet.Layer(layers.LayerTypeIPv4); IP4layer != nil {
-			ip, _ := IP4layer.(*layers.IPv4)
-			IP = ip.SrcIP
-		} else if IP6layer := packet.Layer(layers.LayerTypeIPv6); IP6layer != nil {
-			ip, _ := IP6layer.(*layers.IPv6)
-			IP = ip.SrcIP
-		}
+	dns, _ := dnsLayer.(*layers.DNS)
+	if dns.QR {
+		return nil
+	}
 
-		IP4layer := packet.Layer(layers.LayerTypeIPv4)
-		if IP4layer == nil {
-			continue
-		}
+	var IP net.IP
+	if IP4layer := packet.Layer(layers.LayerTypeIPv4); IP4layer != nil {
+		ip, _ := IP4layer.(*layers.IPv4)
+		IP = ip.SrcIP
+	} else if IP6layer := packet.Layer(layers.LayerTypeIPv6); IP6layer != nil {
+		ip, _ := IP6layer.(*layers.IPv6)
+		IP = ip.SrcIP
+	}
 
-		var entries []asoc.Entry
-		t := time.Now()
+	var entries []asoc.Entry
+	t := time.Now()
 
-		for i := range dns.Questions {
-			if s.fqdnFilter != nil {
-				if s.fqdnFilter(string(dns.Questions[i].Name)) {
-					continue
-				}
-				if s.ipFilter(IP) {
-					continue
-				}
+	for i := range dns.Questions {
+		if s.fqdnFilter != nil {
+			if s.fqdnFilter(string(dns.Questions[i].Name)) {
+				return nil
 			}
-			entries = append(entries, asoc.Entry{Time: t, IP: IP, QType: dns.Questions[i].Type.String(), FQDN: string(dns.Questions[i].Name)})
+			if s.ipFilter(IP) {
+				return nil
+			}
 		}
-		return entries
+		entries = append(entries, asoc.Entry{Time: t, IP: IP, QType: dns.Questions[i].Type.String(), FQDN: string(dns.Questions[i].Name)})
 	}
+	return entries
 }
 
-func (s *Sniffer) Sniff() {
-	var buff []asoc.Entry
-	for {
-		dns := s.getDNS()
-		buff = append(buff, dns...)
-		if len(buff) > s.queriesMax {
-			s.ready <- buff
-			buff = nil
-		}
-	}
-}
+// func (s *Sniffer) Sniff() {
+// 	var buff []asoc.Entry
+// 	for {
+// 		dns := s.getDNS()
+// 		buff = append(buff, dns...)
+// 		if len(buff) > s.queriesMax {
+// 			s.ready <- buff
+// 			buff = nil
+// 		}
+// 	}
+// }
