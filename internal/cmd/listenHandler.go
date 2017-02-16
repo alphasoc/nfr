@@ -35,11 +35,12 @@ func (l *listenHandler) getAlerts() {
 			if err != nil {
 				l.logger.Warn("Failed to check account status", "err", err)
 				continue
-			} else if status.Expired == true {
-				l.logger.Warn("Account status is expired")
-				continue
-			} else if status.Registered == false {
-				l.logger.Warn("Account status is not registered.")
+			}
+			if status.Expired || !status.Registered {
+				l.logger.Warn("Account status is expired or not registered")
+				for _, msg := range status.Messages {
+					l.logger.Warn("Server response:", "msg", msg.Body)
+				}
 				continue
 			}
 
