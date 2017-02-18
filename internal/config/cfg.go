@@ -36,7 +36,7 @@ const (
 
 	// Time interval determining how often alerts are collected from
 	// AlphaSOC cloud
-	alertRequestIntervalSecond = 300
+	alertRequestIntervalSecond = 30
 
 	// Number of chunks of failed queries which are stored locally
 	// Total amout of possible stored queries on disk can be calculated with:

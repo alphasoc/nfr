@@ -5,6 +5,8 @@ import (
 
 	"os"
 
+	"fmt"
+
 	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/alphasoc/namescore/internal/config"
 	"github.com/alphasoc/namescore/internal/dns"
@@ -65,25 +67,27 @@ func (l *listenHandler) getAlerts() {
 }
 
 func (l *listenHandler) sendQueries() {
-	senddata := <-l.queries
+	for {
+		senddata := <-l.queries
 
-	go func() {
-
-		if len(senddata) == 0 {
-			return
-		}
-
-		request := &asoc.QueriesReq{Data: senddata}
-		resp, err := l.client.Queries(request)
-		if err != nil {
-			if err != l.queryStore.Store(request) {
-				l.logger.Warn("Storing queries failed.", "err", err)
+		go func() {
+			if len(senddata) == 0 {
+				return
 			}
-		}
-		if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
-			l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
-		}
-	}()
+			request := &asoc.QueriesReq{Data: senddata}
+			fmt.Println("sendQueries() sending")
+			resp, err := l.client.Queries(request)
+			if err != nil {
+				if err != l.queryStore.Store(request) {
+					l.logger.Warn("Storing queries failed.", "err", err)
+				}
+				return
+			}
+			if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
+				l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
+			}
+		}()
+	}
 }
 
 func (l *listenHandler) sendLocalQueries() {
