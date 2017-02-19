@@ -53,7 +53,7 @@ func listen(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	client := asoc.Client{Server: cfg.GetAlphaSOCAddress()}
+	client := asoc.Client{Server: cfg.AlphaSOCAddress}
 	client.SetKey(cfg.APIKey)
 
 	sniffer, err := dns.Start(cfg.NetworkInterface)
@@ -68,7 +68,7 @@ func listen(cmd *cobra.Command, args []string) {
 	quit := make(chan bool)
 	signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 
-	store := asoc.NewQueryStore(cfg.GetFailedQueriesLimit(), cfg.GetFailedQueriesDir())
+	store := asoc.NewQueryStore(cfg.FailedQueriesLimit, cfg.FailedQueriesDir)
 
 	handler := &listenHandler{cfg: cfg,
 		quit:       quit,

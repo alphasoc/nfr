@@ -51,7 +51,7 @@ func status(cmd *cobra.Command, args []string) {
 		fmt.Println("API key present")
 	}
 
-	client := asoc.Client{Server: cfg.GetAlphaSOCAddress()}
+	client := asoc.Client{Server: cfg.AlphaSOCAddress}
 	client.SetKey(cfg.APIKey)
 
 	status, err := client.AccountStatus()

@@ -25,11 +25,11 @@ func (l *listenHandler) getAlerts() {
 
 	timer := make(chan bool)
 	go func() {
-		time.Sleep(time.Second * l.cfg.GetAlertRequestInterval())
+		time.Sleep(time.Second * l.cfg.AlertRequestInterval)
 		timer <- true
 	}()
 
-	follow := asoc.ReadFollow(l.cfg.GetFollowFilePath())
+	follow := asoc.ReadFollow(l.cfg.FollowFilePath)
 
 	for {
 		select {
@@ -48,7 +48,7 @@ func (l *listenHandler) getAlerts() {
 			}
 
 			if events, err := l.client.Events(follow); err == nil {
-				if err := asoc.StoreAlerts(l.cfg.GetAlertFilePath(), events.Strings()); err != nil {
+				if err := asoc.StoreAlerts(l.cfg.AlertFilePath, events.Strings()); err != nil {
 					l.logger.Warn("Failed to store alerts", "error", err)
 					continue
 				}
@@ -121,7 +121,7 @@ func (l *listenHandler) sniff() {
 		packet := l.sniffer.Sniff()
 		if entries := l.sniffer.PacketToEntry(packet); entries != nil {
 			buffer = append(buffer, entries...)
-			if len(buffer) > l.cfg.GetSendIntervalAmount() {
+			if len(buffer) > l.cfg.SendIntervalAmount {
 				l.queries <- buffer
 				buffer = nil
 			}

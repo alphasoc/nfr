@@ -1,10 +1,22 @@
 package cmd
 
-// getAlerts test when AccountStatus always fails
-// - events should not be collected
-// - alertStore should not be created
+import (
+	"testing"
+
+	log "github.com/inconshreveable/log15"
+)
+
+// Test: getAlerts test when AccountStatus always fails
+//
+// Expectetions:
+// - asoc.Events should not be called
 // - follow should not be updated
-// - there should be warning
+func TestGetAlertsStatusFail(t *testing.T) {
+	// handler := listenHandler{
+	// 	logger: dummyLogger(),
+	// }
+
+}
 
 // getAlerts test when AccountStatus always returns expired
 // - events should not be collected
@@ -38,3 +50,11 @@ package cmd
 // - fail on sending
 // - read them from file
 // - accept from sending function
+
+// Common functions
+
+func dummyLogger() log.Logger {
+	logger := log.New()
+	logger.SetHandler(log.DiscardHandler())
+	return logger
+}

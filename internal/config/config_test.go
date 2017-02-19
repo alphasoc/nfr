@@ -14,7 +14,7 @@ func TestSaveConfig(t *testing.T) {
 	)
 	defer os.Remove(testFilePath)
 
-	c := Config{configFilePath: testFilePath, APIKey: apiKey, NetworkInterface: iface}
+	c := Config{ConfigFilePath: testFilePath, APIKey: apiKey, NetworkInterface: iface}
 
 	if exist, err := c.ConfigFileExists(); err != nil {
 		t.Errorf("ConfigFileExists() unexpected error=%v", err)
@@ -56,7 +56,7 @@ func TestDoubleSaveConfig(t *testing.T) {
 	)
 	defer os.Remove(testFilePath)
 
-	c := Config{configFilePath: testFilePath, APIKey: apiKey, NetworkInterface: iface}
+	c := Config{ConfigFilePath: testFilePath, APIKey: apiKey, NetworkInterface: iface}
 	if err := c.SaveToFile(); err != nil {
 		t.Errorf("SaveToFile() unexpected err=%v", err)
 	}
@@ -84,39 +84,35 @@ func TestDoubleSaveConfig(t *testing.T) {
 func TestDefaults(t *testing.T) {
 	c := Get()
 
-	if c.followFilePath == "" {
-		t.Errorf("followFilePath is empty")
+	if c.FollowFilePath == "" {
+		t.Errorf("FollowFilePath is empty")
 	}
 
-	if c.alertFilePath == "" {
-		t.Errorf("alertFilePath is empty")
+	if c.AlertFilePath == "" {
+		t.Errorf("AlertFilePath is empty")
 	}
 
-	if c.configFilePath == "" {
-		t.Errorf(" is empty")
+	if c.ConfigFilePath == "" {
+		t.Errorf("ConfigFilePath is empty")
 	}
 
-	if c.configFilePath == "" {
-		t.Errorf(" is empty")
+	if c.AlphaSOCAddress == "" {
+		t.Errorf("AlphaSOCAddress is empty")
 	}
 
-	if c.alphaSOCAddress == "" {
-		t.Errorf("alphaSOCAddress is empty")
-	}
-
-	if c.whitelistFile == "" {
+	if c.WhitelistFilePath == "" {
 		t.Errorf("whitelistFile is empty")
 	}
 
-	if c.failedQueriesDir == "" {
+	if c.FailedQueriesDir == "" {
 		t.Errorf("failedQueriesDir is empty")
 	}
 
-	if c.alertRequestInterval == 0 {
+	if c.AlertRequestInterval == 0 {
 		t.Errorf("alertRequestInterval is 0")
 	}
 
-	if c.sendIntervalTime == 0 {
+	if c.SendIntervalTime == 0 {
 		t.Errorf("sendIntervalTime is 0")
 	}
 }
@@ -136,11 +132,11 @@ func TestInitialDirsCreate(t *testing.T) {
 	)
 
 	cfg := Config{
-		alertFilePath:    file1,
-		configFilePath:   file2,
-		followFilePath:   file3,
-		whitelistFile:    file4,
-		failedQueriesDir: dir5,
+		AlertFilePath:     file1,
+		ConfigFilePath:    file2,
+		FollowFilePath:    file3,
+		WhitelistFilePath: file4,
+		FailedQueriesDir:  dir5,
 	}
 	defer os.RemoveAll(testDir)
 

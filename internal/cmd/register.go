@@ -83,7 +83,7 @@ func register(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	client := asoc.Client{Server: cfg.GetAlphaSOCAddress()}
+	client := asoc.Client{Server: cfg.AlphaSOCAddress}
 	if cfg.APIKey != "" {
 		client.SetKey(cfg.APIKey)
 		status, err := client.AccountStatus()
