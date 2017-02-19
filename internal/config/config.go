@@ -114,6 +114,7 @@ func (c *Config) InitialDirsCreate() error {
 	return nil
 }
 
+// ReadInterface reads Config.NetworkInterface from stdin
 func (c *Config) ReadInterface(rd io.Reader) {
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
