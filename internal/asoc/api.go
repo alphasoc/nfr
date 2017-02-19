@@ -36,6 +36,10 @@ type Client struct {
 	key        string
 }
 
+func setUserAgent(r *http.Request) {
+	r.Header.Set("User-Agent", "AlphaSOC Namescore/0.1")
+}
+
 // KeyRequest handles /v1/key/request API call.
 // On success API key is returned.
 func (c *Client) KeyRequest() (string, error) {
@@ -45,9 +49,15 @@ func (c *Client) KeyRequest() (string, error) {
 		return "", errjson
 	}
 
-	response, errpost := c.httpClient.Post(c.Server+request, "application/json", bytes.NewReader(payload))
-	if errpost != nil {
-		return "", errpost
+	req, errrq := http.NewRequest("POST", c.Server+request, bytes.NewReader(payload))
+	if errrq != nil {
+		return "", errrq
+	}
+	setUserAgent(req)
+
+	response, errdo := c.httpClient.Do(req)
+	if errdo != nil {
+		return "", errdo
 	}
 
 	respBody, errread := ioutil.ReadAll(response.Body)
@@ -80,7 +90,7 @@ func (c *Client) AccountStatus() (*StatusResp, error) {
 	if errrq != nil {
 		return nil, errrq
 	}
-
+	setUserAgent(req)
 	req.SetBasicAuth(c.key, "")
 
 	response, errdo := c.httpClient.Do(req)
@@ -118,6 +128,7 @@ func (c *Client) Register(data *RegisterReq) error {
 		return errrq
 	}
 	req.SetBasicAuth(c.key, "")
+	setUserAgent(req)
 
 	response, errdo := c.httpClient.Do(req)
 	if errdo != nil {
@@ -145,6 +156,7 @@ func (c *Client) Events(follow string) (*EventsResp, error) {
 		return nil, errrq
 	}
 	req.SetBasicAuth(c.key, "")
+	setUserAgent(req)
 
 	response, errdo := c.httpClient.Do(req)
 	if errdo != nil {
@@ -182,6 +194,7 @@ func (c *Client) Queries(q *QueriesReq) (*QueriesResp, error) {
 		return nil, errrq
 	}
 	req.SetBasicAuth(c.key, "")
+	setUserAgent(req)
 
 	response, errdo := c.httpClient.Do(req)
 	if errdo != nil {
