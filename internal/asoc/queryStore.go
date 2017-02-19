@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strings"
 	"time"
 )
@@ -32,6 +33,7 @@ func (q *QueryStore) GetQueryFiles() []string {
 			queries = append(queries, q.dir+"/"+file.Name())
 		}
 	}
+	sort.Strings(queries)
 	return queries
 }
 

@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"time"
-
-	"os"
-
 	"fmt"
+	"os"
+	"time"
 
 	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/alphasoc/namescore/internal/config"
