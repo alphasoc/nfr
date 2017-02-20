@@ -11,23 +11,13 @@ import (
 )
 
 type listenHandler struct {
-	logger             log.Logger
-	client             asoc.AlphaSOCAPI
-	queryStore         *asoc.QueryStore
-	sniffer            dns.DNSCapture
-	cfg                *config.Config
-	quit               chan bool
-	queries            chan []asoc.Entry
-	alertsNotify       chan bool
-	queriesNotify      chan bool
-	localQueriesNotify chan bool
-}
-
-func (l *listenHandler) notifyAlerts() {
-	for {
-		time.Sleep(l.cfg.AlertRequestInterval)
-		l.alertsNotify <- true
-	}
+	logger     log.Logger
+	client     asoc.AlphaSOCAPI
+	queryStore *asoc.QueryStore
+	sniffer    dns.DNSCapture
+	cfg        *config.Config
+	quit       chan bool
+	queries    chan []asoc.Entry
 }
 
 func (l *listenHandler) getAlerts() {
@@ -62,14 +52,14 @@ func (l *listenHandler) getAlerts() {
 }
 
 func (l *listenHandler) AlertsLoop() {
-	l.alertsNotify = make(chan bool)
-	go l.notifyAlerts()
+	timer := time.NewTicker(l.cfg.AlertRequestInterval)
 	for {
 		select {
-		case <-l.alertsNotify:
+		case <-timer.C:
 			l.logger.Info("QueriesLoop() Notified to check alerts.")
 			l.getAlerts()
 		case <-l.quit:
+			timer.Stop()
 			l.logger.Info("Stopped retrieving alerts.")
 			return
 		}
@@ -108,22 +98,15 @@ func (l *listenHandler) sendQueries(data []asoc.Entry) {
 	}
 }
 
-func (l *listenHandler) notifyLocalQueries() {
-	for {
-		time.Sleep(l.cfg.LocalQueriesInterval)
-		l.localQueriesNotify <- true
-	}
-}
-
 func (l *listenHandler) LocalQueriesLoop() {
-	l.localQueriesNotify = make(chan bool)
-	go l.notifyLocalQueries()
+	timer := time.NewTicker(l.cfg.LocalQueriesInterval)
 	for {
 		select {
-		case <-l.localQueriesNotify:
+		case <-timer.C:
 			l.logger.Debug("LocalQueriesLoop(): Received notification to scan local queries.")
 			l.localQueries()
 		case <-l.quit:
+			timer.Stop()
 			l.logger.Info("Stopped sending queries.")
 			return
 		}
@@ -151,27 +134,19 @@ func (l *listenHandler) localQueries() {
 
 }
 
-func (l *listenHandler) notifyQueries() {
-	for {
-		time.Sleep(l.cfg.SendIntervalTime)
-		l.queriesNotify <- true
-	}
-}
-
 func (l *listenHandler) SniffLoop() {
 	l.queries = make(chan []asoc.Entry, 10)
 	var buffer []asoc.Entry
-	l.queriesNotify = make(chan bool)
-	go l.notifyQueries()
-
+	timer := time.NewTicker(l.cfg.LocalQueriesInterval)
 	for {
 		select {
-		case <-l.queriesNotify:
+		case <-timer.C:
 			l.logger.Debug("SniffLoop(): received queries notification.")
 			l.queries <- buffer
 			buffer = nil
 		case <-l.quit:
 			l.sniffer.Close()
+			timer.Stop()
 			l.logger.Info("Stopped sending queries.")
 			return
 		default:
