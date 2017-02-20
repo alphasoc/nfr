@@ -68,10 +68,12 @@ func (c *Config) ReadFromFile() error {
 	return nil
 }
 
+// ConfigFileExists checks whether config file exists.
 func (c *Config) ConfigFileExists() (bool, error) {
 	return utils.FileExists(c.ConfigFilePath)
 }
 
+// SaveToFile stores API key and network interface name to configuration file
 func (c *Config) SaveToFile() error {
 	content := AsocFileConfig{Iface: c.NetworkInterface, Key: c.APIKey}
 

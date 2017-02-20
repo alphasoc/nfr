@@ -13,7 +13,6 @@ func WriteFollow(file, follow string) error {
 	if err := ioutil.WriteFile(tmpFile, []byte(follow), 0660); err != nil {
 		return err
 	}
-
 	return os.Rename(tmpFile, file)
 }
 
