@@ -115,6 +115,11 @@ func TestDefaults(t *testing.T) {
 	if c.SendIntervalTime == 0 {
 		t.Errorf("sendIntervalTime is 0")
 	}
+
+	if c.LocalQueriesInterval == 0 {
+		t.Errorf("LocalQueriesInterval is 0")
+	}
+
 }
 
 func TestInitialDirsCreate(t *testing.T) {

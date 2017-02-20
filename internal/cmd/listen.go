@@ -30,18 +30,28 @@ func init() {
 }
 
 func listen(cmd *cobra.Command, args []string) {
-	logger := log.New()
-	if sysloghandler, err := log.SyslogHandler(syslog.LOG_USER|syslog.LOG_ERR, "namescore/listen", log.TerminalFormat()); err != nil {
-		logger.SetHandler(log.DiscardHandler())
-	} else {
-		logger.SetHandler(sysloghandler)
-	}
+	logger := ConfigureLogger(args)
 
 	cfg := config.Get()
 	if err := cfg.ReadFromFile(); err != nil {
 		logger.Warn("Failed to read config", "err", err)
 		os.Exit(1)
 	}
+
+	// APIKey and AlphaSOCAddress is not printed
+	logger.Debug("Configuration:")
+	logger.Debug("", "AlertFilePath", cfg.AlertFilePath)
+	logger.Debug("", "NetworkInterface", cfg.NetworkInterface)
+	logger.Debug("", "FollowFilePath", cfg.FollowFilePath)
+	logger.Debug("", "ConfigFilePath", cfg.ConfigFilePath)
+	logger.Debug("", "SendIntervalTime", cfg.SendIntervalTime)
+	logger.Debug("", "SendIntervalAmount", cfg.SendIntervalAmount)
+	logger.Debug("", "AlertRequestInterval", cfg.AlertRequestInterval)
+	logger.Debug("", "LocalQueriesInterval", cfg.LocalQueriesInterval)
+	logger.Debug("", "WhitelistFilePath", cfg.WhitelistFilePath)
+	logger.Debug("", "AlertFilePath", cfg.AlertFilePath)
+	logger.Debug("", "FailedQueriesDir", cfg.FailedQueriesDir)
+	logger.Debug("", "FailedQueriesLimit", cfg.FailedQueriesLimit)
 
 	if cfg.APIKey == "" {
 		logger.Warn("API key not set.")
@@ -70,7 +80,8 @@ func listen(cmd *cobra.Command, args []string) {
 
 	store := asoc.NewQueryStore(cfg.FailedQueriesLimit, cfg.FailedQueriesDir)
 
-	handler := &listenHandler{cfg: cfg,
+	handler := &listenHandler{
+		cfg:        cfg,
 		quit:       quit,
 		client:     &client,
 		logger:     logger,
@@ -78,10 +89,10 @@ func listen(cmd *cobra.Command, args []string) {
 		queryStore: store,
 	}
 
-	go handler.sniff()
-	go handler.sendQueries()
-	go handler.getAlerts()
-	go handler.sendLocalQueries()
+	go handler.SniffLoop()
+	go handler.QueriesLoop()
+	go handler.AlertsLoop()
+	go handler.LocalQueriesLoop()
 
 	for {
 		s := <-sig
@@ -92,5 +103,23 @@ func listen(cmd *cobra.Command, args []string) {
 		logger.Info("namescore exitting", "signal", s.String())
 		os.Exit(0)
 	}
+}
 
+func ConfigureLogger(args []string) log.Logger {
+	logger := log.New()
+	sysloghandler, err := log.SyslogHandler(syslog.LOG_USER|syslog.LOG_ERR, "namescore/listen", log.TerminalFormat())
+	if err != nil {
+		logger.SetHandler(log.DiscardHandler())
+		return logger
+	}
+
+	if len(args) == 1 {
+		if args[0] == "debug" {
+			logger.SetHandler(log.LvlFilterHandler(log.LvlDebug, sysloghandler))
+			return logger
+		}
+	}
+
+	logger.SetHandler(log.LvlFilterHandler(log.LvlInfo, sysloghandler))
+	return logger
 }

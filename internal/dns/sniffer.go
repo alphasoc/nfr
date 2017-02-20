@@ -16,6 +16,7 @@ type IPFilter func(net.IP) bool
 type DNSCapture interface {
 	Sniff() gopacket.Packet
 	PacketToEntry(packet gopacket.Packet) []asoc.Entry
+	Close()
 }
 
 type Sniffer struct {
@@ -90,5 +91,8 @@ func (s *Sniffer) PacketToEntry(packet gopacket.Packet) []asoc.Entry {
 		entries = append(entries, asoc.Entry{Time: t, IP: IP, QType: dns.Questions[i].Type.String(), FQDN: string(dns.Questions[i].Name)})
 	}
 	return entries
+}
 
+func (s *Sniffer) Close() {
+	s.handle.Close()
 }

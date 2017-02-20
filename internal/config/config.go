@@ -25,6 +25,7 @@ type Config struct {
 	SendIntervalTime     time.Duration
 	SendIntervalAmount   int
 	AlertRequestInterval time.Duration
+	LocalQueriesInterval time.Duration
 	WhitelistFilePath    string
 	FailedQueriesDir     string
 	FailedQueriesLimit   uint
@@ -45,12 +46,13 @@ func Get() *Config {
 		AlertFilePath:        alertFilePath,
 		ConfigFilePath:       configFilePath,
 		AlphaSOCAddress:      alphaSOCAddress,
-		SendIntervalTime:     sendIntervalTime,
+		SendIntervalTime:     sendIntervalTime * time.Second,
 		SendIntervalAmount:   sendIntervalAmount,
-		AlertRequestInterval: alertRequestInterval,
+		AlertRequestInterval: alertRequestInterval * time.Second,
 		WhitelistFilePath:    whitelistFilePath,
 		FailedQueriesDir:     failedQueriesDir,
 		FailedQueriesLimit:   failedQueriesLimit,
+		LocalQueriesInterval: localQueriesInterval * time.Second,
 	}
 }
 

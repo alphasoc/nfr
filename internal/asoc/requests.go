@@ -40,7 +40,6 @@ type RegisterReq struct {
 }
 
 func createKeyRequest() keyRequestReq {
-	//todo discuss about platform and version (how to pass it)
 	req := keyRequestReq{Uname: uname()}
 	req.Platform.Name = "namescore"
 	req.Platform.Version = "0.1"

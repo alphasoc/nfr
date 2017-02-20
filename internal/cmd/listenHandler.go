@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -12,120 +11,180 @@ import (
 )
 
 type listenHandler struct {
-	logger     log.Logger
-	client     asoc.AlphaSOCAPI
-	queryStore *asoc.QueryStore
-	sniffer    dns.DNSCapture
-	cfg        *config.Config
-	quit       chan bool
-	queries    chan []asoc.Entry
+	logger             log.Logger
+	client             asoc.AlphaSOCAPI
+	queryStore         *asoc.QueryStore
+	sniffer            dns.DNSCapture
+	cfg                *config.Config
+	quit               chan bool
+	queries            chan []asoc.Entry
+	alertsNotify       chan bool
+	queriesNotify      chan bool
+	localQueriesNotify chan bool
+}
+
+func (l *listenHandler) notifyAlerts() {
+	for {
+		time.Sleep(l.cfg.AlertRequestInterval)
+		l.alertsNotify <- true
+	}
 }
 
 func (l *listenHandler) getAlerts() {
-
-	timer := make(chan bool)
-	go func() {
-		time.Sleep(time.Second * l.cfg.AlertRequestInterval)
-		timer <- true
-	}()
+	status, err := l.client.AccountStatus()
+	if err != nil {
+		l.logger.Warn("Failed to check account status", "err", err)
+		return
+	}
+	if status.Expired || !status.Registered {
+		l.logger.Warn("Account status is expired or not registered")
+		for _, msg := range status.Messages {
+			l.logger.Warn("Server response:", "msg", msg.Body)
+		}
+		return
+	}
 
 	follow := asoc.ReadFollow(l.cfg.FollowFilePath)
+	events, errEvents := l.client.Events(follow)
+	if errEvents != nil {
+		l.logger.Warn("Failed to retrieve events", "err", errEvents)
+		return
+	}
 
+	if errStore := asoc.StoreAlerts(l.cfg.AlertFilePath, events.Strings()); errStore != nil {
+		l.logger.Warn("Failed to store alerts", "error", errStore)
+		return
+	}
+	if errWrite := asoc.WriteFollow(l.cfg.FollowFilePath, events.Follow); errWrite != nil {
+		l.logger.Warn("Failed to update follow", "error", errWrite)
+		return
+	}
+}
+
+func (l *listenHandler) AlertsLoop() {
+	l.alertsNotify = make(chan bool)
+	go l.notifyAlerts()
 	for {
 		select {
-		case <-timer:
-			status, err := l.client.AccountStatus()
-			if err != nil {
-				l.logger.Warn("Failed to check account status", "err", err)
-				continue
-			}
-			if status.Expired || !status.Registered {
-				l.logger.Warn("Account status is expired or not registered")
-				for _, msg := range status.Messages {
-					l.logger.Warn("Server response:", "msg", msg.Body)
-				}
-				continue
-			}
-
-			if events, err := l.client.Events(follow); err == nil {
-				if err := asoc.StoreAlerts(l.cfg.AlertFilePath, events.Strings()); err != nil {
-					l.logger.Warn("Failed to store alerts", "error", err)
-					continue
-				}
-				follow = events.Follow
-			} else {
-				l.logger.Warn("Failed to retrieve events", "err", err)
-			}
-
+		case <-l.alertsNotify:
+			l.logger.Info("QueriesLoop() Notified to check alerts.")
+			l.getAlerts()
 		case <-l.quit:
-			l.logger.Info("Closed getAlerts")
+			l.logger.Info("Stopped retrieving alerts.")
 			return
 		}
 	}
 }
 
-func (l *listenHandler) sendQueries() {
+func (l *listenHandler) QueriesLoop() {
 	for {
-		senddata := <-l.queries
-
-		go func() {
-			if len(senddata) == 0 {
-				return
-			}
-			request := &asoc.QueriesReq{Data: senddata}
-			fmt.Println("sendQueries() sending")
-			resp, err := l.client.Queries(request)
-			if err != nil {
-				if err != l.queryStore.Store(request) {
-					l.logger.Warn("Storing queries failed.", "err", err)
-				}
-				return
-			}
-			if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
-				l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
-			}
-		}()
-	}
-}
-
-func (l *listenHandler) sendLocalQueries() {
-	for {
-		time.Sleep(60 * time.Second)
-		files := l.queryStore.GetQueryFiles()
-
-		for _, file := range files {
-			query, err := l.queryStore.Read(file)
-			if err != nil {
-				l.logger.Warn("Reading queries failed.", "err", err)
-				os.Remove(file)
-				continue
-			}
-			resp, err := l.client.Queries(query)
-			if err != nil {
-				continue
-			}
-			if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
-				l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
-			}
-			os.Remove(file)
+		select {
+		case senddata := <-l.queries:
+			l.logger.Info("QueriesLoop() received queries to send.")
+			go l.sendQueries(senddata)
+		case <-l.quit:
+			l.logger.Info("Stopped sending queries.")
+			return
 		}
 	}
+}
+
+func (l *listenHandler) sendQueries(data []asoc.Entry) {
+	if len(data) == 0 {
+		return
+	}
+	request := &asoc.QueriesReq{Data: data}
+	resp, err := l.client.Queries(request)
+
+	if err != nil {
+		l.logger.Warn("Sending queries failed.", "err", err)
+		if errStore := l.queryStore.Store(request); errStore != nil {
+			l.logger.Warn("Storing queries failed.", "err", errStore)
+		}
+		return
+	}
+	if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
+		l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
+	}
+}
+
+func (l *listenHandler) notifyLocalQueries() {
+	for {
+		time.Sleep(l.cfg.LocalQueriesInterval)
+		l.localQueriesNotify <- true
+	}
+}
+
+func (l *listenHandler) LocalQueriesLoop() {
+	l.localQueriesNotify = make(chan bool)
+	go l.notifyLocalQueries()
+	for {
+		select {
+		case <-l.localQueriesNotify:
+			l.logger.Debug("LocalQueriesLoop(): Received notification to scan local queries.")
+			l.localQueries()
+		case <-l.quit:
+			l.logger.Info("Stopped sending queries.")
+			return
+		}
+	}
+}
+
+func (l *listenHandler) localQueries() {
+	files := l.queryStore.GetQueryFiles()
+	for _, file := range files {
+		query, err := l.queryStore.Read(file)
+		if err != nil {
+			l.logger.Warn("Reading queries failed.", "err", err)
+			os.Remove(file)
+			continue
+		}
+		resp, err := l.client.Queries(query)
+		if err != nil {
+			continue
+		}
+		if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
+			l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
+		}
+		os.Remove(file)
+	}
 
 }
 
-func (l *listenHandler) sniff() {
+func (l *listenHandler) notifyQueries() {
+	for {
+		time.Sleep(l.cfg.SendIntervalTime)
+		l.queriesNotify <- true
+	}
+}
+
+func (l *listenHandler) SniffLoop() {
 	l.queries = make(chan []asoc.Entry, 10)
 	var buffer []asoc.Entry
+	l.queriesNotify = make(chan bool)
+	go l.notifyQueries()
 
 	for {
-		packet := l.sniffer.Sniff()
-		if entries := l.sniffer.PacketToEntry(packet); entries != nil {
+		select {
+		case <-l.queriesNotify:
+			l.logger.Debug("SniffLoop(): received queries notification.")
+			l.queries <- buffer
+			buffer = nil
+		case <-l.quit:
+			l.sniffer.Close()
+			l.logger.Info("Stopped sending queries.")
+			return
+		default:
+			entries := l.sniffer.PacketToEntry(l.sniffer.Sniff())
+			if entries == nil {
+				continue
+			}
 			buffer = append(buffer, entries...)
-			if len(buffer) > l.cfg.SendIntervalAmount {
+			if len(buffer) >= l.cfg.SendIntervalAmount {
+				l.logger.Debug("SniffLoop(): sending queries to channel.", "size", len(buffer))
 				l.queries <- buffer
 				buffer = nil
 			}
 		}
-
 	}
 }

@@ -27,19 +27,23 @@ const (
 
 	// Time interval in seconds which determines how often queries are sent
 	// to AlphaSOC cloud
-	sendIntervalTime = 60
+	sendIntervalTime = 10
 
 	// Amount interval which determines how many DNS requests are needed
 	// to be collected to send data to AlphaSOC
 	// It has higher priority than time interval parameter.
-	sendIntervalAmount = 1000
+	sendIntervalAmount = 100
 
 	// Time interval determining how often alerts are collected from
 	// AlphaSOC cloud
-	alertRequestInterval = 30
+	alertRequestInterval = 20
 
 	// Number of chunks of failed queries which are stored locally
 	// Total amout of possible stored queries on disk can be calculated with:
 	//  failedQueriesCountLimit * querySendAmount
 	failedQueriesLimit = 100
+
+	// Time interval determining how often failedQueriesDir is scanned for
+	// queries saved in file.
+	localQueriesInterval = 20
 )
