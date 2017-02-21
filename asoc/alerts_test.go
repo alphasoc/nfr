@@ -3,36 +3,45 @@ package asoc
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"testing"
 )
 
 func TestContent(t *testing.T) {
 	var (
-		file        = "/tmp/namescore_test_alerts"
 		linesWrite  = []string{"one", "two", "three"}
 		linesAppend = []string{"four", "five", "six"}
 	)
+
+	file, err := ioutil.TempFile("", "namescore_alert")
+	if err != nil {
+		t.Fatalf("TempFile(), unexpected error %v", err)
+	}
+	if err := file.Close(); err != nil {
+		t.Fatalf("Close(%q), unexpected error %v", file.Name(), err)
+	}
+
 	defer func() {
-		if err := os.Remove(file); err != nil {
+		if err := os.Remove(file.Name()); err != nil {
 			t.Fatalf("Remove(%q), unexpected error %v", file, err)
 		}
 	}()
 
-	if err := StoreAlerts(file, linesWrite); err != nil {
+	if err := StoreAlerts(file.Name(), linesWrite); err != nil {
 		t.Fatalf("Open(%q), unexpected error %v", file, err)
 	}
 
-	if err := compareFileContent(file, linesWrite); err != nil {
-		t.Fatalf("Unexpected file content err=%v", err)
+	if err := compareFileContent(file.Name(), linesWrite); err != nil {
+		t.Fatalf("Unexpected file %q content err=%v", file.Name(), err)
 	}
 
-	if err := StoreAlerts(file, linesAppend); err != nil {
-		t.Fatalf("Open(%q), unexpected error %v", file, err)
+	if err := StoreAlerts(file.Name(), linesAppend); err != nil {
+		t.Fatalf("Open(%q), unexpected error %v", file.Name(), err)
 	}
 
-	if err := compareFileContent(file, append(linesWrite, linesAppend...)); err != nil {
-		t.Fatalf("Unexpected file content err=%v", err)
+	if err := compareFileContent(file.Name(), append(linesWrite, linesAppend...)); err != nil {
+		t.Fatalf("Unexpected file %q content err=%v", file.Name(), err)
 	}
 
 }

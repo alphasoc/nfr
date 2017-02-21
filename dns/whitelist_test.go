@@ -22,25 +22,34 @@ func TestWhitelistNonExist(t *testing.T) {
 // checking whitelist reading and matching
 func TestWhitelist(t *testing.T) {
 	var (
-		file    = "/tmp/namescore_whitelist_test"
 		content = `networks = ["192.168.1.0/24", "127.0.0.1/8"]
 domains = ["google.com", "site.net", "internal.company.org"]`
 	)
 
-	if err := ioutil.WriteFile(file, []byte(content), 0666); err != nil {
-		t.Fatalf("When creating test file %q unexpected error: %v", file, err)
+	file, err := ioutil.TempFile("", "namescore_whitelist")
+	if err != nil {
+		t.Fatalf("TempFile(), unexpected error %v", err)
 	}
+
+	if _, err := file.WriteString(content); err != nil {
+		t.Fatalf("WriteString(%q), unexpected error %v", file.Name(), err)
+	}
+
+	if err := file.Close(); err != nil {
+		t.Fatalf("Close(%q), unexpected error %v", file.Name(), err)
+	}
+
 	defer func() {
-		if err := os.Remove(file); err != nil {
-			t.Fatalf("Remove(%q) unexpected error: %v", file, err)
+		if err := os.Remove(file.Name()); err != nil {
+			t.Fatalf("Remove(%q) unexpected error: %v", file.Name(), err)
 		}
 	}()
 
-	w, err := NewWhitelist(file)
+	w, err := NewWhitelist(file.Name())
 	if err != nil {
-		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file, err)
+		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file.Name(), err)
 	} else if w == nil {
-		t.Fatalf("NewWhitelist(%q) returned nil object", file)
+		t.Fatalf("NewWhitelist(%q) returned nil object", file.Name())
 	}
 
 	domains := []struct {
@@ -84,24 +93,33 @@ domains = ["google.com", "site.net", "internal.company.org"]`
 // only domains in file
 func TestWhitelistOnlyDomains(t *testing.T) {
 	var (
-		file    = "/tmp/namescore_whitelist_test"
 		content = `domains = ["google.com", "site.net", "internal.company.org"]`
 	)
 
-	if err := ioutil.WriteFile(file, []byte(content), 0666); err != nil {
-		t.Fatalf("When creating test file %q unexpected error: %v", file, err)
+	file, err := ioutil.TempFile("", "namescore_whitelist")
+	if err != nil {
+		t.Fatalf("TempFile(), unexpected error %v", err)
 	}
+
+	if _, err := file.WriteString(content); err != nil {
+		t.Fatalf("WriteString(%q), unexpected error %v", file.Name(), err)
+	}
+
+	if err := file.Close(); err != nil {
+		t.Fatalf("Close(%q), unexpected error %v", file.Name(), err)
+	}
+
 	defer func() {
-		if err := os.Remove(file); err != nil {
-			t.Fatalf("Remove(%q) unexpected error: %v", file, err)
+		if err := os.Remove(file.Name()); err != nil {
+			t.Fatalf("Remove(%q) unexpected error: %v", file.Name(), err)
 		}
 	}()
 
-	w, err := NewWhitelist(file)
+	w, err := NewWhitelist(file.Name())
 	if err != nil {
-		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file, err)
+		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file.Name(), err)
 	} else if w == nil {
-		t.Fatalf("NewWhitelist(%q) returned nil object", file)
+		t.Fatalf("NewWhitelist(%q) returned nil object", file.Name())
 	}
 
 	domains := []struct {
@@ -145,24 +163,33 @@ func TestWhitelistOnlyDomains(t *testing.T) {
 // only networks in file
 func TestWhitelistOnlyNets(t *testing.T) {
 	var (
-		file    = "/tmp/namescore_whitelist_test"
 		content = `networks = ["192.168.1.0/24", "127.0.0.1/8"]`
 	)
 
-	if err := ioutil.WriteFile(file, []byte(content), 0666); err != nil {
-		t.Fatalf("When creating test file %q unexpected error: %v", file, err)
+	file, err := ioutil.TempFile("", "namescore_whitelist")
+	if err != nil {
+		t.Fatalf("TempFile(), unexpected error %v", err)
 	}
+
+	if _, err := file.WriteString(content); err != nil {
+		t.Fatalf("WriteString(%q), unexpected error %v", file.Name(), err)
+	}
+
+	if err := file.Close(); err != nil {
+		t.Fatalf("Close(%q), unexpected error %v", file.Name(), err)
+	}
+
 	defer func() {
-		if err := os.Remove(file); err != nil {
-			t.Fatalf("Remove(%q) unexpected error: %v", file, err)
+		if err := os.Remove(file.Name()); err != nil {
+			t.Fatalf("Remove(%q) unexpected error: %v", file.Name(), err)
 		}
 	}()
 
-	w, err := NewWhitelist(file)
+	w, err := NewWhitelist(file.Name())
 	if err != nil {
-		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file, err)
+		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file.Name(), err)
 	} else if w == nil {
-		t.Fatalf("NewWhitelist(%q) returned nil object", file)
+		t.Fatalf("NewWhitelist(%q) returned nil object", file.Name())
 	}
 
 	domains := []struct {

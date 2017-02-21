@@ -2,7 +2,6 @@ package dns
 
 import (
 	"net"
-	"os"
 	"os/exec"
 	"testing"
 
@@ -13,11 +12,11 @@ func TestSnifferWrongInterface(t *testing.T) {
 	wrongInterface := "invalid_network_interface"
 	sniffer, err := Start(wrongInterface)
 	if err == nil {
-		t.Errorf("Start(%q) expected err", wrongInterface)
+		t.Fatalf("Start(%q) expected err", wrongInterface)
 	}
 
 	if sniffer != nil {
-		t.Errorf("Start(%q) expected nil sniffer", wrongInterface)
+		t.Fatalf("Start(%q) expected nil sniffer", wrongInterface)
 	}
 }
 
@@ -25,13 +24,9 @@ func TestSniffer(t *testing.T) {
 	lookup := "google.com"
 	qtype := "A"
 
-	if os.Getuid() != 0 {
-		return
-	}
-
 	ni := getIface()
 	if ni == "" {
-		return
+		t.Fatalf("no interface found to be used for test")
 	}
 
 	sniffer, err := Start(ni)
