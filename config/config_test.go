@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/alphasoc/namescore/internal/utils"
+	"github.com/alphasoc/namescore/utils"
 )
 
 func TestSaveConfig(t *testing.T) {

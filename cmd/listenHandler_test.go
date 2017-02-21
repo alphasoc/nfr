@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/alphasoc/namescore/internal/asoc"
-	"github.com/alphasoc/namescore/internal/config"
+	"github.com/alphasoc/namescore/asoc"
+	"github.com/alphasoc/namescore/config"
 	"github.com/google/gopacket"
 	log "github.com/inconshreveable/log15"
 )

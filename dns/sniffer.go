@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/alphasoc/namescore/internal/asoc"
+	"github.com/alphasoc/namescore/asoc"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"

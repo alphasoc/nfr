@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/alphasoc/namescore/internal/asoc"
+	"github.com/alphasoc/namescore/asoc"
 )
 
 func TestSnifferWrongInterface(t *testing.T) {

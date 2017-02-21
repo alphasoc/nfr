@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/alphasoc/namescore/internal/utils"
+	"github.com/alphasoc/namescore/utils"
 )
 
 // Config is a structure containing internal

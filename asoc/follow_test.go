@@ -2,7 +2,7 @@ package asoc
 
 import "testing"
 import "os"
-import "github.com/alphasoc/namescore/internal/utils"
+import "github.com/alphasoc/namescore/utils"
 import "io/ioutil"
 import "bytes"
 

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alphasoc/namescore/internal/asoc"
-	"github.com/alphasoc/namescore/internal/config"
-	"github.com/alphasoc/namescore/internal/utils"
+	"github.com/alphasoc/namescore/asoc"
+	"github.com/alphasoc/namescore/config"
+	"github.com/alphasoc/namescore/utils"
 	"github.com/spf13/cobra"
 )
 

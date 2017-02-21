@@ -7,9 +7,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/alphasoc/namescore/internal/asoc"
-	"github.com/alphasoc/namescore/internal/config"
-	"github.com/alphasoc/namescore/internal/dns"
+	"github.com/alphasoc/namescore/asoc"
+	"github.com/alphasoc/namescore/config"
+	"github.com/alphasoc/namescore/dns"
 	log "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 )
