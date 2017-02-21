@@ -30,7 +30,7 @@ func init() {
 }
 
 func listen(cmd *cobra.Command, args []string) {
-	logger := ConfigureLogger(args)
+	logger := configureLogger(args)
 
 	cfg := config.Get()
 	if err := cfg.ReadFromFile(); err != nil {
@@ -72,6 +72,14 @@ func listen(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
+	whitelist, errList := dns.NewWhitelist(cfg.WhitelistFilePath)
+	if errList != nil {
+		logger.Info("Whitelist error", "err", err)
+	} else {
+		sniffer.SetFQDNFilter(whitelist.CheckFqdn)
+		sniffer.SetIPFilter(whitelist.CheckIP)
+	}
+
 	logger.Info("namescore daemon started")
 
 	sig := make(chan os.Signal)
@@ -105,7 +113,7 @@ func listen(cmd *cobra.Command, args []string) {
 	}
 }
 
-func ConfigureLogger(args []string) log.Logger {
+func configureLogger(args []string) log.Logger {
 	logger := log.New()
 	sysloghandler, err := log.SyslogHandler(syslog.LOG_USER|syslog.LOG_ERR, "namescore/listen", log.TerminalFormat())
 	if err != nil {

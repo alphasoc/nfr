@@ -9,13 +9,14 @@ import (
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "test",
+	Use:   "namescore listen|register|status",
 	Short: "AlphaSOC namescore client.",
 	Long: `namescore is application which captures DNS requests and provides
 deep analysis and alerting of suspicious events,
 identifying gaps in your security controls and highlighting targeted attacks.`,
 }
 
+// Execute represents the main command function
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)

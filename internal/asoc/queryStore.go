@@ -18,6 +18,7 @@ type QueryStore struct {
 	dir   string
 }
 
+// NewQueryStore creates
 func NewQueryStore(limit uint, dir string) *QueryStore {
 	return &QueryStore{dir: dir, limit: limit}
 }

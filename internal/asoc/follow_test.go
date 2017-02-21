@@ -23,7 +23,12 @@ func TestFollow(t *testing.T) {
 		follow        = "content_of_follow"
 	)
 
-	defer os.Remove(followFile)
+	defer func() {
+		if err := os.Remove(followFile); err != nil {
+			t.Fatalf("Remove(%q) failed: %v", followFile, err)
+		}
+	}()
+
 	if err := WriteFollow(followFile, follow); err != nil {
 		t.Fatalf("WriteFollow(%q, %q) failed: %v", followFile, follow, err)
 	}
@@ -34,9 +39,11 @@ func TestFollow(t *testing.T) {
 
 	if exist, err := utils.FileExists(followFileTmp); err != nil {
 		t.Fatalf("FileExists(%q), unexpected error=%v", followFileTmp, err)
-	} else if exist == true {
-		os.Remove(followFileTmp)
+	} else if exist {
 		t.Fatalf("Temporary file %q shouldn't exist", followFileTmp)
+		if err := os.Remove(followFileTmp); err != nil {
+			t.Fatalf("Remove(%q) failed: %v", followFileTmp, err)
+		}
 	}
 }
 
@@ -47,7 +54,11 @@ func TestFollowOverride(t *testing.T) {
 		contentOverride = "overridden_follow"
 	)
 
-	defer os.Remove(followFile)
+	defer func() {
+		if err := os.Remove(followFile); err != nil {
+			t.Fatalf("Remove(%q) failed: %v", followFile, err)
+		}
+	}()
 
 	if err := WriteFollow(followFile, content); err != nil {
 		t.Fatalf("WriteFollow(%q, %q) failed: %v", followFile, content, err)
@@ -55,7 +66,7 @@ func TestFollowOverride(t *testing.T) {
 
 	if c, err := ioutil.ReadFile(followFile); err != nil {
 		t.Fatalf("ReadFile(%q) enexpected error=%v", followFile, err)
-	} else if bytes.Compare([]byte(content), c) != 0 {
+	} else if !bytes.Equal([]byte(content), c) {
 		t.Fatalf("%q file content mismatch %s != %s", followFile, content, c)
 	}
 
@@ -65,7 +76,7 @@ func TestFollowOverride(t *testing.T) {
 
 	if c, err := ioutil.ReadFile(followFile); err != nil {
 		t.Fatalf("ReadFile(%q) enexpected error=%v", followFile, err)
-	} else if bytes.Compare([]byte(contentOverride), c) != 0 {
+	} else if !bytes.Equal([]byte(contentOverride), c) {
 		t.Fatalf("%q file content mismatch %s != %s", followFile, contentOverride, c)
 	}
 

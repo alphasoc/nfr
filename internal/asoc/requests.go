@@ -9,6 +9,7 @@ import (
 	"time"
 )
 
+// Entry contains information about single DNS request.
 type Entry struct {
 	Time  time.Time
 	IP    net.IP
@@ -16,6 +17,9 @@ type Entry struct {
 	FQDN  string
 }
 
+// QueriesReq contains slice of queries which are sent to
+// AlphaSOC for analysis.
+// It is used by "/v1/queries" API call.
 type QueriesReq struct {
 	Data []Entry `json:"data"`
 }
@@ -29,6 +33,8 @@ type keyRequestReq struct {
 	Token string `json:"token"`
 }
 
+// RegisterReq contains information needed to register API key.
+// It is used by "/v1/account/register" API call.
 type RegisterReq struct {
 	Details struct {
 		Name         string    `json:"name"`
@@ -67,12 +73,19 @@ func uname() string {
 		int8tostr(u.Machine))
 }
 
+// MarshalJSON converts Entry structure to JSON
+// format.
 func (e *Entry) MarshalJSON() ([]byte, error) {
 	buffer := bytes.NewBufferString("[")
 	str := fmt.Sprintf(`"%s","%s","%s","%s"]`, e.Time.Format(time.RFC3339), e.IP.String(), e.QType, e.FQDN)
-	buffer.WriteString(str)
+
+	if _, err := buffer.WriteString(str); err != nil {
+		return nil, err
+	}
 	return buffer.Bytes(), nil
 }
+
+// UnmarshalJSON converts JSON data to Entry
 func (e *Entry) UnmarshalJSON(data []byte) error {
 	if data == nil {
 		return fmt.Errorf("Entry: data is empty")
@@ -88,17 +101,18 @@ func (e *Entry) UnmarshalJSON(data []byte) error {
 	var ip string
 	var qtype string
 	var fqdn string
-	fmt.Sscanf(str, "%s %s %s %s", &tim, &ip, &qtype, &fqdn)
+	if _, err := fmt.Sscanf(str, "%s %s %s %s", &tim, &ip, &qtype, &fqdn); err != nil {
+		return err
+	}
 
 	e.FQDN = fqdn
 	e.IP = net.ParseIP(ip)
 	e.QType = qtype
 
-	if t, err := time.Parse(time.RFC3339, tim); err != nil {
+	t, err := time.Parse(time.RFC3339, tim)
+	if err != nil {
 		return err
-	} else {
-		e.Time = t
 	}
-
+	e.Time = t
 	return nil
 }

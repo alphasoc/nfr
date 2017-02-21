@@ -11,7 +11,7 @@ func TestWhitelistNonExist(t *testing.T) {
 		file = "/tmp/namescore_whitelist.nonexist"
 	)
 
-	w, err := newWhitelist(file)
+	w, err := NewWhitelist(file)
 	if err == nil {
 		t.Fatalf("NewWhitelist(%q) expected error", file)
 	} else if w != nil {
@@ -30,9 +30,13 @@ domains = ["google.com", "site.net", "internal.company.org"]`
 	if err := ioutil.WriteFile(file, []byte(content), 0666); err != nil {
 		t.Fatalf("When creating test file %q unexpected error: %v", file, err)
 	}
-	defer os.Remove(file)
+	defer func() {
+		if err := os.Remove(file); err != nil {
+			t.Fatalf("Remove(%q) unexpected error: %v", file, err)
+		}
+	}()
 
-	w, err := newWhitelist(file)
+	w, err := NewWhitelist(file)
 	if err != nil {
 		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file, err)
 	} else if w == nil {
@@ -64,14 +68,14 @@ domains = ["google.com", "site.net", "internal.company.org"]`
 	}
 
 	for _, d := range domains {
-		if w.checkFqdn(d.domain) != d.ret {
+		if w.CheckFqdn(d.domain) != d.ret {
 			t.Fatalf("CheckFqdn(%q) didn't return %v", d.domain, d.ret)
 		}
 	}
 
 	for _, i := range IPs {
 		j := net.ParseIP(i.ip)
-		if w.checkIP(j) != i.ret {
+		if w.CheckIP(j) != i.ret {
 			t.Fatalf("CheckIP(%q) didn't return %v", i.ip, i.ret)
 		}
 	}
@@ -87,9 +91,13 @@ func TestWhitelistOnlyDomains(t *testing.T) {
 	if err := ioutil.WriteFile(file, []byte(content), 0666); err != nil {
 		t.Fatalf("When creating test file %q unexpected error: %v", file, err)
 	}
-	defer os.Remove(file)
+	defer func() {
+		if err := os.Remove(file); err != nil {
+			t.Fatalf("Remove(%q) unexpected error: %v", file, err)
+		}
+	}()
 
-	w, err := newWhitelist(file)
+	w, err := NewWhitelist(file)
 	if err != nil {
 		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file, err)
 	} else if w == nil {
@@ -121,14 +129,14 @@ func TestWhitelistOnlyDomains(t *testing.T) {
 	}
 
 	for _, d := range domains {
-		if w.checkFqdn(d.domain) != d.ret {
+		if w.CheckFqdn(d.domain) != d.ret {
 			t.Fatalf("CheckFqdn(%q) didn't return %v", d.domain, d.ret)
 		}
 	}
 
 	for _, i := range IPs {
 		j := net.ParseIP(i.ip)
-		if w.checkIP(j) != i.ret {
+		if w.CheckIP(j) != i.ret {
 			t.Fatalf("CheckIP(%q) didn't return %v", i.ip, i.ret)
 		}
 	}
@@ -144,9 +152,13 @@ func TestWhitelistOnlyNets(t *testing.T) {
 	if err := ioutil.WriteFile(file, []byte(content), 0666); err != nil {
 		t.Fatalf("When creating test file %q unexpected error: %v", file, err)
 	}
-	defer os.Remove(file)
+	defer func() {
+		if err := os.Remove(file); err != nil {
+			t.Fatalf("Remove(%q) unexpected error: %v", file, err)
+		}
+	}()
 
-	w, err := newWhitelist(file)
+	w, err := NewWhitelist(file)
 	if err != nil {
 		t.Fatalf("NewWhitelist(%q) unexpected error: %v", file, err)
 	} else if w == nil {
@@ -178,14 +190,14 @@ func TestWhitelistOnlyNets(t *testing.T) {
 	}
 
 	for _, d := range domains {
-		if w.checkFqdn(d.domain) != d.ret {
+		if w.CheckFqdn(d.domain) != d.ret {
 			t.Fatalf("CheckFqdn(%q) didn't return %v", d.domain, d.ret)
 		}
 	}
 
 	for _, i := range IPs {
 		j := net.ParseIP(i.ip)
-		if w.checkIP(j) != i.ret {
+		if w.CheckIP(j) != i.ret {
 			t.Fatalf("CheckIP(%q) didn't return %v", i.ip, i.ret)
 		}
 	}

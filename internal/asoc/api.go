@@ -12,10 +12,7 @@ const (
 	events   = "/v1/events"
 	status   = "/v1/account/status"
 	register = "/v1/account/register"
-	verify   = "/v1/account/verify/"
 	request  = "/v1/key/request"
-	reset    = "/v1/key/reset"
-	wisdom   = "/v1/wisdom"
 )
 
 // AlphaSOCAPI defines interface for public API
@@ -61,12 +58,15 @@ func (c *Client) KeyRequest() (string, error) {
 	}
 
 	respBody, errread := ioutil.ReadAll(response.Body)
-	response.Body.Close()
+	if err := response.Body.Close(); err != nil {
+		return "", err
+	}
+
 	if errread != nil {
 		return "", errread
 	}
 
-	if response.StatusCode != 200 {
+	if response.StatusCode != http.StatusOK {
 		return "", payloadToError(respBody)
 	}
 
@@ -99,12 +99,16 @@ func (c *Client) AccountStatus() (*StatusResp, error) {
 	}
 
 	respBody, errread := ioutil.ReadAll(response.Body)
-	response.Body.Close()
+
+	if err := response.Body.Close(); err != nil {
+		return nil, err
+	}
+
 	if errread != nil {
 		return nil, errread
 	}
 
-	if response.StatusCode != 200 {
+	if response.StatusCode != http.StatusOK {
 		return nil, payloadToError(respBody)
 	}
 
@@ -117,7 +121,7 @@ func (c *Client) AccountStatus() (*StatusResp, error) {
 }
 
 // Register handles /v1/account/register API call.
-func (c *Client) Register(data *RegisterReq) error {
+func (c *Client) Register(data *RegisterReq) (err error) {
 	payload, errjson := json.Marshal(*data)
 	if errjson != nil {
 		return errjson
@@ -134,9 +138,14 @@ func (c *Client) Register(data *RegisterReq) error {
 	if errdo != nil {
 		return errdo
 	}
-	defer response.Body.Close()
 
-	if response.StatusCode != 200 {
+	defer func() {
+		if errClose := response.Body.Close(); errClose != nil && err == nil {
+			err = errClose
+		}
+	}()
+
+	if response.StatusCode != http.StatusOK {
 		respBody, errread := ioutil.ReadAll(response.Body)
 		if errread != nil {
 			return errread
@@ -164,12 +173,15 @@ func (c *Client) Events(follow string) (*EventsResp, error) {
 	}
 
 	respBody, errread := ioutil.ReadAll(response.Body)
-	response.Body.Close()
 	if errread != nil {
 		return nil, errread
 	}
 
-	if response.StatusCode != 200 {
+	if err := response.Body.Close(); err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
 		return nil, payloadToError(respBody)
 	}
 
@@ -201,12 +213,15 @@ func (c *Client) Queries(q *QueriesReq) (*QueriesResp, error) {
 		return nil, errdo
 	}
 	respBody, errread := ioutil.ReadAll(response.Body)
-	defer response.Body.Close()
 	if errread != nil {
 		return nil, errread
 	}
 
-	if response.StatusCode != 200 {
+	if err := response.Body.Close(); err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode != http.StatusOK {
 		return nil, payloadToError(respBody)
 	}
 
@@ -221,8 +236,5 @@ func (c *Client) Queries(q *QueriesReq) (*QueriesResp, error) {
 
 // VerifyKey check whether key meets internal requirements.
 func VerifyKey(key string) bool {
-	if len(key) < 15 {
-		return false
-	}
-	return true
+	return len(key) > 15
 }

@@ -7,8 +7,5 @@ import "net"
 // It uses anonymous linux socket domain. See: man (7) unix
 func LockSocket() error {
 	_, err := net.Listen("unix", "@namescore")
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }

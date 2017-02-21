@@ -18,23 +18,22 @@ const (
 	noInput = "invalid user input"
 )
 
-//todo comment
 type userInput struct {
 	reader  io.Reader
 	writer  io.Writer
 	scanner *bufio.Scanner
 }
 
-//todo comment
 func defaultUserInput() *userInput {
 	u := &userInput{reader: os.Stdin, writer: os.Stdout}
 	u.scanner = bufio.NewScanner(u.reader)
 	return u
 }
 
-//todo comment
 func (u *userInput) get(text string, mandatory bool) (string, error) {
-	fmt.Fprintf(u.writer, "%s", text)
+	if _, err := fmt.Fprintf(u.writer, "%s", text); err != nil {
+		return "", err
+	}
 	u.scanner.Scan()
 	line := u.scanner.Text()
 
@@ -42,7 +41,7 @@ func (u *userInput) get(text string, mandatory bool) (string, error) {
 		return "", err
 	}
 
-	if mandatory == true && line == "" {
+	if mandatory && line == "" {
 		return "", errors.New(noInput)
 	}
 	return line, nil
@@ -75,7 +74,7 @@ func register(cmd *cobra.Command, args []string) {
 		logger.Warn("Checking existence of config file failed", "err:", err)
 		fmt.Println("error: failed to check if config file exists.")
 		os.Exit(1)
-	} else if exist == true {
+	} else if exist {
 		if err := cfg.ReadFromFile(); err != nil {
 			logger.Warn("Failed to read configuration file.", "err:", err)
 			fmt.Println("Failed to read configuration file.")
@@ -92,7 +91,7 @@ func register(cmd *cobra.Command, args []string) {
 			fmt.Println("Failed to check account status.")
 			os.Exit(1)
 		}
-		if status.Registered == true {
+		if status.Registered {
 			fmt.Println("Account is already registered.")
 			os.Exit(0)
 		}

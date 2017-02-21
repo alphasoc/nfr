@@ -13,7 +13,11 @@ func TestContent(t *testing.T) {
 		linesWrite  = []string{"one", "two", "three"}
 		linesAppend = []string{"four", "five", "six"}
 	)
-	defer os.Remove(file)
+	defer func() {
+		if err := os.Remove(file); err != nil {
+			t.Fatalf("Remove(%q), unexpected error %v", file, err)
+		}
+	}()
 
 	if err := StoreAlerts(file, linesWrite); err != nil {
 		t.Fatalf("Open(%q), unexpected error %v", file, err)
@@ -33,12 +37,16 @@ func TestContent(t *testing.T) {
 
 }
 
-func compareFileContent(file string, content []string) error {
+func compareFileContent(file string, content []string) (err error) {
 	f, err := os.Open(file)
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() {
+		if errClose := f.Close(); errClose != nil && err == nil {
+			err = errClose
+		}
+	}()
 
 	s := bufio.NewScanner(f)
 	var i int
@@ -50,5 +58,5 @@ func compareFileContent(file string, content []string) error {
 		}
 		i++
 	}
-	return nil
+	return err
 }

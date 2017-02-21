@@ -105,17 +105,13 @@ func (c *Config) InitialDirsCreate() error {
 		if err != nil {
 			return err
 		}
-		if exist == false {
-			if err := os.MkdirAll(dir, 0750); err != nil {
+		if !exist {
+			if err := os.MkdirAll(dir, 0700); err != nil {
 				return err
 			}
 		}
 	}
-	if err := os.MkdirAll(c.FailedQueriesDir, 0750); err != nil {
-		return err
-	}
-
-	return nil
+	return os.MkdirAll(c.FailedQueriesDir, 0700)
 }
 
 // ReadInterface reads Config.NetworkInterface from stdin

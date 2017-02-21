@@ -21,7 +21,7 @@ func TestQueryStoreName(t *testing.T) {
 
 	name := s.GenerateName()
 
-	if strings.HasPrefix(name, s.dir) == false {
+	if !strings.HasPrefix(name, s.dir) {
 		t.Fatalf("GenerateName()=%q expected to have prefix %s,", name, s.dir)
 	}
 }
@@ -43,7 +43,11 @@ func TestQueryStore(t *testing.T) {
 	if err := os.Mkdir(dir, 0770); err != nil {
 		t.Fatalf("Mkdir(%q) failed, err=%v", dir, err)
 	}
-	defer os.RemoveAll(dir)
+	defer func() {
+		if err := os.RemoveAll(dir); err != nil {
+			t.Fatalf("RemoveAll(%q) failed, err=%v", dir, err)
+		}
+	}()
 
 	s := NewQueryStore(10, dir)
 	if nil != s.GetQueryFiles() {

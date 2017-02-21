@@ -29,7 +29,7 @@ func status(cmd *cobra.Command, args []string) {
 	if exist, err := cfg.ConfigFileExists(); err != nil {
 		fmt.Println("error: failed to check if config file exists.")
 		os.Exit(1)
-	} else if exist == false {
+	} else if !exist {
 		fmt.Println("error: no config file present.")
 		fmt.Println("Run \"namescore register\" first.")
 		os.Exit(1)
@@ -44,7 +44,7 @@ func status(cmd *cobra.Command, args []string) {
 		fmt.Println("error: no API key set.")
 		fmt.Println("Create new with \"namescore register\"")
 		os.Exit(1)
-	} else if asoc.VerifyKey(cfg.APIKey) == false {
+	} else if !asoc.VerifyKey(cfg.APIKey) {
 		fmt.Println("error: API key does not meet requirements.")
 		os.Exit(1)
 	} else {

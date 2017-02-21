@@ -10,7 +10,7 @@ func TestDirectoryCreate(t *testing.T) {
 
 	if exist, err := FileExists(realFile); err != nil {
 		t.Fatalf("FileExists(%q) unexpected error.", realFile)
-	} else if exist == true {
+	} else if exist {
 		t.Fatalf("FileExists(%q) unexpected true return.", realFile)
 	}
 
@@ -18,13 +18,21 @@ func TestDirectoryCreate(t *testing.T) {
 	if errf != nil {
 		t.Fatalf("Create(%q) unexpected error %v", realFile, errf)
 	}
-	defer f.Close()
-	defer os.Remove(realFile)
+	defer func() {
+		if err := f.Close(); err != nil {
+			t.Fatalf("Close(%q) unexpected error=%v", realFile, err)
+		}
+	}()
+	defer func() {
+		if err := os.Remove(realFile); err != nil {
+			t.Fatalf("Remove(%q) unexpected error=%v", realFile, err)
+		}
+	}()
 
 	if exist, err := FileExists(realFile); err != nil {
 		t.Fatalf("FileExists(%q) unexpected error.", realFile)
 
-	} else if exist == false {
+	} else if !exist {
 		t.Fatalf("FileExists(%q) unexpected false return.", realFile)
 	}
 }

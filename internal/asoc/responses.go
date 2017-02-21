@@ -15,17 +15,22 @@ type keyReqResp struct {
 	Key string `json:"key"`
 }
 
+// StatusMsg provides detailed informations about account.
 type StatusMsg struct {
 	Level int    `json:"level"`
 	Body  string `json:"body"`
 }
 
+// StatusResp provides information about account.
+// It is reply to "/v1/account/status" call.
 type StatusResp struct {
 	Registered bool        `json:"registered"`
 	Expired    bool        `json:"expired"`
 	Messages   []StatusMsg `json:"messages"`
 }
 
+// EventDetail provides result of analysis of DNS
+// request, which was found to be threat.
 type EventDetail struct {
 	Type    string   `json:"type"`
 	Ts      []string `json:"ts"`
@@ -37,6 +42,8 @@ type EventDetail struct {
 	Threats []string `json:"threats"`
 }
 
+// ThreatInfo provides more details about threat,
+// like human-readable description.
 type ThreatInfo struct {
 	Title      string `json:"title"`
 	Severity   int    `json:"severity"`
@@ -44,6 +51,7 @@ type ThreatInfo struct {
 	Deprecated bool   `json:"deprecated"`
 }
 
+// EventsResp is response to "/v1/events" call.
 type EventsResp struct {
 	Follow  string                `json:"follow"`
 	More    bool                  `json:"more"`
@@ -51,12 +59,14 @@ type EventsResp struct {
 	Threats map[string]ThreatInfo `json:"threats"`
 }
 
+// RejectedResp provides statistics about rejected queries.
 type RejectedResp struct {
 	BadNames       int `json:"bad_names"`
 	IgnoredDomains int `json:"ignored_domains"`
 	Duplicates     int `json:"duplicates"`
 }
 
+// QueriesResp is response to "/v1/queries" call.
 type QueriesResp struct {
 	Received int          `json:"received"`
 	Accepted int          `json:"accepted"`

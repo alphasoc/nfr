@@ -42,7 +42,7 @@ func TestStatus(t *testing.T) {
 		t.Fatalf("AccountStatus() returned nil status")
 	}
 
-	if status.Registered == true {
+	if status.Registered {
 		t.Fatalf("AccountStatus() expected unregistered account")
 	}
 
@@ -53,8 +53,8 @@ func TestStatus(t *testing.T) {
 	reg.Details.Organization = "AlphaSOC"
 	reg.Details.Phone = "123-456-789"
 
-	if err := c.Register(&reg); err != nil {
-		t.Fatalf("Register() failed err=%v", err)
+	if errReg := c.Register(&reg); errReg != nil {
+		t.Fatalf("Register() failed err=%v", errReg)
 	}
 
 	statusreg, errsg := c.AccountStatus()
@@ -65,7 +65,7 @@ func TestStatus(t *testing.T) {
 		t.Fatalf("AccountStatus() on registered account, returned nil status")
 	}
 
-	if status.Registered == false {
+	if !status.Registered {
 		t.Fatalf("AccountStatus() expected registered account")
 	}
 }
@@ -100,7 +100,7 @@ func TestStatusSick(t *testing.T) {
 		t.Fatalf("AccountStatus() unexpected error: %q", err)
 	}
 
-	if status.Registered == false {
+	if !status.Registered {
 		t.Fatalf("AccountStatus() expected registered account")
 	}
 

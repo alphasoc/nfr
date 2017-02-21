@@ -10,15 +10,22 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
+// FQDNFilter is a type representing domain filter.
+// If domain is found in filter, packet is not stored.
 type FQDNFilter func(string) bool
+
+// IPFilter is a type representing IP filter.
+// If IP is found in filter, packet is not stored.
 type IPFilter func(net.IP) bool
 
-type DNSCapture interface {
+// Capture is interface for DNS packet sniffer.
+type Capture interface {
 	Sniff() gopacket.Packet
 	PacketToEntry(packet gopacket.Packet) []asoc.Entry
 	Close()
 }
 
+// Sniffer is performing DNS request sniffing on local NIC.
 type Sniffer struct {
 	handle     *pcap.Handle
 	source     *gopacket.PacketSource
@@ -26,6 +33,9 @@ type Sniffer struct {
 	fqdnFilter FQDNFilter
 }
 
+// Start is preparing sniffer to capture packets.
+// After this function finish, packets can be retrieved from packetSource
+// by using Sniff() function.
 func Start(iface string) (*Sniffer, error) {
 	handle, err := pcap.OpenLive(iface, 1600, false, pcap.BlockForever)
 	if err != nil {
@@ -41,14 +51,17 @@ func Start(iface string) (*Sniffer, error) {
 	return &Sniffer{source: packetSource, handle: handle}, nil
 }
 
+// SetFQDNFilter sets domain filter on Sniffer
 func (s *Sniffer) SetFQDNFilter(f FQDNFilter) {
 	s.fqdnFilter = f
 }
 
+// SetIPFilter sets IP filter on Sniffer
 func (s *Sniffer) SetIPFilter(f IPFilter) {
 	s.ipFilter = f
 }
 
+// Sniff returs valid packet from packetSource
 func (s *Sniffer) Sniff() gopacket.Packet {
 	for {
 		packet, err := s.source.NextPacket()
@@ -59,6 +72,8 @@ func (s *Sniffer) Sniff() gopacket.Packet {
 	}
 }
 
+// PacketToEntry converts packet to asoc.Entry.
+// If packet does not meet requirements nil is retured.
 func (s *Sniffer) PacketToEntry(packet gopacket.Packet) []asoc.Entry {
 	dnsLayer := packet.Layer(layers.LayerTypeDNS)
 	if dnsLayer == nil {
@@ -93,6 +108,7 @@ func (s *Sniffer) PacketToEntry(packet gopacket.Packet) []asoc.Entry {
 	return entries
 }
 
+// Close stops Sniffer.
 func (s *Sniffer) Close() {
 	s.handle.Close()
 }

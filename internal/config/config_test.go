@@ -12,13 +12,17 @@ func TestSaveConfig(t *testing.T) {
 		apiKey       = "abcd"
 		iface        = "eth0"
 	)
-	defer os.Remove(testFilePath)
+	defer func() {
+		if err := os.Remove(testFilePath); err != nil {
+			t.Fatalf("Remove(%q) unexpected error: %v", testFilePath, err)
+		}
+	}()
 
 	c := Config{ConfigFilePath: testFilePath, APIKey: apiKey, NetworkInterface: iface}
 
 	if exist, err := c.ConfigFileExists(); err != nil {
 		t.Errorf("ConfigFileExists() unexpected error=%v", err)
-	} else if exist == true {
+	} else if exist {
 		t.Errorf("ConfigFileExists() returned unexpected true before storing file.")
 	}
 
@@ -28,7 +32,7 @@ func TestSaveConfig(t *testing.T) {
 
 	if exist, err := c.ConfigFileExists(); err != nil {
 		t.Errorf("ConfigFileExists() unexpected error=%v after saving file", err)
-	} else if exist == false {
+	} else if !exist {
 		t.Errorf("ConfigFileExists() expected to have file after calling SaveToFile()")
 	}
 
@@ -54,7 +58,11 @@ func TestDoubleSaveConfig(t *testing.T) {
 		apiKey       = "defgh"
 		iface        = "eth1"
 	)
-	defer os.Remove(testFilePath)
+	defer func() {
+		if err := os.Remove(testFilePath); err != nil {
+			t.Fatalf("Remove(%q) unexpected error: %v", testFilePath, err)
+		}
+	}()
 
 	c := Config{ConfigFilePath: testFilePath, APIKey: apiKey, NetworkInterface: iface}
 	if err := c.SaveToFile(); err != nil {
@@ -76,7 +84,7 @@ func TestDoubleSaveConfig(t *testing.T) {
 
 	if content2, err := ioutil.ReadFile(testFilePath); err != nil {
 		t.Errorf("ReadFile() unexpected err=%v", err)
-	} else if bytes.Compare(content1, content2) != 0 {
+	} else if !bytes.Equal(content1, content2) {
 		t.Errorf("Config file content mismatch \n%s!=\n%s\n", content1, content2)
 	}
 }
@@ -143,29 +151,33 @@ func TestInitialDirsCreate(t *testing.T) {
 		WhitelistFilePath: file4,
 		FailedQueriesDir:  dir5,
 	}
-	defer os.RemoveAll(testDir)
+	defer func() {
+		if err := os.RemoveAll(testDir); err != nil {
+			t.Fatalf("RemoveAll(%q) unexpected error: %v", testDir, err)
+		}
+	}()
 
 	if err := cfg.InitialDirsCreate(); err != nil {
 		t.Fatalf("InitialDirsCreate(), unexpected error %v", err)
 	}
 
-	if exist, _ := utils.FileExists(dir1); exist == false {
+	if exist, _ := utils.FileExists(dir1); !exist {
 		t.Fatalf("%q, was not created!", dir1)
 	}
 
-	if exist, _ := utils.FileExists(dir2); exist == false {
+	if exist, _ := utils.FileExists(dir2); !exist {
 		t.Fatalf("%q, was not created!", dir2)
 	}
 
-	if exist, _ := utils.FileExists(dir3); exist == false {
+	if exist, _ := utils.FileExists(dir3); !exist {
 		t.Fatalf("%q, was not created!", dir3)
 	}
 
-	if exist, _ := utils.FileExists(dir4); exist == false {
+	if exist, _ := utils.FileExists(dir4); !exist {
 		t.Fatalf("%q, was not created!", dir4)
 	}
 
-	if exist, _ := utils.FileExists(dir5); exist == false {
+	if exist, _ := utils.FileExists(dir5); !exist {
 		t.Fatalf("%q, was not created!", dir5)
 	}
 }

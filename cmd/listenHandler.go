@@ -14,7 +14,7 @@ type listenHandler struct {
 	logger     log.Logger
 	client     asoc.AlphaSOCAPI
 	queryStore *asoc.QueryStore
-	sniffer    dns.DNSCapture
+	sniffer    dns.Capture
 	cfg        *config.Config
 	quit       chan bool
 	queries    chan []asoc.Entry
@@ -118,8 +118,11 @@ func (l *listenHandler) localQueries() {
 	for _, file := range files {
 		query, err := l.queryStore.Read(file)
 		if err != nil {
-			l.logger.Warn("Reading queries failed.", "err", err)
-			os.Remove(file)
+			l.logger.Warn("Reading queries failed.", "file", file, "err", err)
+			if err = os.Remove(file); err != nil {
+				l.logger.Warn("Removing queries failed.", "file", file, "err", err)
+			}
+
 			continue
 		}
 		resp, err := l.client.Queries(query)
@@ -129,7 +132,9 @@ func (l *listenHandler) localQueries() {
 		if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
 			l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
 		}
-		os.Remove(file)
+		if err = os.Remove(file); err != nil {
+			l.logger.Warn("Removing queries failed.", "file", file, "err", err)
+		}
 	}
 
 }
