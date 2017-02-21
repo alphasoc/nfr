@@ -1,10 +1,11 @@
 package asoc
 
 import (
-	"bufio"
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -47,25 +48,10 @@ func TestContent(t *testing.T) {
 }
 
 func compareFileContent(file string, content []string) (err error) {
-	f, err := os.Open(file)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		if errClose := f.Close(); errClose != nil && err == nil {
-			err = errClose
-		}
-	}()
 
-	s := bufio.NewScanner(f)
-	var i int
-
-	for s.Scan() {
-		line := s.Text()
-		if line != content[i] {
-			return fmt.Errorf("Line: %d File: %q != Expected: %q", i, line, content[i])
-		}
-		i++
+	read, err := ioutil.ReadFile(file)
+	if !bytes.Equal(read, []byte(strings.Join(content, "\n")+"\n")) {
+		return fmt.Errorf("%q content is invalid", file)
 	}
-	return err
+	return nil
 }
