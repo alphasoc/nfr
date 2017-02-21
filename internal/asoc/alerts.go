@@ -1,8 +1,8 @@
 package asoc
 
 import (
-	"bufio"
 	"os"
+	"strings"
 )
 
 // StoreAlerts appends alerts collected from Events api call
@@ -18,18 +18,8 @@ func StoreAlerts(path string, alerts []string) (err error) {
 		}
 	}()
 
-	buf := bufio.NewWriter(file)
-	for _, line := range alerts {
-		if _, errWriteS := buf.WriteString(line); errWriteS != nil {
-			return errWriteS
-		}
-		if errWriteB := buf.WriteByte('\n'); errWriteB != nil {
-			return errWriteB
-		}
-	}
-
-	if errFlush := buf.Flush(); errFlush != nil {
-		return errFlush
+	if _, errWrite := file.WriteString(strings.Join(alerts, "\n") + "\n"); errWrite != nil {
+		return errWrite
 	}
 	return err
 }
