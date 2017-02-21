@@ -26,9 +26,9 @@ func TestWhitelist(t *testing.T) {
 domains = ["google.com", "site.net", "internal.company.org"]`
 	)
 
-	file, err := ioutil.TempFile("", "namescore_whitelist")
-	if err != nil {
-		t.Fatalf("TempFile(), unexpected error %v", err)
+	file, errt := ioutil.TempFile("", "namescore_whitelist")
+	if errt != nil {
+		t.Fatalf("TempFile(), unexpected error %v", errt)
 	}
 
 	if _, err := file.WriteString(content); err != nil {
@@ -96,9 +96,9 @@ func TestWhitelistOnlyDomains(t *testing.T) {
 		content = `domains = ["google.com", "site.net", "internal.company.org"]`
 	)
 
-	file, err := ioutil.TempFile("", "namescore_whitelist")
-	if err != nil {
-		t.Fatalf("TempFile(), unexpected error %v", err)
+	file, errt := ioutil.TempFile("", "namescore_whitelist")
+	if errt != nil {
+		t.Fatalf("TempFile(), unexpected error %v", errt)
 	}
 
 	if _, err := file.WriteString(content); err != nil {
@@ -166,9 +166,9 @@ func TestWhitelistOnlyNets(t *testing.T) {
 		content = `networks = ["192.168.1.0/24", "127.0.0.1/8"]`
 	)
 
-	file, err := ioutil.TempFile("", "namescore_whitelist")
-	if err != nil {
-		t.Fatalf("TempFile(), unexpected error %v", err)
+	file, errt := ioutil.TempFile("", "namescore_whitelist")
+	if errt != nil {
+		t.Fatalf("TempFile(), unexpected error %v", errt)
 	}
 
 	if _, err := file.WriteString(content); err != nil {

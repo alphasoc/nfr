@@ -47,9 +47,12 @@ func TestContent(t *testing.T) {
 
 }
 
-func compareFileContent(file string, content []string) (err error) {
-
+func compareFileContent(file string, content []string) error {
 	read, err := ioutil.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf("ReadFile(%q) unexpected err=%v", file, err)
+	}
+
 	if !bytes.Equal(read, []byte(strings.Join(content, "\n")+"\n")) {
 		return fmt.Errorf("%q content is invalid", file)
 	}

@@ -38,7 +38,6 @@ type Client struct {
 // On success API key is returned.
 func (c *Client) KeyRequest() (string, error) {
 	payload, errjson := json.Marshal(createKeyRequest())
-
 	if errjson != nil {
 		return "", errjson
 	}
