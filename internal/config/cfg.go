@@ -1,5 +1,7 @@
 package config
 
+import "time"
+
 const (
 	// File where follow ID after each response is stored
 	followFilePath = "/home/phob0s/alphasoc/follow"
@@ -27,7 +29,7 @@ const (
 
 	// Time interval in seconds which determines how often queries are sent
 	// to AlphaSOC cloud
-	sendIntervalTime = 10
+	sendIntervalTime = 10 * time.Second
 
 	// Amount interval which determines how many DNS requests are needed
 	// to be collected to send data to AlphaSOC
@@ -36,7 +38,7 @@ const (
 
 	// Time interval determining how often alerts are collected from
 	// AlphaSOC cloud
-	alertRequestInterval = 20
+	alertRequestInterval = 20 * time.Second
 
 	// Number of chunks of failed queries which are stored locally
 	// Total amout of possible stored queries on disk can be calculated with:
@@ -45,5 +47,5 @@ const (
 
 	// Time interval determining how often failedQueriesDir is scanned for
 	// queries saved in file.
-	localQueriesInterval = 20
+	localQueriesInterval = 20 * time.Second
 )

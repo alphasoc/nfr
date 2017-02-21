@@ -46,7 +46,7 @@ func (c *Client) KeyRequest() (string, error) {
 		return "", errjson
 	}
 
-	req, errrq := http.NewRequest("POST", c.Server+request, bytes.NewReader(payload))
+	req, errrq := http.NewRequest(http.MethodPost, c.Server+request, bytes.NewReader(payload))
 	if errrq != nil {
 		return "", errrq
 	}
@@ -86,7 +86,7 @@ func (c *Client) SetKey(key string) {
 
 // AccountStatus handles /v1/account/status API call.
 func (c *Client) AccountStatus() (*StatusResp, error) {
-	req, errrq := http.NewRequest("GET", c.Server+status, nil)
+	req, errrq := http.NewRequest(http.MethodGet, c.Server+status, nil)
 	if errrq != nil {
 		return nil, errrq
 	}
@@ -127,7 +127,7 @@ func (c *Client) Register(data *RegisterReq) (err error) {
 		return errjson
 	}
 
-	req, errrq := http.NewRequest("POST", c.Server+register, bytes.NewReader(payload))
+	req, errrq := http.NewRequest(http.MethodPost, c.Server+register, bytes.NewReader(payload))
 	if errrq != nil {
 		return errrq
 	}
@@ -160,7 +160,7 @@ func (c *Client) Register(data *RegisterReq) (err error) {
 func (c *Client) Events(follow string) (*EventsResp, error) {
 	url := c.Server + events + "?follow=" + follow
 
-	req, errrq := http.NewRequest("GET", url, nil)
+	req, errrq := http.NewRequest(http.MethodGet, url, nil)
 	if errrq != nil {
 		return nil, errrq
 	}
@@ -201,7 +201,7 @@ func (c *Client) Queries(q *QueriesReq) (*QueriesResp, error) {
 		return nil, errjson
 	}
 
-	req, errrq := http.NewRequest("POST", c.Server+queries, bytes.NewReader(payload))
+	req, errrq := http.NewRequest(http.MethodPost, c.Server+queries, bytes.NewReader(payload))
 	if errrq != nil {
 		return nil, errrq
 	}

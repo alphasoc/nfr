@@ -14,39 +14,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	noInput = "invalid user input"
-)
-
-type userInput struct {
-	reader  io.Reader
-	writer  io.Writer
-	scanner *bufio.Scanner
-}
-
-func defaultUserInput() *userInput {
-	u := &userInput{reader: os.Stdin, writer: os.Stdout}
-	u.scanner = bufio.NewScanner(u.reader)
-	return u
-}
-
-func (u *userInput) get(text string, mandatory bool) (string, error) {
-	if _, err := fmt.Fprintf(u.writer, "%s", text); err != nil {
-		return "", err
-	}
-	u.scanner.Scan()
-	line := u.scanner.Text()
-
-	if err := u.scanner.Err(); err != nil {
-		return "", err
-	}
-
-	if mandatory && line == "" {
-		return "", errors.New(noInput)
-	}
-	return line, nil
-}
-
 // registerCmd represents the register command
 var registerCmd = &cobra.Command{
 	Use:   "register",
@@ -59,6 +26,10 @@ func init() {
 	RootCmd.AddCommand(registerCmd)
 }
 
+const (
+	noInput = "invalid user input"
+)
+
 func register(cmd *cobra.Command, args []string) {
 	logger := log.New()
 	if sysloghandler, err := log.SyslogHandler(syslog.LOG_USER|syslog.LOG_ERR, "namescore/register", log.TerminalFormat()); err != nil {
@@ -70,16 +41,10 @@ func register(cmd *cobra.Command, args []string) {
 	fmt.Println("namescore register")
 
 	cfg := config.Get()
-	if exist, err := cfg.ConfigFileExists(); err != nil {
-		logger.Warn("Checking existence of config file failed", "err:", err)
-		fmt.Println("error: failed to check if config file exists.")
+	if err := cfg.ReadFromFile(); err != nil {
+		logger.Warn("Failed to read configuration file.", "err:", err)
+		fmt.Println("Failed to read configuration file.")
 		os.Exit(1)
-	} else if exist {
-		if err := cfg.ReadFromFile(); err != nil {
-			logger.Warn("Failed to read configuration file.", "err:", err)
-			fmt.Println("Failed to read configuration file.")
-			os.Exit(1)
-		}
 	}
 
 	client := asoc.Client{Server: cfg.AlphaSOCAddress}
@@ -99,7 +64,7 @@ func register(cmd *cobra.Command, args []string) {
 
 	if cfg.NetworkInterface == "" {
 		fmt.Println("Provide network interface to be used by namescore:")
-		cfg.ReadInterface(os.Stdin)
+		cfg.NetworkInterface = readInterface()
 	}
 
 	data, err := readRegisterData(defaultUserInput())
@@ -134,6 +99,41 @@ func register(cmd *cobra.Command, args []string) {
 
 	logger.Info("Account was successfully registered.")
 	fmt.Println("Account was successfully registered.")
+}
+
+type userInput struct {
+	reader  io.Reader
+	writer  io.Writer
+	scanner *bufio.Scanner
+}
+
+func defaultUserInput() *userInput {
+	u := &userInput{reader: os.Stdin, writer: os.Stdout}
+	u.scanner = bufio.NewScanner(u.reader)
+	return u
+}
+
+func readInterface() string {
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	return scanner.Text()
+}
+
+func (u *userInput) get(text string, mandatory bool) (string, error) {
+	if _, err := fmt.Fprintf(u.writer, "%s", text); err != nil {
+		return "", err
+	}
+	u.scanner.Scan()
+	line := u.scanner.Text()
+
+	if err := u.scanner.Err(); err != nil {
+		return "", err
+	}
+
+	if mandatory && line == "" {
+		return "", errors.New(noInput)
+	}
+	return line, nil
 }
 
 func readRegisterData(userIn *userInput) (rq *asoc.RegisterReq, err error) {

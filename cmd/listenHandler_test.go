@@ -3,12 +3,10 @@ package cmd
 import (
 	"fmt"
 	"testing"
-
-	"github.com/alphasoc/namescore/internal/config"
-
 	"time"
 
 	"github.com/alphasoc/namescore/internal/asoc"
+	"github.com/alphasoc/namescore/internal/config"
 	"github.com/google/gopacket"
 	log "github.com/inconshreveable/log15"
 )

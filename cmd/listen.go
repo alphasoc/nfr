@@ -4,9 +4,8 @@ import (
 	"log/syslog"
 	"os"
 	"os/signal"
-	"time"
-
 	"syscall"
+	"time"
 
 	"github.com/alphasoc/namescore/internal/asoc"
 	"github.com/alphasoc/namescore/internal/config"

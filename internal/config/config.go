@@ -1,9 +1,7 @@
 package config
 
 import (
-	"bufio"
 	"bytes"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -28,7 +26,7 @@ type Config struct {
 	LocalQueriesInterval time.Duration
 	WhitelistFilePath    string
 	FailedQueriesDir     string
-	FailedQueriesLimit   uint
+	FailedQueriesLimit   int
 }
 
 // AsocFileConfig represents configuration parameters
@@ -46,13 +44,13 @@ func Get() *Config {
 		AlertFilePath:        alertFilePath,
 		ConfigFilePath:       configFilePath,
 		AlphaSOCAddress:      alphaSOCAddress,
-		SendIntervalTime:     sendIntervalTime * time.Second,
+		SendIntervalTime:     sendIntervalTime,
 		SendIntervalAmount:   sendIntervalAmount,
-		AlertRequestInterval: alertRequestInterval * time.Second,
+		AlertRequestInterval: alertRequestInterval,
 		WhitelistFilePath:    whitelistFilePath,
 		FailedQueriesDir:     failedQueriesDir,
 		FailedQueriesLimit:   failedQueriesLimit,
-		LocalQueriesInterval: localQueriesInterval * time.Second,
+		LocalQueriesInterval: localQueriesInterval,
 	}
 }
 
@@ -77,7 +75,7 @@ func (c *Config) ConfigFileExists() (bool, error) {
 func (c *Config) SaveToFile() error {
 	content := AsocFileConfig{Iface: c.NetworkInterface, Key: c.APIKey}
 
-	buf := new(bytes.Buffer)
+	buf := &bytes.Buffer{}
 	if err := toml.NewEncoder(buf).Encode(content); err != nil {
 		return err
 	}
@@ -101,22 +99,10 @@ func (c *Config) InitialDirsCreate() error {
 
 	for _, file := range files {
 		dir, _ := filepath.Split(file)
-		exist, err := utils.FileExists(dir)
-		if err != nil {
+
+		if err := os.MkdirAll(dir, 0700); err != nil {
 			return err
-		}
-		if !exist {
-			if err := os.MkdirAll(dir, 0700); err != nil {
-				return err
-			}
 		}
 	}
 	return os.MkdirAll(c.FailedQueriesDir, 0700)
-}
-
-// ReadInterface reads Config.NetworkInterface from stdin
-func (c *Config) ReadInterface(rd io.Reader) {
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	c.NetworkInterface = scanner.Text()
 }

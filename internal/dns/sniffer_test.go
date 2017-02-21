@@ -42,7 +42,7 @@ func TestSniffer(t *testing.T) {
 
 	cmd := exec.Command("nslookup", lookup)
 	if err := cmd.Run(); err != nil {
-		return
+		t.Fatalf("exec of nslookup failed err=%v", err)
 	}
 
 	var dns []asoc.Entry

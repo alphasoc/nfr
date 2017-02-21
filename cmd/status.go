@@ -21,6 +21,10 @@ Following informations are provided:
 	Run: status,
 }
 
+func init() {
+	RootCmd.AddCommand(statusCmd)
+}
+
 func status(cmd *cobra.Command, args []string) {
 	fmt.Println("namescore status")
 	fmt.Println()
@@ -68,8 +72,4 @@ func status(cmd *cobra.Command, args []string) {
 	} else {
 		fmt.Println("namescore is not running")
 	}
-}
-
-func init() {
-	RootCmd.AddCommand(statusCmd)
 }

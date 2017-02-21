@@ -1,10 +1,13 @@
 package config
 
-import "testing"
-import "os"
-import "io/ioutil"
-import "bytes"
-import "github.com/alphasoc/namescore/internal/utils"
+import (
+	"bytes"
+	"io/ioutil"
+	"os"
+	"testing"
+
+	"github.com/alphasoc/namescore/internal/utils"
+)
 
 func TestSaveConfig(t *testing.T) {
 	var (

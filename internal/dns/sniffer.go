@@ -64,11 +64,9 @@ func (s *Sniffer) SetIPFilter(f IPFilter) {
 // Sniff returs valid packet from packetSource
 func (s *Sniffer) Sniff() gopacket.Packet {
 	for {
-		packet, err := s.source.NextPacket()
-		if err != nil {
-			continue
+		if packet, err := s.source.NextPacket(); err == nil {
+			return packet
 		}
-		return packet
 	}
 }
 

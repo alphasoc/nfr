@@ -14,12 +14,12 @@ const (
 
 // QueryStore stores and saves queries to files.
 type QueryStore struct {
-	limit uint
+	limit int
 	dir   string
 }
 
-// NewQueryStore creates
-func NewQueryStore(limit uint, dir string) *QueryStore {
+// NewQueryStore handles saving and reading queries from file.
+func NewQueryStore(limit int, dir string) *QueryStore {
 	return &QueryStore{dir: dir, limit: limit}
 }
 
@@ -44,7 +44,7 @@ func (q *QueryStore) GetQueryFiles() []string {
 // Store saves queries to local file.
 // Before storing queries are decoded to JSON format.
 func (q *QueryStore) Store(queries *QueriesReq) error {
-	if len(q.GetQueryFiles()) > int(q.limit) {
+	if len(q.GetQueryFiles()) > q.limit {
 		return fmt.Errorf("Store: quota exceeded")
 	}
 
