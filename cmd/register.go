@@ -5,12 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/syslog"
 	"os"
 
 	"github.com/alphasoc/namescore/asoc"
 	"github.com/alphasoc/namescore/config"
-	log "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 )
 
@@ -31,19 +29,12 @@ const (
 )
 
 func register(cmd *cobra.Command, args []string) {
-	logger := log.New()
-	if sysloghandler, err := log.SyslogHandler(syslog.LOG_USER|syslog.LOG_ERR, "namescore/register", log.TerminalFormat()); err != nil {
-		logger.SetHandler(log.DiscardHandler())
-	} else {
-		logger.SetHandler(sysloghandler)
-	}
 
 	fmt.Println("namescore register")
 
 	cfg := config.Get()
 	if err := cfg.ReadFromFile(); err != nil {
-		logger.Warn("Failed to read configuration file.", "err:", err)
-		fmt.Println("Failed to read configuration file.")
+		fmt.Println("Failed to read configuration file:", err)
 		os.Exit(1)
 	}
 
@@ -52,8 +43,7 @@ func register(cmd *cobra.Command, args []string) {
 		client.SetKey(cfg.APIKey)
 		status, err := client.AccountStatus()
 		if err != nil {
-			logger.Warn("Failed to check account status.", "err:", err)
-			fmt.Println("Failed to check account status.")
+			fmt.Println("Failed to check account status:", err)
 			os.Exit(1)
 		}
 		if status.Registered {
@@ -76,28 +66,23 @@ func register(cmd *cobra.Command, args []string) {
 	if cfg.APIKey == "" {
 		key, err := client.KeyRequest()
 		if err != nil {
-			logger.Warn("Failed to get new API key from server.", "err:", err)
-			fmt.Println("Failed to get new API key from server.")
+			fmt.Println("Failed to get new API key from server:", err)
 			os.Exit(1)
 		}
-		logger.Info("New API key retrieved.")
 		cfg.APIKey = key
 	}
 	client.SetKey(cfg.APIKey)
 
 	if err := cfg.SaveToFile(); err != nil {
-		logger.Warn("Failed to save config file.", "err:", err)
-		fmt.Println("Failed to save config file.")
+		fmt.Println("Failed to save config file:", err)
 		os.Exit(1)
 	}
 
 	if err := client.Register(data); err != nil {
-		logger.Warn("Failed to register account.", "err:", err)
-		fmt.Println("Failed to register account.")
+		fmt.Println("Failed to register account:", err)
 		os.Exit(1)
 	}
 
-	logger.Info("Account was successfully registered.")
 	fmt.Println("Account was successfully registered.")
 }
 

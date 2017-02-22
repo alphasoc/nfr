@@ -120,13 +120,6 @@ func configureLogger(args []string) log.Logger {
 		return logger
 	}
 
-	if len(args) == 1 {
-		if args[0] == "debug" {
-			logger.SetHandler(log.LvlFilterHandler(log.LvlDebug, sysloghandler))
-			return logger
-		}
-	}
-
-	logger.SetHandler(log.LvlFilterHandler(log.LvlInfo, sysloghandler))
+	logger.SetHandler(sysloghandler)
 	return logger
 }

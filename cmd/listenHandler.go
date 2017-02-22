@@ -103,7 +103,6 @@ func (l *listenHandler) LocalQueriesLoop() {
 	for {
 		select {
 		case <-timer.C:
-			l.logger.Debug("LocalQueriesLoop(): Received notification to scan local queries.")
 			l.localQueries()
 		case <-l.quit:
 			timer.Stop()
@@ -146,13 +145,11 @@ func (l *listenHandler) SniffLoop() {
 	for {
 		select {
 		case <-timer.C:
-			l.logger.Debug("SniffLoop(): received queries notification.")
 			l.queries <- buffer
 			buffer = nil
 		case <-l.quit:
 			l.sniffer.Close()
 			timer.Stop()
-			l.logger.Info("Stopped sending queries.")
 			return
 		default:
 			entries := l.sniffer.PacketToEntry(l.sniffer.Sniff())
@@ -161,7 +158,6 @@ func (l *listenHandler) SniffLoop() {
 			}
 			buffer = append(buffer, entries...)
 			if len(buffer) >= l.cfg.SendIntervalAmount {
-				l.logger.Debug("SniffLoop(): sending queries to channel.", "size", len(buffer))
 				l.queries <- buffer
 				buffer = nil
 			}

@@ -11,22 +11,63 @@ import (
 	"github.com/alphasoc/namescore/utils"
 )
 
+const (
+	followFilePath       = "/home/phob0s/alphasoc/follow"
+	alertFilePath        = "/home/phob0s/alphasoc/namescore.log"
+	configFilePath       = "/home/phob0s/alphasoc/namescore.toml"
+	failedQueriesDir     = "/home/phob0s/alphasoc/backup"
+	whitelistFilePath    = "/home/phob0s/alphasoc/whitelist.toml"
+	alphaSOCAddress      = "http://127.0.0.1:8080"
+	sendIntervalTime     = 10 * time.Second
+	alertRequestInterval = 20 * time.Second
+	localQueriesInterval = 20 * time.Second
+	failedQueriesLimit   = 100
+	sendIntervalAmount   = 100
+)
+
 // Config is a structure containing internal
 // configuration parameters.
 type Config struct {
-	APIKey               string
-	NetworkInterface     string
-	FollowFilePath       string
-	AlertFilePath        string
-	ConfigFilePath       string
-	AlphaSOCAddress      string
-	SendIntervalTime     time.Duration
-	SendIntervalAmount   int
+	// APIKey represents client unique key retrieved from AlphaSOC.
+	APIKey string
+	// NetworkInterface determines which network interface is used
+	// to sniff DNS packets.
+	NetworkInterface string
+	// FollowFilePath File where follow ID after each response is stored
+	FollowFilePath string
+	// AlertFilePath is a file where alerts are stored
+	// Format of alerts is:
+	// timestamp;ip;record_type;domain;severity;threat_definition;flags
+	AlertFilePath string
+	// ConfigFilePath is a file where are stored informations about:
+	// - API key
+	// - Network interface which should namescore bind to
+	ConfigFilePath string
+	// AlphaSOCAddress is AlphaSOC server address to communicate with.
+	AlphaSOCAddress string
+	// SendIntervalTime is time interval in seconds which determines
+	// how often queries are sent to AlphaSOC cloud.
+	SendIntervalTime time.Duration
+	// SendIntervalAmount determines how many DNS requests are needed
+	// to be collected to send data to AlphaSOC.
+	// It has higher priority than time interval parameter.
+	SendIntervalAmount int
+	// AlertRequestInterval determines how often alerts are collected from
+	// AlphaSOC cloud. It is represented in seconds.
 	AlertRequestInterval time.Duration
+	// Time interval determining how often failedQueriesDir is scanned for
+	// queries saved in file.
 	LocalQueriesInterval time.Duration
-	WhitelistFilePath    string
-	FailedQueriesDir     string
-	FailedQueriesLimit   int
+	// WhitelistFilePath stores information about:
+	// - which subnetworks should not be taken into account
+	// - which domains should not been taken into account
+	WhitelistFilePath string
+	// FailedQueriesDir is a dir where are stored queries which sending failed.
+	FailedQueriesDir string
+	// FailedQueriesLimit is number of chunks of failed queries which are stored locally
+	// Total amout of possible stored queries on disk can be calculated with:
+	// failedQueriesCountLimit * querySendAmount
+	FailedQueriesLimit int
 }
 
 // AsocFileConfig represents configuration parameters

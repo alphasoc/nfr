@@ -37,29 +37,29 @@ type Client struct {
 // KeyRequest handles /v1/key/request API call.
 // On success API key is returned.
 func (c *Client) KeyRequest() (string, error) {
-	payload, errjson := json.Marshal(createKeyRequest())
-	if errjson != nil {
-		return "", errjson
+	payload, err := json.Marshal(createKeyRequest())
+	if err != nil {
+		return "", err
 	}
 
-	req, errrq := http.NewRequest(http.MethodPost, c.Server+request, bytes.NewReader(payload))
-	if errrq != nil {
-		return "", errrq
+	req, err := http.NewRequest(http.MethodPost, c.Server+request, bytes.NewReader(payload))
+	if err != nil {
+		return "", err
 	}
 	req.Header.Set("User-Agent", userAgent)
 
-	response, errdo := c.httpClient.Do(req)
-	if errdo != nil {
-		return "", errdo
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
 	}
 
-	respBody, errread := ioutil.ReadAll(response.Body)
+	respBody, err := ioutil.ReadAll(response.Body)
 	if err := response.Body.Close(); err != nil {
 		return "", err
 	}
 
-	if errread != nil {
-		return "", errread
+	if err != nil {
+		return "", err
 	}
 
 	if response.StatusCode != http.StatusOK {
@@ -82,26 +82,26 @@ func (c *Client) SetKey(key string) {
 
 // AccountStatus handles /v1/account/status API call.
 func (c *Client) AccountStatus() (*StatusResp, error) {
-	req, errrq := http.NewRequest(http.MethodGet, c.Server+status, nil)
-	if errrq != nil {
-		return nil, errrq
+	req, err := http.NewRequest(http.MethodGet, c.Server+status, nil)
+	if err != nil {
+		return nil, err
 	}
 	req.Header.Set("User-Agent", userAgent)
 	req.SetBasicAuth(c.key, "")
 
-	response, errdo := c.httpClient.Do(req)
-	if errdo != nil {
-		return nil, errdo
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
 	}
 
-	respBody, errread := ioutil.ReadAll(response.Body)
+	respBody, err := ioutil.ReadAll(response.Body)
 
 	if err := response.Body.Close(); err != nil {
 		return nil, err
 	}
 
-	if errread != nil {
-		return nil, errread
+	if err != nil {
+		return nil, err
 	}
 
 	if response.StatusCode != http.StatusOK {
@@ -118,21 +118,21 @@ func (c *Client) AccountStatus() (*StatusResp, error) {
 
 // Register handles /v1/account/register API call.
 func (c *Client) Register(data *RegisterReq) (err error) {
-	payload, errjson := json.Marshal(*data)
-	if errjson != nil {
-		return errjson
+	payload, err := json.Marshal(*data)
+	if err != nil {
+		return err
 	}
 
-	req, errrq := http.NewRequest(http.MethodPost, c.Server+register, bytes.NewReader(payload))
-	if errrq != nil {
-		return errrq
+	req, err := http.NewRequest(http.MethodPost, c.Server+register, bytes.NewReader(payload))
+	if err != nil {
+		return err
 	}
 	req.SetBasicAuth(c.key, "")
 	req.Header.Set("User-Agent", userAgent)
 
-	response, errdo := c.httpClient.Do(req)
-	if errdo != nil {
-		return errdo
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
 	}
 
 	defer func() {
@@ -142,9 +142,9 @@ func (c *Client) Register(data *RegisterReq) (err error) {
 	}()
 
 	if response.StatusCode != http.StatusOK {
-		respBody, errread := ioutil.ReadAll(response.Body)
-		if errread != nil {
-			return errread
+		respBody, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			return err
 		}
 		return payloadToError(respBody)
 	}
@@ -156,21 +156,21 @@ func (c *Client) Register(data *RegisterReq) (err error) {
 func (c *Client) Events(follow string) (*EventsResp, error) {
 	url := c.Server + events + "?follow=" + follow
 
-	req, errrq := http.NewRequest(http.MethodGet, url, nil)
-	if errrq != nil {
-		return nil, errrq
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
 	}
 	req.SetBasicAuth(c.key, "")
 	req.Header.Set("User-Agent", userAgent)
 
-	response, errdo := c.httpClient.Do(req)
-	if errdo != nil {
-		return nil, errdo
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
 	}
 
-	respBody, errread := ioutil.ReadAll(response.Body)
-	if errread != nil {
-		return nil, errread
+	respBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := response.Body.Close(); err != nil {
@@ -192,25 +192,25 @@ func (c *Client) Events(follow string) (*EventsResp, error) {
 
 // Queries handles /v1/queries API call.
 func (c *Client) Queries(q *QueriesReq) (*QueriesResp, error) {
-	payload, errjson := json.Marshal(q)
-	if errjson != nil {
-		return nil, errjson
+	payload, err := json.Marshal(q)
+	if err != nil {
+		return nil, err
 	}
 
-	req, errrq := http.NewRequest(http.MethodPost, c.Server+queries, bytes.NewReader(payload))
-	if errrq != nil {
-		return nil, errrq
+	req, err := http.NewRequest(http.MethodPost, c.Server+queries, bytes.NewReader(payload))
+	if err != nil {
+		return nil, err
 	}
 	req.SetBasicAuth(c.key, "")
 	req.Header.Set("User-Agent", userAgent)
 
-	response, errdo := c.httpClient.Do(req)
-	if errdo != nil {
-		return nil, errdo
+	response, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, err
 	}
-	respBody, errread := ioutil.ReadAll(response.Body)
-	if errread != nil {
-		return nil, errread
+	respBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := response.Body.Close(); err != nil {
