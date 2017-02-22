@@ -76,8 +76,8 @@ func TestUserInputMandatory(t *testing.T) {
 
 	v, err := uin.get(textForUser, true)
 
-	if err == nil || err.Error() != noInput {
-		t.Errorf("get(), expected error=%q, got %v", noInput, err)
+	if err == nil || err.Error() != errNoInput.Error() {
+		t.Errorf("get(), expected error=%q, got %v", errNoInput.Error(), err)
 	}
 
 	if v != "" {

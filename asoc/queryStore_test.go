@@ -9,10 +9,10 @@ import (
 )
 
 func TestQueryStoreNoFiles(t *testing.T) {
-	s := NewQueryStore(10, "/tmp")
+	s := NewQueryStore(10, "/nonexist/directory")
 
-	if nil != s.GetQueryFiles() {
-		t.Errorf("getQueryFiles did not return nil on non existing directory")
+	if _, err := s.GetQueryFiles(); err == nil {
+		t.Errorf("GetQueryFiles() didn't return error when called on non existing directory")
 	}
 }
 
@@ -50,8 +50,8 @@ func TestQueryStore(t *testing.T) {
 	}()
 
 	s := NewQueryStore(10, dir)
-	if nil != s.GetQueryFiles() {
-		t.Fatalf("getQueryFiles did not return nil on non existing directory")
+	if _, err := s.GetQueryFiles(); err != nil {
+		t.Fatalf("getQueryFiles(%q) unexpected error %v", dir, err)
 	}
 
 	if err := s.Store(querya); err != nil {
@@ -66,7 +66,10 @@ func TestQueryStore(t *testing.T) {
 		t.Fatalf("Store(queryc) failed, err=%v", err)
 	}
 
-	files := s.GetQueryFiles()
+	files, err := s.GetQueryFiles()
+	if err != nil {
+		t.Fatalf("getQueryFiles(%q) unexpected error %v", dir, err)
+	}
 	if len(files) != 3 {
 		t.Fatalf("getQueryFiles() returned %d files, expected 3", len(files))
 	}

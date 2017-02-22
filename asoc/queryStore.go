@@ -27,10 +27,10 @@ func NewQueryStore(limit int, dir string) *QueryStore {
 // If no queries are found this function returns nil.
 // In case if queries are found sorted slice with absolute
 // paths is returned.
-func (q *QueryStore) GetQueryFiles() []string {
+func (q *QueryStore) GetQueryFiles() ([]string, error) {
 	files, err := ioutil.ReadDir(q.dir)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	var queries []string
 	for _, file := range files {
@@ -38,13 +38,17 @@ func (q *QueryStore) GetQueryFiles() []string {
 			queries = append(queries, q.dir+"/"+file.Name())
 		}
 	}
-	return queries
+	return queries, nil
 }
 
 // Store saves queries to local file.
 // Before storing queries are decoded to JSON format.
 func (q *QueryStore) Store(queries *QueriesReq) error {
-	if len(q.GetQueryFiles()) > q.limit {
+	query, err := q.GetQueryFiles()
+	if err != nil {
+		return err
+	}
+	if len(query) > q.limit {
 		return fmt.Errorf("Store: quota exceeded")
 	}
 

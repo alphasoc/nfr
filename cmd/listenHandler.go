@@ -113,7 +113,10 @@ func (l *listenHandler) LocalQueriesLoop() {
 }
 
 func (l *listenHandler) localQueries() {
-	files := l.queryStore.GetQueryFiles()
+	files, err := l.queryStore.GetQueryFiles()
+	if err != nil {
+		l.logger.Warn("Searching for local queries failed.", "err", err)
+	}
 	for _, file := range files {
 		query, err := l.queryStore.Read(file)
 		if err != nil {

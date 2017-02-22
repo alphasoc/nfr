@@ -24,9 +24,7 @@ func init() {
 	RootCmd.AddCommand(registerCmd)
 }
 
-const (
-	noInput = "invalid user input"
-)
+var errNoInput = errors.New("invalid user input")
 
 func register(cmd *cobra.Command, args []string) {
 
@@ -116,7 +114,7 @@ func (u *userInput) get(text string, mandatory bool) (string, error) {
 	}
 
 	if mandatory && line == "" {
-		return "", errors.New(noInput)
+		return "", errNoInput
 	}
 	return line, nil
 }
