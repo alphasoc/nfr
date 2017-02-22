@@ -55,7 +55,11 @@ func (c *Client) KeyRequest() (string, error) {
 	}
 
 	respBody, err := ioutil.ReadAll(response.Body)
-	if err := response.Body.Close(); err != nil {
+	if err != nil {
+		return "", err
+	}
+
+	if err = response.Body.Close(); err != nil {
 		return "", err
 	}
 
@@ -96,8 +100,11 @@ func (c *Client) AccountStatus() (*StatusResp, error) {
 	}
 
 	respBody, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
 
-	if err := response.Body.Close(); err != nil {
+	if err = response.Body.Close(); err != nil {
 		return nil, err
 	}
 

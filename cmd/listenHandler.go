@@ -34,7 +34,12 @@ func (l *listenHandler) getAlerts() {
 		return
 	}
 
-	follow := asoc.ReadFollow(l.cfg.FollowFilePath)
+	follow, err := asoc.ReadFollow(l.cfg.FollowFilePath)
+	if err != nil {
+		l.logger.Warn("Failed to read follow", "err", err)
+		return
+	}
+
 	events, errEvents := l.client.Events(follow)
 	if errEvents != nil {
 		l.logger.Warn("Failed to retrieve events", "err", errEvents)

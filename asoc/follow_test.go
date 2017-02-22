@@ -8,11 +8,16 @@ import "bytes"
 
 func TestFollowNonExist(t *testing.T) {
 	var (
-		followFile = "/tmp/namescore_follow.test"
+		followFile = "/tmp/nonexist_namescore_follow.test"
 	)
+	follow, err := ReadFollow(followFile)
 
-	if f := ReadFollow(followFile); f != "" {
-		t.Fatalf("ReadFollow(%q), expected empty string, got %q", followFile, f)
+	if err != nil {
+		t.Fatalf("ReadFollow(%q), unexpected error %v", followFile, err)
+	}
+
+	if follow != "" {
+		t.Fatalf("ReadFollow(%q), expected empty string, got %q", followFile, follow)
 	}
 }
 
@@ -33,8 +38,12 @@ func TestFollow(t *testing.T) {
 		t.Fatalf("WriteFollow(%q, %q) failed: %v", followFile, follow, err)
 	}
 
-	if f := ReadFollow(followFile); f != follow {
-		t.Fatalf("ReadFollow(%q), expected %q, got %q", followFile, follow, f)
+	readfollow, err := ReadFollow(followFile)
+	if err != nil {
+		t.Fatalf("ReadFollow(%q), unexpected error %v", followFile, err)
+	}
+	if readfollow != follow {
+		t.Fatalf("ReadFollow(%q), expected %q, got %q", followFile, follow, readfollow)
 	}
 
 	if exist, err := utils.FileExists(followFileTmp); err != nil {

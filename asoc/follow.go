@@ -18,10 +18,10 @@ func WriteFollow(file, follow string) error {
 
 // ReadFollow returns follow ID.
 // If follow ID is not set empty string is returned
-func ReadFollow(path string) string {
+func ReadFollow(path string) (string, error) {
 	follow, err := ioutil.ReadFile(path)
-	if err != nil {
-		return ""
+	if err != nil && !os.IsNotExist(err) {
+		return "", err
 	}
-	return string(follow)
+	return string(follow), nil
 }
