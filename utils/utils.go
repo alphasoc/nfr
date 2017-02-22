@@ -1,3 +1,4 @@
+// Package utils provides common functions for namescore
 package utils
 
 import "os"

@@ -24,6 +24,7 @@ func init() {
 	RootCmd.AddCommand(registerCmd)
 }
 
+// errNoInput appears when user does not provide input for mandatory variable.
 var errNoInput = errors.New("invalid user input")
 
 func register(cmd *cobra.Command, args []string) {

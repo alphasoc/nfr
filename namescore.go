@@ -1,3 +1,4 @@
+// Package main is main file for namescore.
 package main
 
 import (

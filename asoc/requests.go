@@ -88,7 +88,7 @@ func (e *Entry) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON converts JSON data to Entry
 func (e *Entry) UnmarshalJSON(data []byte) error {
 	if data == nil {
-		return fmt.Errorf("Entry: data is empty")
+		return fmt.Errorf("empty data in Entry")
 	}
 
 	str := string(data)

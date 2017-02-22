@@ -1,3 +1,4 @@
+// Package asoc provides functions to handle AlphaSOC public API and manage API related files.
 package asoc
 
 import (

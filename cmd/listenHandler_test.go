@@ -46,7 +46,7 @@ type FailingClientOnEvents struct {
 }
 
 func (a *FailingClientOnEvents) KeyRequest() (string, error) {
-	return "", fmt.Errorf("KeyRequest")
+	return "", fmt.Errorf("keyRequest")
 
 }
 func (a *FailingClientOnEvents) SetKey(key string) {
@@ -54,20 +54,20 @@ func (a *FailingClientOnEvents) SetKey(key string) {
 }
 func (a *FailingClientOnEvents) AccountStatus() (*asoc.StatusResp, error) {
 	a.notify <- true
-	return nil, fmt.Errorf("AccountStatus")
+	return nil, fmt.Errorf("accountStatus")
 
 }
 func (a *FailingClientOnEvents) Register(data *asoc.RegisterReq) error {
-	return fmt.Errorf("Register")
+	return fmt.Errorf("register")
 
 }
 func (a *FailingClientOnEvents) Events(follow string) (*asoc.EventsResp, error) {
 	a.t.Fatalf("Events function shouldn't be called in this scenario.")
-	return nil, fmt.Errorf("Events")
+	return nil, fmt.Errorf("events")
 
 }
 func (a *FailingClientOnEvents) Queries(q *asoc.QueriesReq) (*asoc.QueriesResp, error) {
-	return nil, fmt.Errorf("Queries")
+	return nil, fmt.Errorf("queries")
 
 }
 

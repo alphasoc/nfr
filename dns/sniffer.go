@@ -1,3 +1,4 @@
+// Package dns provides functions for DNS packet sniffing.
 package dns
 
 import (

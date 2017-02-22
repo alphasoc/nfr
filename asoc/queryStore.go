@@ -49,7 +49,7 @@ func (q *QueryStore) Store(queries *QueriesReq) error {
 		return err
 	}
 	if len(query) > q.limit {
-		return fmt.Errorf("Store: quota exceeded")
+		return fmt.Errorf("quota exceeded")
 	}
 
 	payload, errjson := json.Marshal(queries)

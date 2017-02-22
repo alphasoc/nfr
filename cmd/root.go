@@ -1,3 +1,4 @@
+// Package cmd provides 3 command line modes for namescore: listen, register and status.
 package cmd
 
 import (

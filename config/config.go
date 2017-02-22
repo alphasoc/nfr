@@ -1,3 +1,4 @@
+// Package config stores namescore internal configuration
 package config
 
 import (
