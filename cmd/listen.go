@@ -62,7 +62,7 @@ func listen(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	client := asoc.Client{Server: cfg.AlphaSOCAddress}
+	client := asoc.Client{Server: cfg.AlphaSOCAddress, Version: cfg.Version}
 	client.SetKey(cfg.APIKey)
 
 	sniffer, err := dns.Start(cfg.NetworkInterface)
@@ -79,7 +79,7 @@ func listen(cmd *cobra.Command, args []string) {
 		sniffer.SetIPFilter(whitelist.CheckIP)
 	}
 
-	logger.Info("namescore daemon started")
+	logger.Info("namescore daemon started", "version", cfg.Version)
 
 	sig := make(chan os.Signal)
 	quit := make(chan bool)

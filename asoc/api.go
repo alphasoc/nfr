@@ -14,7 +14,7 @@ const (
 	status    = "/v1/account/status"
 	register  = "/v1/account/register"
 	request   = "/v1/key/request"
-	userAgent = "AlphaSOC Namescore/0.1"
+	userAgent = "AlphaSOC Namescore/"
 )
 
 // AlphaSOCAPI defines interface for public API
@@ -31,6 +31,7 @@ type AlphaSOCAPI interface {
 // There should be created one client per process.
 type Client struct {
 	Server     string
+	Version    string
 	httpClient http.Client
 	key        string
 }
@@ -47,7 +48,7 @@ func (c *Client) KeyRequest() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", userAgent+c.Version)
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
@@ -91,7 +92,7 @@ func (c *Client) AccountStatus() (*StatusResp, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", userAgent+c.Version)
 	req.SetBasicAuth(c.key, "")
 
 	response, err := c.httpClient.Do(req)
@@ -136,7 +137,7 @@ func (c *Client) Register(data *RegisterReq) (err error) {
 		return err
 	}
 	req.SetBasicAuth(c.key, "")
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", userAgent+c.Version)
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
@@ -169,7 +170,7 @@ func (c *Client) Events(follow string) (*EventsResp, error) {
 		return nil, err
 	}
 	req.SetBasicAuth(c.key, "")
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", userAgent+c.Version)
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
@@ -210,7 +211,7 @@ func (c *Client) Queries(q *QueriesReq) (*QueriesResp, error) {
 		return nil, err
 	}
 	req.SetBasicAuth(c.key, "")
-	req.Header.Set("User-Agent", userAgent)
+	req.Header.Set("User-Agent", userAgent+c.Version)
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {

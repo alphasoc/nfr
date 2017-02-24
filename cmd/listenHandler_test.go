@@ -203,11 +203,11 @@ func TestAlertsLoopHappyPath(t *testing.T) {
 	}
 
 	defer func() {
-		if err := os.Remove(followFile); err != nil {
-			t.Fatalf("Remove(%q) unexpected error=%v", followFile, err)
+		if errRm := os.Remove(followFile); errRm != nil {
+			t.Fatalf("Remove(%q) unexpected error=%v", followFile, errRm)
 		}
-		if err := os.Remove(alertFile); err != nil {
-			t.Fatalf("Remove(%q) unexpected error=%v", alertFile, err)
+		if errRm := os.Remove(alertFile); errRm != nil {
+			t.Fatalf("Remove(%q) unexpected error=%v", alertFile, errRm)
 		}
 	}()
 
@@ -267,7 +267,7 @@ func (a *ClientPositiveEvents) Register(data *asoc.RegisterReq) error {
 
 }
 func (a *ClientPositiveEvents) Events(follow string) (*asoc.EventsResp, error) {
-	if a.firstCallDone == false {
+	if !a.firstCallDone {
 		if follow != "" {
 			a.t.Fatalf("First Events call should be with empty follow, got %s", follow)
 		}
@@ -297,7 +297,7 @@ func (a *ClientPositiveEvents) Events(follow string) (*asoc.EventsResp, error) {
 }
 
 func (a *ClientPositiveEvents) Queries(q *asoc.QueriesReq) (*asoc.QueriesResp, error) {
-	return nil, fmt.Errorf("Queries")
+	return nil, fmt.Errorf("queries")
 }
 
 // queries from local files test

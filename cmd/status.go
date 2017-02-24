@@ -29,6 +29,7 @@ func status(cmd *cobra.Command, args []string) {
 	fmt.Println("namescore status")
 	fmt.Println()
 	cfg := config.Get()
+	fmt.Println("version: ", cfg.Version)
 
 	if exist, err := cfg.ConfigFileExists(); err != nil {
 		fmt.Println("error: failed to check if config file exists.")

@@ -119,6 +119,10 @@ func TestDefaults(t *testing.T) {
 		t.Errorf("failedQueriesDir is empty")
 	}
 
+	if c.Version == "" {
+		t.Errorf("Version is empty")
+	}
+
 	if c.AlertRequestInterval == 0 {
 		t.Errorf("alertRequestInterval is 0")
 	}

@@ -19,6 +19,7 @@ const (
 	failedQueriesDir     = "/home/phob0s/alphasoc/backup"
 	whitelistFilePath    = "/home/phob0s/alphasoc/whitelist.toml"
 	alphaSOCAddress      = "http://127.0.0.1:8080"
+	version              = "0.1"
 	sendIntervalTime     = 10 * time.Second
 	alertRequestInterval = 20 * time.Second
 	localQueriesInterval = 20 * time.Second
@@ -69,6 +70,8 @@ type Config struct {
 	// Total amout of possible stored queries on disk can be calculated with:
 	// failedQueriesCountLimit * querySendAmount
 	FailedQueriesLimit int
+	// Version descrives namescore version
+	Version string
 }
 
 // AsocFileConfig represents configuration parameters
@@ -93,6 +96,7 @@ func Get() *Config {
 		FailedQueriesDir:     failedQueriesDir,
 		FailedQueriesLimit:   failedQueriesLimit,
 		LocalQueriesInterval: localQueriesInterval,
+		Version:              version,
 	}
 }
 
