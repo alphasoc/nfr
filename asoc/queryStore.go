@@ -9,7 +9,8 @@ import (
 )
 
 const (
-	prefix = "namescore_queries_"
+	// Prefix defines how query files should be named.
+	Prefix = "namescore_queries_"
 )
 
 // QueryStore stores and saves queries to files.
@@ -34,7 +35,7 @@ func (q *QueryStore) GetQueryFiles() ([]string, error) {
 	}
 	var queries []string
 	for _, file := range files {
-		if strings.HasPrefix(file.Name(), prefix) {
+		if strings.HasPrefix(file.Name(), Prefix) {
 			queries = append(queries, q.dir+"/"+file.Name())
 		}
 	}
@@ -75,5 +76,5 @@ func (q *QueryStore) Read(path string) (*QueriesReq, error) {
 
 // GenerateName creates unique name for query file.
 func (q *QueryStore) GenerateName() string {
-	return fmt.Sprintf("%s/%s%d", q.dir, prefix, time.Now().UnixNano())
+	return fmt.Sprintf("%s/%s%d", q.dir, Prefix, time.Now().UnixNano())
 }
