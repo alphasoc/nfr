@@ -7,6 +7,7 @@ import (
 	"github.com/alphasoc/namescore/asoc"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/utils"
+	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
 
@@ -26,51 +27,71 @@ func init() {
 }
 
 func status(cmd *cobra.Command, args []string) {
-	fmt.Println("namescore status")
-	fmt.Println()
 	cfg := config.Get()
-	fmt.Println("version: ", cfg.Version)
+	fmt.Printf("namescore version:        ")
+	fmt.Println(aurora.Bold(cfg.Version))
 
+	fmt.Printf("Configuration status:     ")
 	if exist, err := cfg.ConfigFileExists(); err != nil {
-		fmt.Println("error: failed to check if config file exists.")
+		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	} else if !exist {
-		fmt.Println("error: no config file present.")
-		fmt.Println("Run \"namescore register\" first.")
+		fmt.Println(aurora.Bold(aurora.Red("config file does not exist")))
 		os.Exit(1)
 	}
-
-	if cfg.ReadFromFile() != nil {
-		fmt.Println("error: failed to read configuration file")
+	if err := cfg.ReadFromFile(); err != nil {
+		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	}
+	fmt.Println(aurora.Bold(aurora.Green("present")))
 
+	fmt.Printf("network interface to use: ")
+	if cfg.NetworkInterface == "" {
+		fmt.Println(aurora.Bold(aurora.Red("not configured")))
+	} else {
+		fmt.Println(aurora.Bold(aurora.Green(cfg.NetworkInterface)))
+	}
+
+	fmt.Printf("API key status:           ")
 	if cfg.APIKey == "" {
-		fmt.Println("error: no API key set.")
-		fmt.Println("Create new with \"namescore register\"")
+		fmt.Println(aurora.Bold(aurora.Red("not set")))
 		os.Exit(1)
 	} else if !asoc.VerifyKey(cfg.APIKey) {
-		fmt.Println("error: API key does not meet requirements.")
+		fmt.Println(aurora.Bold(aurora.Red("invalid")))
 		os.Exit(1)
 	} else {
-		fmt.Println("API key present")
+		fmt.Println(aurora.Bold(aurora.Green("valid")))
 	}
 
 	client := asoc.Client{Server: cfg.AlphaSOCAddress, Version: cfg.Version}
 	client.SetKey(cfg.APIKey)
 
+	fmt.Printf("Connection with AlphaSOC: ")
 	status, err := client.AccountStatus()
 	if err != nil {
-		fmt.Println("error: Failed to check account status")
+		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	}
+	fmt.Println(aurora.Bold(aurora.Green("OK")))
 
-	fmt.Println("Account registered:", status.Registered)
-	fmt.Println("Account expired:", status.Expired)
-
-	if utils.LockSocket() != nil {
-		fmt.Println("namescore is running")
+	fmt.Printf("Account registered:       ")
+	if status.Registered {
+		fmt.Println(aurora.Bold((aurora.Green(status.Registered))))
 	} else {
-		fmt.Println("namescore is not running")
+		fmt.Println(aurora.Bold((aurora.Red(status.Registered))))
+	}
+
+	fmt.Printf("Account expired:          ")
+	if status.Expired {
+		fmt.Println(aurora.Bold((aurora.Red(status.Expired))))
+	} else {
+		fmt.Println(aurora.Bold((aurora.Green(status.Expired))))
+	}
+
+	fmt.Printf("namescore daemon:         ")
+	if utils.LockSocket() != nil {
+		fmt.Println(aurora.Bold(aurora.Green("running")))
+	} else {
+		fmt.Println(aurora.Bold(aurora.Red("not running")))
 	}
 }

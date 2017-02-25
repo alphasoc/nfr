@@ -16,7 +16,7 @@ import (
 var registerCmd = &cobra.Command{
 	Use:   "register",
 	Short: "Acquire and register API key.",
-	Long:  `Acquire and register API key.`, //todo longer description, write what is needed
+	Long:  `This command provides interactive mode to retrieve API key and register it.`,
 	Run:   register,
 }
 
@@ -28,7 +28,6 @@ func init() {
 var errNoInput = errors.New("invalid user input")
 
 func register(cmd *cobra.Command, args []string) {
-
 	fmt.Println("namescore register")
 
 	cfg := config.Get()

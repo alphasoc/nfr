@@ -10,6 +10,7 @@ import (
 	"github.com/alphasoc/namescore/asoc"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/dns"
+	"github.com/alphasoc/namescore/utils"
 	log "github.com/inconshreveable/log15"
 	"github.com/spf13/cobra"
 )
@@ -37,23 +38,13 @@ func listen(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	// APIKey and AlphaSOCAddress is not printed
-	logger.Debug("Configuration:")
-	logger.Debug("", "AlertFilePath", cfg.AlertFilePath)
-	logger.Debug("", "NetworkInterface", cfg.NetworkInterface)
-	logger.Debug("", "FollowFilePath", cfg.FollowFilePath)
-	logger.Debug("", "ConfigFilePath", cfg.ConfigFilePath)
-	logger.Debug("", "SendIntervalTime", cfg.SendIntervalTime)
-	logger.Debug("", "SendIntervalAmount", cfg.SendIntervalAmount)
-	logger.Debug("", "AlertRequestInterval", cfg.AlertRequestInterval)
-	logger.Debug("", "LocalQueriesInterval", cfg.LocalQueriesInterval)
-	logger.Debug("", "WhitelistFilePath", cfg.WhitelistFilePath)
-	logger.Debug("", "AlertFilePath", cfg.AlertFilePath)
-	logger.Debug("", "FailedQueriesDir", cfg.FailedQueriesDir)
-	logger.Debug("", "FailedQueriesLimit", cfg.FailedQueriesLimit)
-
 	if cfg.APIKey == "" {
 		logger.Warn("API key not set.")
+		os.Exit(1)
+	}
+
+	if err := utils.LockSocket(); err != nil {
+		logger.Warn("LockSocket", "err", err)
 		os.Exit(1)
 	}
 
