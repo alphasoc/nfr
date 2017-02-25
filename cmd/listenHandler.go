@@ -61,7 +61,6 @@ func (l *listenHandler) AlertsLoop() {
 	for {
 		select {
 		case <-timer.C:
-			l.logger.Info("QueriesLoop() Notified to check alerts.")
 			l.getAlerts()
 		case <-l.quit:
 			timer.Stop()
@@ -75,7 +74,6 @@ func (l *listenHandler) QueriesLoop() {
 	for {
 		select {
 		case senddata := <-l.queries:
-			l.logger.Info("QueriesLoop() received queries to send.")
 			go l.sendQueries(senddata)
 		case <-l.quit:
 			l.logger.Info("Stopped sending queries.")
