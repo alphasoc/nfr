@@ -12,11 +12,11 @@ import (
 func TestStatus(t *testing.T) {
 	server := os.Getenv("ASOC_TEST_SERVER")
 	if server == "" {
-		return
+		t.Skipf("Test is skipped because environment variable ASOC_TEST_SERVER is not set.")
 	}
 
 	if os.Getenv("ASOC_API_KEY") != "" {
-		return
+		t.Skipf("Test is skipped because environment variable ASOC_API_KEY is set.")
 	}
 
 	c := Client{Server: server}
@@ -75,12 +75,12 @@ func TestStatus(t *testing.T) {
 func TestStatusSick(t *testing.T) {
 	server := os.Getenv("ASOC_TEST_SERVER")
 	if server == "" {
-		return
+		t.Skipf("Test is skipped because environment variable ASOC_TEST_SERVER is not set.")
 	}
 
 	key := os.Getenv("ASOC_API_KEY")
 	if key == "" {
-		return
+		t.Skipf("Test is skipped because environment variable ASOC_API_KEY is not set.")
 	}
 
 	c := Client{Server: server}
