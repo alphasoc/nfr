@@ -64,7 +64,7 @@ func listen(cmd *cobra.Command, args []string) {
 
 	whitelist, errList := dns.NewWhitelist(cfg.WhitelistFilePath)
 	if errList != nil {
-		logger.Info("Whitelist error", "err", err)
+		logger.Info("Whitelist error", "err", errList)
 	} else {
 		sniffer.SetFQDNFilter(whitelist.CheckFqdn)
 		sniffer.SetIPFilter(whitelist.CheckIP)
