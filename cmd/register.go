@@ -9,6 +9,7 @@ import (
 
 	"github.com/alphasoc/namescore/asoc"
 	"github.com/alphasoc/namescore/config"
+	"github.com/logrusorgru/aurora"
 	"github.com/spf13/cobra"
 )
 
@@ -28,60 +29,75 @@ func init() {
 var errNoInput = errors.New("invalid user input")
 
 func register(cmd *cobra.Command, args []string) {
-	fmt.Println("namescore register")
-
+	fmt.Println(aurora.Bold("API key registration."))
 	cfg := config.Get()
-	if err := cfg.ReadFromFile(); err != nil {
-		fmt.Println("Failed to read configuration file:", err)
-		os.Exit(1)
-	}
-
 	client := asoc.Client{Server: cfg.AlphaSOCAddress, Version: cfg.Version}
-	if cfg.APIKey != "" {
-		client.SetKey(cfg.APIKey)
-		status, err := client.AccountStatus()
-		if err != nil {
-			fmt.Println("Failed to check account status:", err)
-			os.Exit(1)
-		}
-		if status.Registered {
-			fmt.Println("Account is already registered.")
-			os.Exit(0)
+
+	if err := cfg.ReadFromFile(); err == nil {
+		if asoc.VerifyKey(cfg.APIKey) {
+			fmt.Println("Found valid API key.")
+			client.SetKey(cfg.APIKey)
+			status, err := client.AccountStatus()
+			if err != nil {
+				fmt.Println(aurora.Bold(aurora.Red("Failed to check account status:")))
+				fmt.Println(aurora.Bold((aurora.Red(err))))
+				os.Exit(1)
+			}
+			if status.Registered {
+				fmt.Println(aurora.Bold(aurora.Green("Account is already registered.")))
+				os.Exit(0)
+			}
 		}
 	}
 
 	if cfg.NetworkInterface == "" {
-		fmt.Println("Provide network interface to be used by namescore:")
-		cfg.NetworkInterface = readInterface()
+		iface, err := defaultUserInput().get("Network interface to bind with: ", true)
+		if err != nil {
+			fmt.Println()
+			fmt.Println(aurora.Bold(aurora.Red("error:")))
+			fmt.Println(aurora.Bold((aurora.Red(err))))
+			os.Exit(1)
+		}
+		cfg.NetworkInterface = iface
 	}
 
 	data, err := readRegisterData(defaultUserInput())
+	fmt.Println()
 	if err != nil {
-		fmt.Println("error:", err)
+		fmt.Println(aurora.Bold(aurora.Red("error:")))
+		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	}
 
 	if cfg.APIKey == "" {
 		key, err := client.KeyRequest()
 		if err != nil {
-			fmt.Println("Failed to get new API key from server:", err)
+			fmt.Println(aurora.Bold(aurora.Red("Failed to get new API key from server:")))
+			fmt.Println(aurora.Bold((aurora.Red(err))))
 			os.Exit(1)
 		}
 		cfg.APIKey = key
 	}
 	client.SetKey(cfg.APIKey)
 
+	if err := cfg.InitialDirsCreate(); err != nil {
+		fmt.Println(aurora.Bold(aurora.Red("Failed to create directories for namescore")))
+		fmt.Println(aurora.Bold((aurora.Red(err))))
+		os.Exit(1)
+	}
+
 	if err := cfg.SaveToFile(); err != nil {
-		fmt.Println("Failed to save config file:", err)
+		fmt.Println(aurora.Bold(aurora.Red("Failed to save config file")))
+		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	}
 
 	if err := client.Register(data); err != nil {
-		fmt.Println("Failed to register account:", err)
+		fmt.Println(aurora.Bold(aurora.Red("Failed to register account:")))
+		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	}
-
-	fmt.Println("Account was successfully registered.")
+	fmt.Println(aurora.Bold(aurora.Green("Account was successfully registered.")))
 }
 
 type userInput struct {
@@ -94,12 +110,6 @@ func defaultUserInput() *userInput {
 	u := &userInput{reader: os.Stdin, writer: os.Stdout}
 	u.scanner = bufio.NewScanner(u.reader)
 	return u
-}
-
-func readInterface() string {
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	return scanner.Text()
 }
 
 func (u *userInput) get(text string, mandatory bool) (string, error) {
