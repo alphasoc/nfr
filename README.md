@@ -1,5 +1,6 @@
 ## Synopsis
 **Namescore** project aim to provide lightweight and portable client which would provide online analysis of **DNS** requests to identify threats. 
+To compile **libpcap-dev** is needed.
 
 ## Config file
 
@@ -26,6 +27,10 @@ Example:
 networks = ["192.168.1.0/24", "127.0.0.1/8"]
 domains = ["google.com", "site.net", "internal.company.org]
 ```
+## Status command
+*namescore status* gives possibility to quickly check the most important parameters and diagnose basic problems.
+
+![status jpg ](https://github.com/alphasoc/namescore/blob/master/status.jpg)
 
 ## Tests
 Be aware that tests require higher privileges.
