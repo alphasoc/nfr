@@ -37,6 +37,7 @@ func listen(cmd *cobra.Command, args []string) {
 		logger.Warn("Failed to read config", "err", err)
 		os.Exit(1)
 	}
+	logger.Debug("Configuration was successfully read.")
 
 	if cfg.APIKey == "" {
 		logger.Warn("API key not set.")
@@ -61,10 +62,11 @@ func listen(cmd *cobra.Command, args []string) {
 		logger.Warn("Failed to start sniffer", "err", err)
 		os.Exit(1)
 	}
+	logger.Debug("DNS sniffer was created.", "iface", cfg.NetworkInterface)
 
 	whitelist, errList := dns.NewWhitelist(cfg.WhitelistFilePath)
 	if errList != nil {
-		logger.Info("Whitelist error", "err", errList)
+		logger.Info("Whitelist notice", "err", errList)
 	} else {
 		sniffer.SetFQDNFilter(whitelist.CheckFqdn)
 		sniffer.SetIPFilter(whitelist.CheckIP)
@@ -91,6 +93,7 @@ func listen(cmd *cobra.Command, args []string) {
 	go handler.QueriesLoop()
 	go handler.AlertsLoop()
 	go handler.LocalQueriesLoop()
+	logger.Debug("Handlers are started.")
 
 	for {
 		s := <-sig
@@ -104,13 +107,28 @@ func listen(cmd *cobra.Command, args []string) {
 }
 
 func configureLogger(args []string) log.Logger {
-	logger := log.New()
-	sysloghandler, err := log.SyslogHandler(syslog.LOG_USER|syslog.LOG_ERR, "namescore/listen", log.TerminalFormat())
+	var (
+		filteredSyslogHandler log.Handler
+		logger                = log.New()
+	)
+
+	sysloghandler, err := log.SyslogHandler(syslog.LOG_USER|syslog.LOG_ERR, "namescore/listen", log.LogfmtFormat())
 	if err != nil {
-		logger.SetHandler(log.DiscardHandler())
-		return logger
+		filteredSyslogHandler = log.DiscardHandler()
+	} else {
+		filteredSyslogHandler = log.LvlFilterHandler(log.LvlInfo, sysloghandler)
 	}
 
-	logger.SetHandler(sysloghandler)
+	if len(args) == 1 {
+		if args[0] == "debug" {
+			stdoutHandler := log.StreamHandler(os.Stdout, log.TerminalFormat())
+			debugHandler := log.LvlFilterHandler(log.LvlDebug, stdoutHandler)
+
+			multiHandler := log.MultiHandler(debugHandler, filteredSyslogHandler)
+			logger.SetHandler(multiHandler)
+			return logger
+		}
+	}
+	logger.SetHandler(filteredSyslogHandler)
 	return logger
 }

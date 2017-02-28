@@ -21,6 +21,7 @@ type listenHandler struct {
 }
 
 func (l *listenHandler) getAlerts() {
+	l.logger.Debug("Getting alerts.")
 	status, err := l.client.AccountStatus()
 	if err != nil {
 		l.logger.Warn("Failed to check account status", "err", err)
@@ -54,6 +55,7 @@ func (l *listenHandler) getAlerts() {
 		l.logger.Warn("Failed to update follow", "error", errWrite)
 		return
 	}
+	l.logger.Debug("Events were collected, alerts if any were stored, follow was updated.")
 }
 
 func (l *listenHandler) AlertsLoop() {
@@ -83,6 +85,7 @@ func (l *listenHandler) QueriesLoop() {
 }
 
 func (l *listenHandler) sendQueries(data []asoc.Entry) {
+	l.logger.Debug("Sending queries.")
 	if len(data) == 0 {
 		return
 	}
@@ -96,9 +99,11 @@ func (l *listenHandler) sendQueries(data []asoc.Entry) {
 		}
 		return
 	}
-	if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
+	rate := resp.Received * 100 / resp.Accepted
+	if rate < 90 {
 		l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
 	}
+	l.logger.Debug("Queries were successfully send.", "acceptance rate", rate)
 }
 
 func (l *listenHandler) LocalQueriesLoop() {
@@ -120,6 +125,7 @@ func (l *listenHandler) localQueries() {
 	if err != nil {
 		l.logger.Warn("Searching for local queries failed.", "err", err)
 	}
+	l.logger.Debug("Local queries scan", "found", len(files))
 	for _, file := range files {
 		query, err := l.queryStore.Read(file)
 		if err != nil {
@@ -127,7 +133,6 @@ func (l *listenHandler) localQueries() {
 			if err = os.Remove(file); err != nil {
 				l.logger.Warn("Removing queries failed.", "file", file, "err", err)
 			}
-
 			continue
 		}
 		resp, err := l.client.Queries(query)
@@ -159,9 +164,10 @@ func (l *listenHandler) SniffLoop() {
 			return
 		default:
 			entries := l.sniffer.PacketToEntry(l.sniffer.Sniff())
-			if entries == nil {
+			if len(entries) == 0 {
 				continue
 			}
+			l.logger.Debug("Sniffed:", "FQDN", entries[0].FQDN, "IP", entries[0].IP.String())
 			buffer = append(buffer, entries...)
 			if len(buffer) >= l.cfg.SendIntervalAmount {
 				l.queries <- buffer
