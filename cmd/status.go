@@ -47,20 +47,26 @@ func status(cmd *cobra.Command, args []string) {
 	fmt.Println(aurora.Bold(aurora.Green("OK")))
 
 	fmt.Printf(" Whitelist file:           ")
-	fmt.Printf("%s ", aurora.Bold(cfg.WhitelistFilePath))
 	if exist, err := utils.FileExists(cfg.WhitelistFilePath); err != nil {
+		fmt.Printf("%s ", aurora.Bold(aurora.Red(cfg.WhitelistFilePath)))
+		fmt.Println(aurora.Red(aurora.Bold(err)))
 	} else if !exist {
-		fmt.Println(aurora.Bold("not exist"))
+		fmt.Printf("%s ", aurora.Bold(aurora.Red(cfg.WhitelistFilePath)))
+		fmt.Println(aurora.Bold(aurora.Red("not exist")))
 	} else {
+		fmt.Printf("%s ", aurora.Bold(aurora.Green(cfg.WhitelistFilePath)))
 		fmt.Println(aurora.Bold(aurora.Green("OK")))
 	}
 
 	fmt.Printf(" Alerts file:              ")
-	fmt.Printf("%s ", aurora.Bold(cfg.AlertFilePath))
 	if exist, err := utils.FileExists(cfg.AlertFilePath); err != nil {
+		fmt.Printf("%s ", aurora.Bold(aurora.Red(cfg.AlertFilePath)))
+		fmt.Println(aurora.Red(aurora.Bold(err)))
 	} else if !exist {
-		fmt.Println(aurora.Bold("not exist"))
+		fmt.Printf("%s ", aurora.Bold(aurora.Red(cfg.AlertFilePath)))
+		fmt.Println(aurora.Bold(aurora.Red("not exist")))
 	} else {
+		fmt.Printf("%s ", aurora.Bold(aurora.Green(cfg.AlertFilePath)))
 		fmt.Println(aurora.Bold(aurora.Green("OK")))
 	}
 
