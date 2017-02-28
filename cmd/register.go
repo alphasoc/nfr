@@ -7,6 +7,8 @@ import (
 	"io"
 	"os"
 
+	"net"
+
 	"github.com/alphasoc/namescore/asoc"
 	"github.com/alphasoc/namescore/config"
 	"github.com/logrusorgru/aurora"
@@ -51,12 +53,29 @@ func register(cmd *cobra.Command, args []string) {
 	}
 
 	if cfg.NetworkInterface == "" {
-		iface, err := defaultUserInput().get("Network interface to bind with: ", true)
+		fmt.Println("Provide inteface to bind with. Detected interfaces:")
+		if detIfaces, err := net.Interfaces(); err != nil {
+			fmt.Println(aurora.Bold(aurora.Red("error:")))
+			fmt.Println(aurora.Bold((aurora.Red(err))))
+		} else {
+			for _, detiface := range detIfaces {
+				fmt.Printf("    [%s]\n", detiface.Name)
+			}
+
+		}
+
+		iface, err := defaultUserInput().get("Interface: ", true)
 		if err != nil {
 			fmt.Println()
 			fmt.Println(aurora.Bold(aurora.Red("error:")))
 			fmt.Println(aurora.Bold((aurora.Red(err))))
 			os.Exit(1)
+		}
+		if _, err := net.InterfaceByName(iface); err != nil {
+			fmt.Println(aurora.Bold(aurora.Red("error:")))
+			fmt.Println(aurora.Bold((aurora.Red(err))))
+			os.Exit(1)
+
 		}
 		cfg.NetworkInterface = iface
 	}
