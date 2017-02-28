@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	envAlphaSOCAddress   = "ASOC_API_URL"
 	followFilePath       = "/home/phob0s/alphasoc/follow"
 	alertFilePath        = "/home/phob0s/alphasoc/namescore.log"
 	configFilePath       = "/home/phob0s/alphasoc/namescore.toml"
@@ -84,7 +85,7 @@ type AsocFileConfig struct {
 // Get functions sets values of Config with the consts
 // from this package.
 func Get() *Config {
-	return &Config{
+	cfg := &Config{
 		FollowFilePath:       followFilePath,
 		AlertFilePath:        alertFilePath,
 		ConfigFilePath:       configFilePath,
@@ -98,6 +99,12 @@ func Get() *Config {
 		LocalQueriesInterval: localQueriesInterval,
 		Version:              version,
 	}
+
+	if envServer := os.Getenv(envAlphaSOCAddress); envServer != "" {
+		cfg.AlphaSOCAddress = envServer
+	}
+
+	return cfg
 }
 
 // ReadFromFile reads parameters from configFilePath.
@@ -106,6 +113,7 @@ func (c *Config) ReadFromFile() error {
 	if _, err := toml.DecodeFile(c.ConfigFilePath, &cfg); err != nil {
 		return err
 	}
+
 	c.APIKey = cfg.Key
 	c.NetworkInterface = cfg.Iface
 
