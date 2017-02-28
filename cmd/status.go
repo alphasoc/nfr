@@ -28,31 +28,50 @@ func init() {
 
 func status(cmd *cobra.Command, args []string) {
 	cfg := config.Get()
-	fmt.Printf("namescore version:        ")
+	fmt.Printf(" Namescore version:        ")
 	fmt.Println(aurora.Bold(cfg.Version))
 
-	fmt.Printf("Configuration status:     ")
+	fmt.Printf(" Configuration status:     ")
 	if exist, err := cfg.ConfigFileExists(); err != nil {
 		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	} else if !exist {
-		fmt.Println(aurora.Bold(aurora.Red("config file does not exist")))
+		fmt.Println(aurora.Bold(aurora.Red("not exist")))
 		os.Exit(1)
 	}
 	if err := cfg.ReadFromFile(); err != nil {
 		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	}
-	fmt.Println(aurora.Bold(aurora.Green("present")))
+	fmt.Printf("%s ", aurora.Bold(aurora.Green(cfg.ConfigFilePath)))
+	fmt.Println(aurora.Bold(aurora.Green("OK")))
 
-	fmt.Printf("network interface to use: ")
+	fmt.Printf(" Whitelist file:           ")
+	fmt.Printf("%s ", aurora.Bold(cfg.WhitelistFilePath))
+	if exist, err := utils.FileExists(cfg.WhitelistFilePath); err != nil {
+	} else if !exist {
+		fmt.Println(aurora.Bold("not exist"))
+	} else {
+		fmt.Println(aurora.Bold(aurora.Green("OK")))
+	}
+
+	fmt.Printf(" Alerts file:              ")
+	fmt.Printf("%s ", aurora.Bold(cfg.AlertFilePath))
+	if exist, err := utils.FileExists(cfg.AlertFilePath); err != nil {
+	} else if !exist {
+		fmt.Println(aurora.Bold("not exist"))
+	} else {
+		fmt.Println(aurora.Bold(aurora.Green("OK")))
+	}
+
+	fmt.Printf(" Network interface to use: ")
 	if cfg.NetworkInterface == "" {
 		fmt.Println(aurora.Bold(aurora.Red("not configured")))
 	} else {
 		fmt.Println(aurora.Bold(aurora.Green(cfg.NetworkInterface)))
 	}
 
-	fmt.Printf("API key status:           ")
+	fmt.Printf(" API key status:           ")
 	if cfg.APIKey == "" {
 		fmt.Println(aurora.Bold(aurora.Red("not set")))
 		os.Exit(1)
@@ -66,7 +85,7 @@ func status(cmd *cobra.Command, args []string) {
 	client := asoc.Client{Server: cfg.AlphaSOCAddress, Version: cfg.Version}
 	client.SetKey(cfg.APIKey)
 
-	fmt.Printf("Connection with AlphaSOC: ")
+	fmt.Printf(" Connection with AlphaSOC: ")
 	status, err := client.AccountStatus()
 	if err != nil {
 		fmt.Println(aurora.Bold((aurora.Red(err))))
@@ -74,24 +93,25 @@ func status(cmd *cobra.Command, args []string) {
 	}
 	fmt.Println(aurora.Bold(aurora.Green("OK")))
 
-	fmt.Printf("Account registered:       ")
+	fmt.Printf(" Account registered:       ")
 	if status.Registered {
 		fmt.Println(aurora.Bold((aurora.Green(status.Registered))))
 	} else {
 		fmt.Println(aurora.Bold((aurora.Red(status.Registered))))
 	}
 
-	fmt.Printf("Account expired:          ")
+	fmt.Printf(" Account expired:          ")
 	if status.Expired {
 		fmt.Println(aurora.Bold((aurora.Red(status.Expired))))
 	} else {
 		fmt.Println(aurora.Bold((aurora.Green(status.Expired))))
 	}
 
-	fmt.Printf("namescore daemon:         ")
+	fmt.Printf(" Namescore daemon:         ")
 	if utils.LockSocket() != nil {
 		fmt.Println(aurora.Bold(aurora.Green("running")))
 	} else {
 		fmt.Println(aurora.Bold(aurora.Red("not running")))
 	}
+
 }
