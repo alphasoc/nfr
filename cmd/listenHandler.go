@@ -99,7 +99,7 @@ func (l *listenHandler) sendQueries(data []asoc.Entry) {
 		}
 		return
 	}
-	rate := resp.Received * 100 / resp.Accepted
+	rate := resp.Accepted * 100 / resp.Received
 	if rate < 90 {
 		l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
 	}
@@ -139,7 +139,7 @@ func (l *listenHandler) localQueries() {
 		if err != nil {
 			continue
 		}
-		if rate := resp.Received * 100 / resp.Accepted; rate < 90 {
+		if rate := resp.Accepted * 100 / resp.Received; rate < 90 {
 			l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
 		}
 		if err = os.Remove(file); err != nil {
