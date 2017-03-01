@@ -6,6 +6,6 @@ import "net"
 // Also allows to check whether proces is already launched.
 // It uses anonymous linux socket domain. See: man (7) unix
 func LockSocket() error {
-	_, err := net.Listen("unix", "@namescore")
+	_, err := net.ListenUnix("unix", &net.UnixAddr{"@/tmp/namescore", "unix"})
 	return err
 }
