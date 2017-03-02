@@ -21,7 +21,7 @@ type listenHandler struct {
 }
 
 func (l *listenHandler) getAlerts() {
-	l.logger.Debug("Getting alerts.")
+	l.logger.Info("Checking account status.")
 	status, err := l.client.AccountStatus()
 	if err != nil {
 		l.logger.Warn("Failed to check account status", "err", err)
@@ -41,11 +41,13 @@ func (l *listenHandler) getAlerts() {
 		return
 	}
 
+	l.logger.Info("Getting alerts.", "follow", follow)
 	events, errEvents := l.client.Events(follow)
 	if errEvents != nil {
 		l.logger.Warn("Failed to retrieve events", "err", errEvents)
 		return
 	}
+	l.logger.Info("Event succesfully retrieved.", "count", len(events.Events))
 
 	if errStore := asoc.StoreAlerts(l.cfg.AlertFilePath, events.Strings()); errStore != nil {
 		l.logger.Warn("Failed to store alerts", "error", errStore)
@@ -55,7 +57,7 @@ func (l *listenHandler) getAlerts() {
 		l.logger.Warn("Failed to update follow", "error", errWrite)
 		return
 	}
-	l.logger.Debug("Events were collected, alerts if any were stored, follow was updated.")
+	l.logger.Info("Events were collected, alerts if any were stored, follow was updated.")
 }
 
 func (l *listenHandler) AlertsLoop() {
@@ -85,7 +87,7 @@ func (l *listenHandler) QueriesLoop() {
 }
 
 func (l *listenHandler) sendQueries(data []asoc.Entry) {
-	l.logger.Debug("Sending queries.")
+	l.logger.Info("Sending queries.", "amount", len(data))
 	if len(data) == 0 {
 		return
 	}
@@ -102,7 +104,7 @@ func (l *listenHandler) sendQueries(data []asoc.Entry) {
 	if resp.Accepted*9 <= resp.Received {
 		l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
 	}
-	l.logger.Debug("Queries were successfully send.", "received", resp.Received, "accepted", resp.Accepted)
+	l.logger.Info("Queries were successfully send.", "received", resp.Received, "accepted", resp.Accepted)
 }
 
 func (l *listenHandler) LocalQueriesLoop() {
@@ -124,7 +126,7 @@ func (l *listenHandler) localQueries() {
 	if err != nil {
 		l.logger.Warn("Searching for local queries failed.", "err", err)
 	}
-	l.logger.Debug("Local queries scan", "found", len(files))
+	l.logger.Info("Scanned local queries.", "found", len(files))
 	for _, file := range files {
 		query, err := l.queryStore.Read(file)
 		if err != nil {
@@ -134,6 +136,7 @@ func (l *listenHandler) localQueries() {
 			}
 			continue
 		}
+		l.logger.Info("Sending local queries.", "amount", len(query.Data))
 		resp, err := l.client.Queries(query)
 		if err != nil {
 			continue
@@ -141,6 +144,8 @@ func (l *listenHandler) localQueries() {
 		if resp.Accepted*9 <= resp.Received {
 			l.logger.Warn("Queries bad acceptance rate detected.", "received", resp.Received, "accepted", resp.Accepted)
 		}
+		l.logger.Info("Local queries were successfully send.", "received", resp.Received, "accepted", resp.Accepted)
+
 		if err = os.Remove(file); err != nil {
 			l.logger.Warn("Removing queries failed.", "file", file, "err", err)
 		}

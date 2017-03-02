@@ -37,7 +37,7 @@ func listen(cmd *cobra.Command, args []string) {
 		logger.Warn("Failed to read config", "err", err)
 		os.Exit(1)
 	}
-	logger.Debug("Configuration was successfully read.")
+	logger.Info("Configuration was successfully read.")
 
 	if cfg.APIKey == "" {
 		logger.Warn("API key not set.")
@@ -62,7 +62,7 @@ func listen(cmd *cobra.Command, args []string) {
 		logger.Warn("Failed to start sniffer", "err", err)
 		os.Exit(1)
 	}
-	logger.Debug("DNS sniffer was created.", "iface", cfg.NetworkInterface)
+	logger.Info("DNS sniffer was created.", "iface", cfg.NetworkInterface)
 
 	whitelist, errList := dns.NewWhitelist(cfg.WhitelistFilePath)
 	if errList != nil {
@@ -93,7 +93,7 @@ func listen(cmd *cobra.Command, args []string) {
 	go handler.QueriesLoop()
 	go handler.AlertsLoop()
 	go handler.LocalQueriesLoop()
-	logger.Debug("Handlers are started.")
+	logger.Info("Handlers are started.")
 
 	for {
 		s := <-sig
