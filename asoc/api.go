@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 const (
@@ -27,12 +28,22 @@ type AlphaSOCAPI interface {
 	Queries(q *QueriesReq) (*QueriesResp, error)
 }
 
+// NewClient creates new AlphaSOC client with given values,
+// it also sets http.client with timeout value.
+func NewClient(server, version string) *Client {
+	return &Client{
+		httpClient: &http.Client{Timeout: time.Second * 30},
+		Server:     server,
+		Version:    version,
+	}
+}
+
 // Client handles connection to AlphaSOC server.
 // There should be created one client per process.
 type Client struct {
 	Server     string
 	Version    string
-	httpClient http.Client
+	httpClient *http.Client
 	key        string
 }
 

@@ -19,7 +19,7 @@ func TestStatus(t *testing.T) {
 		t.Skipf("Test is skipped because environment variable ASOC_API_KEY is set.")
 	}
 
-	c := Client{Server: server}
+	c := NewClient(server, "test")
 	k, err := c.KeyRequest()
 	if err != nil {
 		t.Fatalf("KeyRequest() unexpected error: %q", err)
@@ -83,7 +83,7 @@ func TestStatusSick(t *testing.T) {
 		t.Skipf("Test is skipped because environment variable ASOC_API_KEY is not set.")
 	}
 
-	c := Client{Server: server}
+	c := NewClient(server, "test")
 	k, err := c.KeyRequest()
 	if err == nil {
 		t.Fatalf("KeyRequest() expected error (sick mode)")
@@ -143,7 +143,7 @@ func TestWrongServer(t *testing.T) {
 		server = "invalid address"
 	)
 
-	client := Client{Server: server}
+	client := NewClient(server, "test")
 
 	if status, err := client.AccountStatus(); err == nil {
 		t.Fatalf("AccountStatus() expected error")
@@ -182,7 +182,7 @@ func TestWrongServerWithKey(t *testing.T) {
 		key    = "key"
 	)
 
-	client := Client{Server: server}
+	client := NewClient(server, "test")
 	client.SetKey(key)
 
 	if status, err := client.AccountStatus(); err == nil {
