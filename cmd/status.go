@@ -88,7 +88,7 @@ func status(cmd *cobra.Command, args []string) {
 		fmt.Println(aurora.Bold(aurora.Green("valid")))
 	}
 
-	client := asoc.Client{Server: cfg.AlphaSOCAddress, Version: cfg.Version}
+	client := asoc.NewClient(cfg.AlphaSOCAddress, cfg.Version)
 	client.SetKey(cfg.APIKey)
 
 	fmt.Printf(" Connection with AlphaSOC: ")

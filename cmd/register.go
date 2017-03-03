@@ -33,7 +33,7 @@ var errNoInput = errors.New("invalid user input")
 func register(cmd *cobra.Command, args []string) {
 	fmt.Println(aurora.Bold("API key registration."))
 	cfg := config.Get()
-	client := asoc.Client{Server: cfg.AlphaSOCAddress, Version: cfg.Version}
+	client := asoc.NewClient(cfg.AlphaSOCAddress, cfg.Version)
 
 	if err := cfg.ReadFromFile(); err == nil {
 		if asoc.VerifyKey(cfg.APIKey) {
