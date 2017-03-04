@@ -63,6 +63,7 @@ func (w *Whitelist) domainParser(line string) error {
 	}
 	if strings.HasPrefix(line, "*") {
 		w.multimatchDomains = append(w.multimatchDomains, strings.TrimPrefix(line, "*"))
+		w.strictDomains = append(w.strictDomains, strings.TrimPrefix(line, "*."))
 		return nil
 	}
 	w.strictDomains = append(w.strictDomains, line)

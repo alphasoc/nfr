@@ -72,6 +72,7 @@ func TestWhitelist(t *testing.T) {
 		{"google.com", true},
 		{"site.net", true},
 		{"google.com", true},
+		{"example.com", true},
 		{"fake.org", false},
 		{"org", false},
 		{"sub.example.com", true},
@@ -332,6 +333,7 @@ func TestWhitelistDomainParser(t *testing.T) {
 	var (
 		lineMultimatch  = "*.google.com"
 		storeMultimatch = ".google.com"
+		storeStrictMM   = "google.com"
 		lineStrict      = "site.com"
 		storeStrict     = "site.com"
 	)
@@ -347,7 +349,7 @@ func TestWhitelistDomainParser(t *testing.T) {
 		t.Fatalf("len(whitelist.multimatchDomains), expected 1, got %d", len(whitelist.multimatchDomains))
 	}
 
-	if len(whitelist.strictDomains) != 1 {
+	if len(whitelist.strictDomains) != 2 {
 		t.Fatalf("len(whitelist.strictDomains), expected 1, got %d", len(whitelist.strictDomains))
 	}
 
@@ -355,10 +357,13 @@ func TestWhitelistDomainParser(t *testing.T) {
 		t.Fatalf("domainParser(%q) unexpected to store %q, got %q", lineMultimatch, storeMultimatch, whitelist.multimatchDomains[0])
 	}
 
-	if whitelist.strictDomains[0] != storeStrict {
-		t.Fatalf("domainParser(%q) unexpected to store %q, got %q", lineMultimatch, storeStrict, whitelist.strictDomains[0])
+	if whitelist.strictDomains[0] != storeStrictMM {
+		t.Fatalf("domainParser(%q) unexpected to store %q, got %q", lineMultimatch, storeStrictMM, whitelist.strictDomains[0])
 	}
 
+	if whitelist.strictDomains[1] != storeStrict {
+		t.Fatalf("domainParser(%q) unexpected to store %q, got %q", lineMultimatch, storeStrict, whitelist.strictDomains[1])
+	}
 }
 
 // checking whitelist reading and matching if whitelist is empty
