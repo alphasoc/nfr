@@ -114,7 +114,7 @@ func status(cmd *cobra.Command, args []string) {
 	}
 
 	fmt.Printf(" Namescore daemon:         ")
-	if utils.LockSocket() != nil {
+	if _, err := utils.LockSocket(); err != nil {
 		fmt.Println(aurora.Bold(aurora.Green("running")))
 	} else {
 		fmt.Println(aurora.Bold(aurora.Red("not running")))

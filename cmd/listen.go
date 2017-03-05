@@ -44,7 +44,8 @@ func listen(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 
-	if err := utils.LockSocket(); err != nil {
+	conn, err := utils.LockSocket()
+	if err != nil {
 		logger.Warn("LockSocket", "err", err)
 		os.Exit(1)
 	}
@@ -99,6 +100,7 @@ func listen(cmd *cobra.Command, args []string) {
 	for {
 		s := <-sig
 		close(quit)
+		conn.Close()
 		// Give namescore some time to close gorutines
 		time.Sleep(time.Second * 2)
 

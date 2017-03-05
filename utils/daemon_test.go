@@ -3,12 +3,12 @@ package utils
 import "testing"
 
 func TestLock(t *testing.T) {
-	err := LockSocket()
+	_, err := LockSocket()
 	if err != nil {
 		t.Errorf("Locking failed %q", err)
 	}
 
-	err = LockSocket()
+	_, err = LockSocket()
 	if err == nil {
 		t.Errorf("Expected error here.")
 	}
