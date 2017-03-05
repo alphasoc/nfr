@@ -75,11 +75,22 @@ func (l *listenHandler) AlertsLoop() {
 }
 
 func (l *listenHandler) QueriesLoop() {
+	var buffer []asoc.Entry
+	timer := time.NewTicker(l.cfg.SendIntervalTime)
 	for {
 		select {
+		case <-timer.C:
+			l.logger.Info("Sending queries because of timer.", "count", len(buffer))
+			go l.sendQueries(buffer)
+			buffer = nil
 		case senddata := <-l.queries:
-			go l.sendQueries(senddata)
+			buffer = append(buffer, senddata...)
+			if len(buffer) >= l.cfg.SendIntervalAmount {
+				go l.sendQueries(buffer)
+				buffer = nil
+			}
 		case <-l.quit:
+			timer.Stop()
 			l.logger.Info("Stopped sending queries.")
 			return
 		}
@@ -139,6 +150,7 @@ func (l *listenHandler) localQueries() {
 		l.logger.Info("Sending local queries.", "amount", len(query.Data))
 		resp, err := l.client.Queries(query)
 		if err != nil {
+			l.logger.Warn("Sending local queries failed.", "err", err)
 			continue
 		}
 		if resp.Accepted*9 <= resp.Received {
@@ -154,17 +166,10 @@ func (l *listenHandler) localQueries() {
 }
 
 func (l *listenHandler) SniffLoop() {
-	l.queries = make(chan []asoc.Entry, 10)
-	var buffer []asoc.Entry
-	timer := time.NewTicker(l.cfg.LocalQueriesInterval)
 	for {
 		select {
-		case <-timer.C:
-			l.queries <- buffer
-			buffer = nil
 		case <-l.quit:
 			l.sniffer.Close()
-			timer.Stop()
 			return
 		default:
 			entries := l.sniffer.PacketToEntry(l.sniffer.Sniff())
@@ -172,11 +177,7 @@ func (l *listenHandler) SniffLoop() {
 				continue
 			}
 			l.logger.Debug("Sniffed:", "FQDN", entries[0].FQDN, "IP", entries[0].IP.String())
-			buffer = append(buffer, entries...)
-			if len(buffer) >= l.cfg.SendIntervalAmount {
-				l.queries <- buffer
-				buffer = nil
-			}
+			l.queries <- entries
 		}
 	}
 }

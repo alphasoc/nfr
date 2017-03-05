@@ -87,6 +87,7 @@ func listen(cmd *cobra.Command, args []string) {
 		logger:     logger,
 		sniffer:    sniffer,
 		queryStore: store,
+		queries:    make(chan []asoc.Entry, 10),
 	}
 
 	go handler.SniffLoop()
