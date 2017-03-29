@@ -1,0 +1,32 @@
+machine:
+  environment:
+    PKG: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+    BUILD_DIR: "$HOME/build"
+    BUILD_TAR_FILE: "$CIRCLE_ARTIFACTS/build.tar.gz"
+    GCP_KEY_NAME: $(case $CIRCLE_BRANCH in master) echo GCP_PROD_SERVICE_KEY;; staging) echo GCP_STAGING_SERVICE_KEY;; esac)
+    BUCKET_NAME: $(case $CIRCLE_BRANCH in master) echo asoc-prod-release;; staging) echo asoc-staging-release;; esac)
+  post:
+    - sudo rm -rf /usr/local/go
+    - curl -s -o - https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz | sudo tar -C /usr/local -xzf -
+    - if test $GCP_KEY_NAME; then
+        echo ${!GCP_KEY_NAME} | base64 --decode > ~/.gcp-key.json &&
+        gcloud auth activate-service-account --key-file ~/.gcp-key.json;
+      fi
+
+
+compile:
+  override:
+    - GOBIN="$BUILD_DIR" go install $PKG
+
+test:
+  override:
+    - go test -v -race $(go list $PKG/... | grep -v /vendor/)
+  post:
+    - tar -czv -C "$BUILD_DIR" -f "$BUILD_TAR_FILE" .
+
+deployment:
+  release:
+    branch: [master, staging]
+    commands:
+      - gsutil cp "$BUILD_TAR_FILE" gs://${BUCKET_NAME}/$CIRCLE_PROJECT_REPONAME/latest.tar.gz
+      - gsutil cp "$BUILD_TAR_FILE" gs://${BUCKET_NAME}/$CIRCLE_PROJECT_REPONAME/$CIRCLE_PROJECT_REPONAME-${CIRCLE_SHA1}.tar.gz
