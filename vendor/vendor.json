@@ -1,0 +1,85 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "UJTpOZ5IuuyoWFrS42uw/167mn0=",
+			"path": "github.com/BurntSushi/toml",
+			"revision": "f0aeabca5a127c4078abb8c8d64298b147264b55",
+			"revisionTime": "2016-04-26T10:16:13Z"
+		},
+		{
+			"checksumSHA1": "2sj/DbXoXdnPAfjAEyhS0Jj5QL0=",
+			"path": "github.com/go-stack/stack",
+			"revision": "100eb0c0a9c5b306ca2fb4f165df21d80ada4b82",
+			"revisionTime": "2016-05-14T03:44:11Z"
+		},
+		{
+			"checksumSHA1": "Eogo5aTI5rX7JaiKy2xe061Y3D4=",
+			"path": "github.com/google/gopacket",
+			"revision": "e3b37923d2d3d9cba7d45038a2be5656eccfe291",
+			"revisionTime": "2017-02-21T14:07:54Z"
+		},
+		{
+			"checksumSHA1": "+kzb2qrfnCCYSPWFLFXxCEltmUU=",
+			"path": "github.com/google/gopacket/layers",
+			"revision": "e3b37923d2d3d9cba7d45038a2be5656eccfe291",
+			"revisionTime": "2017-02-21T14:07:54Z"
+		},
+		{
+			"checksumSHA1": "NRsU2fMy7dKx+9iFgmju5obLweA=",
+			"path": "github.com/google/gopacket/pcap",
+			"revision": "e3b37923d2d3d9cba7d45038a2be5656eccfe291",
+			"revisionTime": "2017-02-21T14:07:54Z"
+		},
+		{
+			"checksumSHA1": "fKPmz8F3wA2Kz3D5J2y/aR//eCo=",
+			"path": "github.com/inconshreveable/log15",
+			"revision": "f1f14b426c23e20a73468078b52d0713a16a132a",
+			"revisionTime": "2016-08-10T19:45:28Z"
+		},
+		{
+			"checksumSHA1": "BjX1g2UWJpKx/qNF3K6IF6JkGXE=",
+			"path": "github.com/inconshreveable/log15/term",
+			"revision": "f1f14b426c23e20a73468078b52d0713a16a132a",
+			"revisionTime": "2016-08-10T19:45:28Z"
+		},
+		{
+			"checksumSHA1": "je0xBtM96GQebMKfmSVzdthg3Rs=",
+			"path": "github.com/logrusorgru/aurora",
+			"revision": "962a6974312dde57d1f6f5738b4f83e1af9f38a4",
+			"revisionTime": "2016-12-16T17:00:44Z"
+		},
+		{
+			"checksumSHA1": "I4njd26dG5hxFT2nawuByM4pxzY=",
+			"path": "github.com/mattn/go-colorable",
+			"revision": "d228849504861217f796da67fae4f6e347643f15",
+			"revisionTime": "2016-11-03T16:00:40Z"
+		},
+		{
+			"checksumSHA1": "xZuhljnmBysJPta/lMyYmJdujCg=",
+			"path": "github.com/mattn/go-isatty",
+			"revision": "30a891c33c7cde7b02a981314b4228ec99380cca",
+			"revisionTime": "2016-11-23T14:36:37Z"
+		},
+		{
+			"checksumSHA1": "FZ0r4TzEy9UxXLkFVXFygApni4M=",
+			"path": "github.com/spf13/cobra",
+			"revision": "9495bc009a56819bdb0ddbc1a373e29c140bc674",
+			"revisionTime": "2016-11-16T13:20:53Z"
+		},
+		{
+			"checksumSHA1": "GxPD7A0NjMDom1xte0mghkpzr0E=",
+			"path": "github.com/spf13/pflag",
+			"revision": "5ccb023bc27df288a957c5e994cd44fd19619465",
+			"revisionTime": "2016-10-24T13:13:51Z"
+		},
+		{
+			"checksumSHA1": "vu7njn8O4vhFtmgGWntwjA2NAbk=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9",
+			"revisionTime": "2016-09-14T20:33:16Z"
+		}
+	],
+	"rootPath": "github.com/alphasoc/namescore"
+}
