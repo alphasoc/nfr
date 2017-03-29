@@ -14,16 +14,16 @@ import (
 
 const (
 	envAlphaSOCAddress   = "ASOC_API_URL"
-	followFilePath       = "/home/phob0s/alphasoc/follow"
-	alertFilePath        = "/home/phob0s/alphasoc/namescore.log"
-	configFilePath       = "/home/phob0s/alphasoc/namescore.toml"
-	failedQueriesDir     = "/home/phob0s/alphasoc/backup"
-	whitelistFilePath    = "/home/phob0s/alphasoc/whitelist.toml"
-	alphaSOCAddress      = "http://127.0.0.1:8080"
+	followFilePath       = "/etc/alphasoc/follow"
+	alertFilePath        = "/etc/alphasoc/namescore.log"
+	configFilePath       = "/etc/alphasoc/namescore.toml"
+	failedQueriesDir     = "/etc/alphasoc/backup"
+	whitelistFilePath    = "/etc/alphasoc/whitelist.toml"
+	alphaSOCAddress      = "https://api.alphasoc.net"
 	version              = "0.1"
-	sendIntervalTime     = 10 * time.Second
-	alertRequestInterval = 20 * time.Second
-	localQueriesInterval = 20 * time.Second
+	sendIntervalTime     = 60 * time.Second
+	alertRequestInterval = 300 * time.Second
+	localQueriesInterval = 60 * time.Second
 	failedQueriesLimit   = 100
 	sendIntervalAmount   = 100
 )
