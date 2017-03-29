@@ -29,5 +29,9 @@ deployment:
   release:
     branch: [master, staging]
     commands:
-      - gsutil cp "$BUILD_TAR_FILE" gs://${BUCKET_NAME}/$CIRCLE_PROJECT_REPONAME/latest.tar.gz
-      - gsutil cp "$BUILD_TAR_FILE" gs://${BUCKET_NAME}/$CIRCLE_PROJECT_REPONAME/$CIRCLE_PROJECT_REPONAME-${CIRCLE_SHA1}.tar.gz
+      - gsutil cp "$BUILD_TAR_FILE" gs://$BUCKET_NAME/$CIRCLE_PROJECT_REPONAME/latest.tar.gz
+      - gsutil cp "$BUILD_TAR_FILE" gs://$BUCKET_NAME/$CIRCLE_PROJECT_REPONAME/$CIRCLE_PROJECT_REPONAME-$CIRCLE_SHA1.tar.gz
+  release:
+    tag: /.*/
+    commands:
+      - gsutil cp "$BUILD_TAR_FILE" gs://asoc-builds/releases/$CIRCLE_PROJECT_REPONAME/$CIRCLE_PROJECT_REPONAME-$CIRCLE_TAG.tar.gz
