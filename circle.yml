@@ -3,17 +3,13 @@ machine:
     PKG: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     BUILD_DIR: "$HOME/build"
     BUILD_TAR_FILE: "$CIRCLE_ARTIFACTS/build.tar.gz"
-    GCP_KEY_NAME: $(case $CIRCLE_BRANCH in master) echo GCP_PROD_SERVICE_KEY;; staging) echo GCP_STAGING_SERVICE_KEY;; esac)
     BUCKET_NAME: $(case $CIRCLE_BRANCH in master) echo asoc-prod-release;; staging) echo asoc-staging-release;; esac)
   post:
     - sudo rm -rf /usr/local/go
     - curl -s -o - https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz | sudo tar -C /usr/local -xzf -
     - sudo apt-get install --yes libpcap-dev
-    - if test $GCP_KEY_NAME; then
-        echo ${!GCP_KEY_NAME} | base64 --decode > ~/.gcp-key.json &&
-        gcloud auth activate-service-account --key-file ~/.gcp-key.json;
-      fi
-
+    - echo $GCP_SERVICE_KEY | base64 --decode > ~/.gcp-key.json
+    - gcloud auth activate-service-account --key-file ~/.gcp-key.json;
 
 compile:
   override:
