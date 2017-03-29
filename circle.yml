@@ -8,6 +8,7 @@ machine:
   post:
     - sudo rm -rf /usr/local/go
     - curl -s -o - https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz | sudo tar -C /usr/local -xzf -
+    - sudo apt-get install --yes libpcap-dev
     - if test $GCP_KEY_NAME; then
         echo ${!GCP_KEY_NAME} | base64 --decode > ~/.gcp-key.json &&
         gcloud auth activate-service-account --key-file ~/.gcp-key.json;
