@@ -15,10 +15,10 @@ var statusCmd = &cobra.Command{
 	Use:   "status",
 	Short: "Shows status of namescore",
 	Long: `This command return status of current namescore setup.
-Following informations are provided:
-- If configuration is correct.
-- API key status.
-- State of namescore process .`,
+The following informations are provided:
+- If configuration is correct
+- API key status
+- State of namescore process`,
 	Run: status,
 }
 
@@ -36,7 +36,7 @@ func status(cmd *cobra.Command, args []string) {
 		fmt.Println(aurora.Bold((aurora.Red(err))))
 		os.Exit(1)
 	} else if !exist {
-		fmt.Println(aurora.Bold(aurora.Red("not exist")))
+		fmt.Println(aurora.Bold(aurora.Red("doesn't exist")))
 		os.Exit(1)
 	}
 	if err := cfg.ReadFromFile(); err != nil {
@@ -52,7 +52,7 @@ func status(cmd *cobra.Command, args []string) {
 		fmt.Println(aurora.Red(aurora.Bold(err)))
 	} else if !exist {
 		fmt.Printf("%s ", aurora.Bold(aurora.Red(cfg.WhitelistFilePath)))
-		fmt.Println(aurora.Bold(aurora.Red("not exist")))
+		fmt.Println(aurora.Bold(aurora.Red("doesn't exist")))
 	} else {
 		fmt.Printf("%s ", aurora.Bold(aurora.Green(cfg.WhitelistFilePath)))
 		fmt.Println(aurora.Bold(aurora.Green("OK")))
@@ -64,7 +64,7 @@ func status(cmd *cobra.Command, args []string) {
 		fmt.Println(aurora.Red(aurora.Bold(err)))
 	} else if !exist {
 		fmt.Printf("%s ", aurora.Bold(aurora.Red(cfg.AlertFilePath)))
-		fmt.Println(aurora.Bold(aurora.Red("not exist")))
+		fmt.Println(aurora.Bold(aurora.Red("doesn't exist")))
 	} else {
 		fmt.Printf("%s ", aurora.Bold(aurora.Green(cfg.AlertFilePath)))
 		fmt.Println(aurora.Bold(aurora.Green("OK")))
