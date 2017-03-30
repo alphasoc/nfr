@@ -1,12 +1,18 @@
 ## Synopsis
-**Namescore** project aim to provide lightweight and portable client which would provide online analysis of **DNS** requests to identify threats. 
-To compile **libpcap-dev** is needed.
+AlphaSOC **Namescore** is a lightweight portable client used to capture DNS query events from a network and submit them to _api.alphasoc.net_ for processing. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use).
 
-## Config file
+## Installation
+Build and install **Namescore** within Linux as follows:
 
-Configuration file can be created by running **namescore register command**. This file contains two important parameters:
+```
+< installation steps here, including generation of the configuration file >
+```
 
--  *interface* -  network interface which is used to sniff DNS packets from.
+## Configuration
+
+The configuration file < what is it called? > contains two important parameters:
+
+- *interface* -  network interface which is used to capture DNS packets from
 - *key* -  unique client API key 
 
 Example:
