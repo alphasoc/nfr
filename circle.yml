@@ -13,7 +13,7 @@ machine:
 
 compile:
   override:
-    - GOBIN="$BUILD_DIR" go install $PKG
+    - GOBIN="$BUILD_DIR" go install -ldflags "-linkmode external -extldflags -static" $PKG
 
 test:
   override:
