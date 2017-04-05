@@ -55,14 +55,15 @@ Detected interfaces:
   - eth0
 
 Interface to monitor: eth0
-
-Please provide your details to generate an AlphaSOC API key and complete setup. A valid email address is required to activate the key. By performing this request you agree to our Terms of Service and Privacy Policy (https://www.alphasoc.com/terms-of-service).
+Provide your details to generate an API key and complete setup. A valid email
+address is required to activate the key. By performing this request you agree to
+our Terms of Service and Privacy Policy (https://www.alphasoc.com/terms-of-service).
 
 Full name: Joey Bag O'Donuts
 Organization: AlphaSOC
 Email: joey@alphasoc.com
 
-Account registered! Please check your email and click the verification link to activate your API key.
+Success! Check your email and click the verification link to activate your API key.
 ```
 
 ## Monitoring Scope
