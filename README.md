@@ -70,7 +70,7 @@ Success! Check your email and click the verification link to activate your API k
 ```
 
 ## Monitoring Scope
-Use directives within `/etc/namescore/whitelist.toml` to define the monitoring scope. DNS requests from the IP ranges within scope will be captured and sent to the AlphaSOC DNS Analytics API for scoring, and domains that are whitelisted (e.g. internal trusted domains) will be ignored and not sent to the API. CIDR notation is supported, and entire domains can be whitelisted using `*`, as follows:
+Use directives within `/etc/namescore/whitelist.toml` to define the monitoring scope. DNS requests from the IP ranges within scope will be captured and sent to the AlphaSOC DNS Analytics API for scoring, and domains that are whitelisted (e.g. internal trusted domains) will be ignored and not sent to the API, e.g.
 
 ```
 [networks]
