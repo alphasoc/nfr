@@ -1,8 +1,8 @@
 # Namescore
-**Namescore** is a lightweight client which uses AlphaSOC DNS Analytics API to identify malware and suspicious behavior within your networks.
+AlphaSOC **Namescore** is a lightweight Linux client used to capture DNS query events from a network and submit them to _api.alphasoc.net_ for processing. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use).
 
-## Installation
-Currently only Linux is supported. To compile `libpcap-dev` is needed. Namescore uses govendor for vendoring.
+## Prerequisites
+The `libpcap-dev` library is needed, and Namescore uses govendor for vendoring.
 
 1. Install libpcap-dev, on debian/ubuntu machines:
 ```
@@ -14,7 +14,8 @@ Currently only Linux is supported. To compile `libpcap-dev` is needed. Namescore
 # go get -u github.com/kardianos/govendor
 ```
 
-3. Install namescore
+## Installation
+Follow these steps to install Namescore:
 ```
 # git clone https://github.com/alphasoc/namescore.git
 # cd namescore
@@ -22,7 +23,7 @@ Currently only Linux is supported. To compile `libpcap-dev` is needed. Namescore
 # go install
 ```
 
-4. Test installation
+Upon installation, test Namescore as follows:
 ```
 # namescore
 namescore is application which captures DNS requests and provides
@@ -42,10 +43,30 @@ Usage:
 
 ## Configuration
 
-Namescore expects to find its configuration file in `/etc/alphasoc/namescore.toml`. You can find an example configuration file in the repository's root directory. Copy this file to `/etc/alphasoc` and if you already have AlphaSOC API Key, update the file with your key. Otherwise, you can use `namescore register` command which will create a new configuration file if it doesn't exist, configure your network interface and request a trial API key from AlphaSOC.
+Namescore expects to find its configuration file in `/etc/alphasoc/namescore.toml`. You can find an example configuration file in the repository's root directory. Copy this file to `/etc/alphasoc` and if you already have AlphaSOC API key, update the file with your key. Otherwise, simply run `namescore` which will prompt you for configuration and account details, e.g.
 
-### Whitelist file
-You can whitelist specific networks or domains from being processed by AlphaSOC by including them in `/etc/namescore/whitelist.toml`. For example:
+```
+# namescore
+AlphaSOC Namescore Setup and API Key Generation
+
+Select a network interface to monitor for DNS traffic
+Detected interfaces:
+  - lo
+  - eth0
+
+Interface to monitor: eth0
+
+Please provide your details to generate an AlphaSOC API key and complete setup. A valid email address is required to activate the key. By performing this request you agree to our Terms of Service and Privacy Policy (https://www.alphasoc.com/terms-of-service).
+
+Full name: Joey Bag O'Donuts
+Organization: AlphaSOC
+Email: joey@alphasoc.com
+
+Account registered! Please check your email and click the verification link to activate your API key.
+```
+
+## Monitoring Scope
+Use directives within `/etc/namescore/whitelist.toml` to define the monitoring scope. DNS requests from the IP ranges within scope will be captured and sent to the AlphaSOC DNS Analytics API for scoring, and domains that are whitelisted (e.g. internal trusted domains) will be ignored and not sent to the API. CIDR notation is supported, and entire domains can be whitelisted using `*`, as follows:
 
 ```
 [networks]
@@ -63,7 +84,7 @@ internal.company.org
 ```
 
 ## Status command
-You can use `namescore status` to quickly check the most important parameters and diagnose basic problems.
+Use `namescore status` to quickly check the most important parameters and diagnose basic problems.
 
 ## Running
 Run `namescore listen` in tmux or screen, or provide a startup script to start namescore at system startup. To debug possible problems, you can use `namescore listen debug` which is more verbose.
