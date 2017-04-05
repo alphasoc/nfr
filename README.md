@@ -4,13 +4,13 @@ AlphaSOC **Namescore** is a lightweight Linux client used to capture DNS query e
 ## Prerequisites
 Namescore requires `libpcap-dev` and uses `govendor` for vendoring.
 
-### Debian and Ubuntu Steps
+### Under Debian and Ubuntu
 ```
 # apt-get install libpcap-dev
 # go get -u github.com/kardianos/govendor
 ```
 
-### Red Hat, Fedora, and CentOS Steps
+### Under Red Hat, Fedora, and CentOS
 ```
 < instructions >
 ```
