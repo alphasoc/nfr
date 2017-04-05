@@ -55,6 +55,7 @@ Detected interfaces:
   - eth0
 
 Interface to monitor: eth0
+
 Provide your details to generate an API key and complete setup. A valid email
 address is required to activate the key. By performing this request you agree to
 our Terms of Service and Privacy Policy (https://www.alphasoc.com/terms-of-service).
