@@ -2,19 +2,19 @@
 AlphaSOC **Namescore** is a lightweight Linux client used to capture DNS query events from a network and submit them to _api.alphasoc.net_ for processing. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use).
 
 ## Prerequisites
-Namescore requires `libpcap-dev` and uses `govendor` for vendoring. Installation steps are as follows.
+Namescore requires the development library for `libpcap`. Installation steps are as follows (as root).
 
 ### Under Debian and Ubuntu
 ```
 # apt-get install libpcap-dev
-# go get -u github.com/kardianos/govendor
 ```
 
-### Under Red Hat, Fedora, and CentOS
+### Under RHEL7
 ```
-< instructions >
+# yum-config-manager --enable rhel-7-server-optional-rpms
+# yum install libpcap-devel
+# yum-config-manager --disable rhel-7-server-optional-rpms
 ```
-
 
 ## Installation
 Follow these steps to install Namescore:
