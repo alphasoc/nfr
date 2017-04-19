@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/alphasoc/namescore/asoc"
 	"github.com/alphasoc/namescore/config"
@@ -37,10 +36,10 @@ func listen(cmd *cobra.Command, args []string) {
 		logger.Warn("Failed to read config", "err", err)
 		os.Exit(1)
 	}
-	logger.Info("Configuration was successfully read.")
+	logger.Info("Configuration was successfully read")
 
 	if cfg.APIKey == "" {
-		logger.Warn("API key not set.")
+		logger.Warn("API key not set")
 		os.Exit(1)
 	}
 
@@ -63,7 +62,7 @@ func listen(cmd *cobra.Command, args []string) {
 		logger.Warn("Failed to start sniffer", "err", err)
 		os.Exit(1)
 	}
-	logger.Info("DNS sniffer was created.", "iface", cfg.NetworkInterface)
+	logger.Info("DNS sniffer was created", "iface", cfg.NetworkInterface)
 
 	whitelist, errList := dns.NewWhitelist(cfg.WhitelistFilePath)
 	if errList != nil {
@@ -73,7 +72,7 @@ func listen(cmd *cobra.Command, args []string) {
 		sniffer.SetIPFilter(whitelist.CheckIP)
 	}
 
-	logger.Info("namescore daemon started", "version", cfg.Version)
+	logger.Info("Namescore daemon started", "version", cfg.Version)
 
 	sig := make(chan os.Signal)
 	quit := make(chan bool)
@@ -95,18 +94,14 @@ func listen(cmd *cobra.Command, args []string) {
 	go handler.QueriesLoop()
 	go handler.AlertsLoop()
 	go handler.LocalQueriesLoop()
-	logger.Info("Handlers are started.")
+	logger.Info("Handlers are started")
 
-	for {
-		s := <-sig
-		close(quit)
-		conn.Close()
-		// Give namescore some time to close gorutines
-		time.Sleep(time.Second * 2)
+	s := <-sig
+	close(quit)
+	conn.Close()
 
-		logger.Info("namescore exitting", "signal", s.String())
-		os.Exit(0)
-	}
+	logger.Info("Namescore exiting", "signal", s.String())
+	os.Exit(0)
 }
 
 func configureLogger(args []string) log.Logger {
