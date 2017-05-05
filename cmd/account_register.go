@@ -17,23 +17,18 @@ func newAccountRegisterCommand(configPath *string) *cobra.Command {
 		Short: "Acquire and register API key.",
 		Long:  `This command provides interactive mode to retrieve API key and register it.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, _, err := config.New(*configPath)
+			cfg, c, err := createConfigAndClient(*configPath, false)
 			if err != nil {
 				return err
 			}
-			return register(cfg, *configPath, key)
+			return register(cfg, c, *configPath, key)
 		},
 	}
 	cmd.Flags().StringVar(&key, "key", "", "AlphaSOC api key")
 	return cmd
 }
 
-func register(cfg *config.Config, configPath, key string) error {
-	c, err := client.New(cfg.Alphasoc.Host, cfg.Alphasoc.APIVersion)
-	if err != nil {
-		return err
-	}
-
+func register(cfg *config.Config, c *client.Client, configPath, key string) error {
 	if key != "" {
 		c.SetKey(key)
 		fmt.Printf("Using key %s for registration.\n\n", key)

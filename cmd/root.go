@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
+	"github.com/alphasoc/namescore/helpers"
 	"github.com/spf13/cobra"
 )
 
@@ -14,17 +16,38 @@ func NewRootCommand() *cobra.Command {
 deep analysis and alerting of suspicious events,
 identifying gaps in your security controls and highlighting targeted attacks.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, _, err := config.New("")
+			cfg, c, err := createConfigAndClient("", false)
 			if err != nil {
 				return err
 			}
-			return register(cfg, "", "")
+			return register(cfg, c, "", "")
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
 	cmd.AddCommand(newVersionCommand())
 	cmd.AddCommand(newAccountCommand())
-	cmd.AddCommand(newListenCommand())
+	cmd.AddCommand(newStartCommand())
 	return cmd
+}
+
+// createConfigAndClient takes one argument to check if key is active.
+func createConfigAndClient(configPath string, checkKey bool) (*config.Config, *client.Client, error) {
+	cfg, _, err := config.New(configPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	if err := helpers.SetLogOutput(cfg.Log.File); err != nil {
+		return nil, nil, err
+	}
+	c, err := client.NewWithKey(cfg.Alphasoc.Host, cfg.Alphasoc.APIVersion, cfg.Alphasoc.APIKey)
+	if err != nil {
+		return nil, nil, err
+	}
+	if checkKey {
+		if err := c.CheckKey(); err != nil {
+			return nil, nil, err
+		}
+	}
+	return cfg, c, nil
 }

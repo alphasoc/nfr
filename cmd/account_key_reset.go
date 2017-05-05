@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
 	"github.com/spf13/cobra"
 )
 
@@ -14,11 +13,12 @@ func newAccountKeyResetCommand(configPath *string) *cobra.Command {
 		Use:   "key-reset",
 		Short: "Reset AlphaSOC API key.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, _, err := config.New(*configPath)
+			_, c, err := createConfigAndClient(*configPath, false)
 			if err != nil {
 				return err
 			}
-			return accountKeyReset(cfg, email)
+
+			return accountKeyReset(c, email)
 		},
 	}
 	cmd.Flags().StringVar(&email, "email", "", "AlphaSOC account email")
@@ -26,12 +26,7 @@ func newAccountKeyResetCommand(configPath *string) *cobra.Command {
 	return cmd
 }
 
-func accountKeyReset(cfg *config.Config, email string) error {
-	c, err := client.New(cfg.Alphasoc.Host, cfg.Alphasoc.APIVersion)
-	if err != nil {
-		return err
-	}
-
+func accountKeyReset(c *client.Client, email string) error {
 	if err := c.KeyReset(&client.KeyResetRequest{Email: email}); err != nil {
 		return err
 	}

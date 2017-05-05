@@ -62,6 +62,12 @@ func (c *Client) SetKey(key string) {
 	c.key = key
 }
 
+// CheckKey check if client has valid AlphaSOC key.
+func (c *Client) CheckKey() error {
+	_, err := c.AccountStatus()
+	return err
+}
+
 // getAPIPath returns the versioned request path to call the api.
 // It appends the query parameters to the path if they are not empty.
 func (c *Client) getAPIPath(path string, query url.Values) string {

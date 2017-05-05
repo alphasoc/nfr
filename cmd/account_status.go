@@ -6,7 +6,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
 )
 
 func newAccountStatusCommand(configPath *string) *cobra.Command {
@@ -17,22 +16,18 @@ func newAccountStatusCommand(configPath *string) *cobra.Command {
 The following informations are provided:
 - API key status`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, _, err := config.New(*configPath)
+			_, c, err := createConfigAndClient(*configPath, false)
 			if err != nil {
 				return err
 			}
 
-			return accountStatus(cfg)
+			return accountStatus(c)
 		},
 	}
 	return cmd
 }
 
-func accountStatus(cfg *config.Config) error {
-	c, err := client.NewWithKey(cfg.Alphasoc.Host, cfg.Alphasoc.APIVersion, cfg.Alphasoc.APIKey)
-	if err != nil {
-		return err
-	}
+func accountStatus(c *client.Client) error {
 	status, err := c.AccountStatus()
 	if err != nil {
 		return err

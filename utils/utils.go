@@ -1,4 +1,4 @@
-package helpers
+package utils
 
 import (
 	"io"
@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
@@ -86,13 +85,8 @@ func ReadPcapFile(file string) ([]gopacket.Packet, error) {
 	return packets, nil
 }
 
-func SendPcapFile(cfg *config.Config) (*client.QueriesResponse, error) {
-	c, err := client.NewWithKey(cfg.Alphasoc.Host, cfg.Alphasoc.APIVersion, cfg.Alphasoc.APIKey)
-	if err != nil {
-		return nil, err
-	}
-
-	packets, err := ReadPcapFile(cfg.Queries.Failed.File)
+func SendPcapFile(c *client.Client, file string) (*client.QueriesResponse, error) {
+	packets, err := ReadPcapFile(file)
 	if err != nil {
 		return nil, err
 	}
@@ -102,5 +96,5 @@ func SendPcapFile(cfg *config.Config) (*client.QueriesResponse, error) {
 		return nil, err
 	}
 
-	return resp, os.Rename(cfg.Queries.Failed.File, cfg.Queries.Failed.File+"."+time.Now().Format(time.RFC3339))
+	return resp, os.Rename(file, file+"."+time.Now().Format(time.RFC3339))
 }
