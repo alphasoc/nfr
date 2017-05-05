@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
+	"github.com/asaskevich/govalidator"
 )
 
 // GetAccountRegisterDetails prompts user for registartion infos
@@ -14,7 +16,7 @@ func GetAccountRegisterDetails() (string, string, string, error) {
 		return "", "", "", err
 	}
 
-	email, err := getInfo("Email", IsEmail)
+	email, err := getInfo("Email", govalidator.IsEmail)
 	if err != nil {
 		return "", "", "", err
 	}
