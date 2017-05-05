@@ -31,8 +31,8 @@ func (b *Buffer) Len() int {
 
 func (b *Buffer) Write(packets []gopacket.Packet) error {
 	b.packets = append(b.packets, packets...)
-	if b.f != nil {
-		// save
+	if b.w != nil {
+		// save to file
 		for i := range packets {
 			md := packets[i].Metadata()
 			if md != nil {

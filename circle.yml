@@ -10,7 +10,8 @@ machine:
 
 compile:
   override:
-    - GOBIN="$BUILD_DIR" go install -o namescore.linux-amd64 -ldflags "-linkmode external -extldflags -static" $PKG
+    - GOOS=linux GOARCH=amd64 GOBIN="$BUILD_DIR" go install -o namescore.linux-amd64 $PKG
+    - GOOS=windows GOARCH=amd64 GOBIN="$BUILD_DIR" go install -o namescore.windows-amd64.exe $PKG
 
 deployment:
   release:
