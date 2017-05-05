@@ -28,6 +28,7 @@ identifying gaps in your security controls and highlighting targeted attacks.`,
 	cmd.AddCommand(newVersionCommand())
 	cmd.AddCommand(newAccountCommand())
 	cmd.AddCommand(newStartCommand())
+	cmd.AddCommand(newSendCommand())
 	return cmd
 }
 
