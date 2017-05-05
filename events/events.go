@@ -15,8 +15,8 @@ type JSONFileLogger struct {
 	f *os.File
 }
 
-func NewJSONFileLogger(filename string) (Logger, error) {
-	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
+func NewJSONFileLogger(file string) (Logger, error) {
+	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
 	if err != nil {
 		return nil, err
 	}

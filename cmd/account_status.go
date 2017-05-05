@@ -29,11 +29,10 @@ The following informations are provided:
 }
 
 func accountStatus(cfg *config.Config) error {
-	c, err := client.New(cfg.Alphasoc.Host, cfg.Alphasoc.APIVersion)
+	c, err := client.NewWithKey(cfg.Alphasoc.Host, cfg.Alphasoc.APIVersion, cfg.Alphasoc.APIKey)
 	if err != nil {
 		return err
 	}
-	c.SetKey(cfg.Alphasoc.APIKey)
 	status, err := c.AccountStatus()
 	if err != nil {
 		return err

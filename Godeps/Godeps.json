@@ -13,18 +13,23 @@
 		},
 		{
 			"ImportPath": "github.com/google/gopacket",
-			"Comment": "v1.1.12-51-g26acf87",
-			"Rev": "26acf8742bf9df387415503f476867f3bddc256e"
+			"Comment": "v1.1.12-59-gb0b789b",
+			"Rev": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3"
 		},
 		{
 			"ImportPath": "github.com/google/gopacket/layers",
-			"Comment": "v1.1.12-51-g26acf87",
-			"Rev": "26acf8742bf9df387415503f476867f3bddc256e"
+			"Comment": "v1.1.12-59-gb0b789b",
+			"Rev": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3"
 		},
 		{
 			"ImportPath": "github.com/google/gopacket/pcap",
-			"Comment": "v1.1.12-51-g26acf87",
-			"Rev": "26acf8742bf9df387415503f476867f3bddc256e"
+			"Comment": "v1.1.12-59-gb0b789b",
+			"Rev": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3"
+		},
+		{
+			"ImportPath": "github.com/google/gopacket/pcapgo",
+			"Comment": "v1.1.12-59-gb0b789b",
+			"Rev": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3"
 		},
 		{
 			"ImportPath": "github.com/inconshreveable/mousetrap",
