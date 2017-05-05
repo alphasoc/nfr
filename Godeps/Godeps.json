@@ -1,0 +1,49 @@
+{
+	"ImportPath": "github.com/alphasoc/namescore",
+	"GoVersion": "go1.8",
+	"GodepVersion": "v79",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/google/gopacket",
+			"Comment": "v1.1.12-51-g26acf87",
+			"Rev": "26acf8742bf9df387415503f476867f3bddc256e"
+		},
+		{
+			"ImportPath": "github.com/google/gopacket/layers",
+			"Comment": "v1.1.12-51-g26acf87",
+			"Rev": "26acf8742bf9df387415503f476867f3bddc256e"
+		},
+		{
+			"ImportPath": "github.com/google/gopacket/pcap",
+			"Comment": "v1.1.12-51-g26acf87",
+			"Rev": "26acf8742bf9df387415503f476867f3bddc256e"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/mousetrap",
+			"Rev": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
+		},
+		{
+			"ImportPath": "github.com/spf13/cobra",
+			"Rev": "7be4beda01ec05d0b93d80b3facd2b6f44080d94"
+		},
+		{
+			"ImportPath": "github.com/spf13/pflag",
+			"Rev": "d16db1e50e33dff1b6cdf37596cef36742128670"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context/ctxhttp",
+			"Rev": "a6577fac2d73be281a500b310739095313165611"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "4c78c975fe7c825c6d1466c42be594d1d6f3aba6"
+		}
+	]
+}
