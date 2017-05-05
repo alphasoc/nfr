@@ -1,10 +1,6 @@
 package client
 
-import (
-	"context"
-	"io/ioutil"
-	"log"
-)
+import "context"
 
 // AccountRegisterRequest contains information needed to
 // register alphasoc account and obtain API key.
@@ -24,8 +20,6 @@ func (c *Client) AccountRegister(req *AccountRegisterRequest) error {
 	if err != nil {
 		return err
 	}
-	b, _ := ioutil.ReadAll(resp.Body)
-	log.Println(resp.StatusCode, string(b))
 	resp.Body.Close()
-	return err
+	return nil
 }
