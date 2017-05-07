@@ -29,7 +29,7 @@ API key must be set before calling this mode.`,
 
 func start(cfg *config.Config, c *client.Client) error {
 	helpers.InstallSIGHUPForLog()
-	if _, err := runner.Send(cfg, c, files[i]); err != nil {
+	if err := runner.Start(cfg, c); err != nil {
 		return err
 	}
 	return nil

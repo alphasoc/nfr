@@ -32,7 +32,7 @@ func newSendCommand() *cobra.Command {
 
 func send(cfg *config.Config, c *client.Client, files []string) error {
 	for i := range files {
-		if _, err := runner.Send(cfg, c, files[i]); err != nil {
+		if err := runner.Send(cfg, c, files[i]); err != nil {
 			return err
 		}
 	}
