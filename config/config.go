@@ -2,15 +2,17 @@ package config
 
 import (
 	"fmt"
-	"path"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
+	"path"
+	"runtime"
 	"time"
 
-	yaml "gopkg.in/yaml.v2"
 	"github.com/alphasoc/namescore/client"
+	"github.com/alphasoc/namescore/utils"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // DefaultLocation for config file.
@@ -30,7 +32,7 @@ type Config struct {
 
 	// Network interface configuration.
 	Network struct {
-		// Interface on which namescore should listen. Default: eth0
+		// Interface on which namescore should listen. Default: (none)
 		Interface string `yaml:"interface,omitempty"`
 		// Protocols on which namescore should listen. Default: ["udp", "tcp"]
 		Protocols []string `yaml:"protocols,omitempty"`
@@ -48,7 +50,10 @@ type Config struct {
 
 	// Internal namescore data.
 	Data struct {
-		// File for internal data. Default: /run/namescore.data
+		// File for internal data.
+		// Default:
+		// - linux /run/namescore.data
+		// - win %AppData%/namescore.data
 		File string `yaml:"file,omitempty"`
 	} `yaml:"data,omitempty"`
 
@@ -61,16 +66,15 @@ type Config struct {
 
 	// WhiteListConfig is loaded when WhilteList.File is not empty.
 	WhiteListConfig struct {
-		GroupName map[string]struct {
-			// Networks is list of network address. If packet source ip match any 
-			// of this network, then the packet will not be send to analyze.
-			Networks []string `json:"networks"`
-			// Domains is list of fqdn. If dns packet fqdn match any 
-			// of this domains , then the packet will not be send to analyze.
-			Domains  []string `json:"domains"`
-			// Exclueds is list of network address excludes from networks.
+		GroupByName map[string]struct {
+			// If packet source ip match this network, then the packet will be send to analyze.
+			MonitoredNetwork string `yaml:"monitored_network"`
+			// Exclueds is list of network address excludes from monitoring networks.
 			// This list has higher priority then networks list
-			Excludes []string `json:"excludes"`
+			ExcludedNetworks []string `yaml:"excluded_networks"`
+			// Domains is list of fqdn. If dns packet fqdn match any
+			// of this domains , then the packet will not be send to analyze.
+			ExcludedDomains []string `yaml:"excluded_domains"`
 		}
 	}
 
@@ -161,12 +165,10 @@ func (cfg *Config) setDefaults() *Config {
 		cfg.Alphasoc.APIVersion = "v1"
 	}
 
-	if cfg.Network.Interface == "" {
-		cfg.Network.Interface = "eth0"
-	}
 	if len(cfg.Network.Protocols) == 0 {
 		cfg.Network.Protocols = []string{"udp", "tcp"}
 	}
+
 	if cfg.Network.Port == 0 {
 		cfg.Network.Port = 53
 	}
@@ -179,7 +181,11 @@ func (cfg *Config) setDefaults() *Config {
 	}
 
 	if cfg.Data.File == "" {
-		cfg.Data.File = "/run/namescore.data"
+		if runtime.GOOS == "windows" {
+			cfg.Data.File = path.Join(os.Getenv("APPDATA"), "namescore.data")
+		} else {
+			cfg.Data.File = path.Join("run", "namescore.data")
+		}
 	}
 
 	if cfg.Events.PollInterval == 0 {
@@ -292,42 +298,47 @@ func validateFilename(file string) error {
 	return nil
 }
 
-func (cfg *Config) loadWhiteListConfig() (error) {
-        if cfg.WhiteList.File == "" {
-                return nil
-        }
+func (cfg *Config) loadWhiteListConfig() error {
+	if cfg.WhiteList.File == "" {
+		return nil
+	}
 
-        content, err := ioutil.ReadFile(cfg.WhiteList.File)
-        if err != nil {
-                return err
-        }
+	content, err := ioutil.ReadFile(cfg.WhiteList.File)
+	if err != nil {
+		return err
+	}
 
-        if err := yaml.Unmarshal(content, &cfg.WhiteListConfig); err != nil {
-                return err
-        }
+	if err := yaml.Unmarshal(content, &cfg.WhiteListConfig); err != nil {
+		return err
+	}
 
-        return cfg.validateWhiteListConfig()
+	return cfg.validateWhiteListConfig()
 }
 
 func (cfg *Config) validateWhiteListConfig() error {
-        for _, group := range cfg.WhiteListConfig.GroupName {
+	for _, group := range cfg.WhiteListConfig.GroupByName {
+		_, netip, err := net.ParseCIDR(group.MonitoredNetwork)
+		if err != nil {
+			return fmt.Errorf("%s is not cidr", group.MonitoredNetwork)
+		}
 
-                for _, network := range group.Networks {
-                        _, _, errCIDR := net.ParseCIDR(network)
-                        ip := net.ParseIP(network)
-                        if errCIDR != nil && ip != nil {
-                                return fmt.Errorf("%s is not cidr nor ip", network)
-                        }
-                }
+		for _, exclude := range group.ExcludedNetworks {
+			_, excip, err := net.ParseCIDR(exclude)
+			ip := net.ParseIP(exclude)
+			if err != nil && ip != nil {
+				return fmt.Errorf("%s is not cidr nor ip", exclude)
+			}
+                         
+			if (ip != nil && len(ip) != len(netip.IP)) ||
+			   (excip != nil && len(excip.IP) != len(netip.IP)) {
+				return fmt.Errorf("%s has diffrent ip type then %s", exclude, group.MonitoredNetwork)
+			}
 
-                for _, exclude := range group.Excludes {
-                        _, _, errCIDR := net.ParseCIDR(exclude)
-                        ip := net.ParseIP(exclude)
-                        if errCIDR != nil && ip != nil {
-                                return fmt.Errorf("%s is not cidr nor ip", exclude)
-                        }
-                }
-        }
-
-        return nil
+			if (ip != nil && !netip.Contains(ip)) || 
+			   utils.IPNetIntersect(netip, excip) {
+				return fmt.Errorf("%s is not with %s network ip", exclude, group.MonitoredNetwork)
+			}
+		}
+	}
+	return nil
 }

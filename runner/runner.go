@@ -1,109 +1,58 @@
 package runner
 
 import (
-	"io"
-	"log"
-	"os"
-
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/queries"
-	"github.com/google/gopacket"
+	"github.com/alphasoc/namescore/sniffer"
+	"github.com/alphasoc/namescore/utils"
 )
 
-func Start(cfg *config.Config, c *client.Client) error {
-	if cfg.Queries.Failed.File != "" {
-		// try to send old data, on success remove the file
-		if err := Send(c, []string{cfg.Queries.Failed.File}); err != nil {
-			return err
-		}
-		os.Remove(cfg.Queries.Failed.File)
-	}
-
-	ms, err := queries.NewMemStorage(cfg.Queries.BufferSize)
+func Start(c *client.Client, cfg *config.Config) error {
+	s, err := sniffer.NewDNSSnifferFromInterface(cfg.Network.Interface, cfg.Network.Protocols, cfg.Network.Port)
 	if err != nil {
 		return err
 	}
 
-	fs, err := queries.NewFileStorage(cfg.Queries.Failed.File)
-	if err != nil {
+	buf := queries.NewBuffer(queries.Size(cfg.Queries.Size), queries.FailedFile(cfg.Queries.Failed.File))
+	if err := loop(c, cfg, buf); err != nil {
 		return err
 	}
-
-	packetC := make(chan gopacket.Packet, cfg.Queries.BufferSize)
-	sniffer.Snif(packetC)
-	go func() {
-		for packet := range packetC {
-			ms.Write([]gopacket.Packet{packet})
-			if ms.Len() < cfg.Queries.BufferSize {
-				continue
-			}
-
-			packets, _ := ms.ReadAll()
-
-			req := utils.DecodePackets(packets)
-			resp, err := c.Queries(req)
-			if err == nil {
-				continue
-			}
-
-			log.Println("failed to send ", err)
-			if fs == nil {
-				continue
-			}
-
-			_, err := fs.Write(packets)
-			if err != nil {
-				log.Println("failed to send ", err)
-			}
-		}
-	}()
-
-	// Flush
-	go func() {
-		tC := timer.New(cfg.Queries.FlushInterval)
-		for range tC {
-			packets, _ := ms.ReadAll()
-			req := utils.DecodePackets(packets)
-			resp, err := c.Queries(req)
-			if err == nil {
-				continue
-			}
-			log.Println("failed to send ", err)
-			if fs == nil {
-				continue
-			}
-
-			_, err := fs.Write(packets)
-			if err != nil {
-				log.Println("failed to send ", err)
-			}
-		}
-	}()
-
 	return nil
 }
 
-func Send(c *client.Client, files []string) error {
-	for i := range files {
-		fs, err := queries.NewFileStorage(files[i])
+func Send(c *client.Client, cfg *config.Config, files []string) error {
+	for _, file := range files {
+		s, err := sniffer.NewDNSSnifferFromFile(file, cfg.Network.Protocols, cfg.Network.Port)
 		if err != nil {
 			return err
 		}
 
-		for packets, err := fs.Read(); err != io.EOF; packets, err = fs.Read() {
-			if err != nil && err != io.EOF {
-				return err
-			}
-
-			req := utils.DecodePackets(packets)
-			resp, err := c.Queries(req)
-			if err != nil {
-				return err
-			}
-
-			log.Println(resp.Received, resp.Accepted, resp.Rejected)
+		buf := queries.NewBuffer(queries.Size(cfg.Queries.Size))
+		if err := loop(c, cfg, buf); err != nil {
+			return err
+		}
+		if err := os.Rename(file, file+"."+time.Now().Format(time.RFC3339)); err != nil {
+			return err
 		}
 	}
 	return nil
+}
+
+func loop(c *client.Client, cfg *config.Config, buf *queries.Buffer) error {
+	df := filter.NewGroupFilter(cfg)
+	for packet := range s.Packets() {
+		buf.Write(packet)
+		if buf.Len() < cfg.Queries.Size {
+			continue
+		}
+		if _, err := c.Queries(utils.DecodePackets(df.Filter(buf.Read()))); err != nil {
+			return err
+		}
+		buf.Clear()
+	}
+
+	if _, err := c.Queries(utils.DecodePackets(df.Filter(ds.Filter(buf.Read())))); err != nil {
+		return err
+	}
 }

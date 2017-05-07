@@ -2,7 +2,6 @@ package utils
 
 import (
 	"net"
-	"os"
 	"time"
 
 	"github.com/alphasoc/namescore/client"
@@ -45,62 +44,13 @@ func DecodePackets(packets []gopacket.Packet) *client.QueriesRequest {
 	return nil
 }
 
-// func ReadPcapFile(file string) ([]gopacket.Packet, error) {
-// 	f, err := os.Open(file)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer f.Close()
-// 
-// 	r, err := pcapgo.NewReader(f)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 
-// 	var packets []gopacket.Packet
-// 	for {
-// 		data, _, err := r.ReadPacketData()
-// 		if err == io.EOF {
-// 			break
-// 		}
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 
-// 		packet := gopacket.NewPacket(data, layers.LinkTypeRaw, gopacket.DecodeOptions{
-// 			Lazy:               true,
-// 			NoCopy:             true,
-// 			SkipDecodeRecovery: true,
-// 		})
-// 
-// 		if l, ok := packet.ApplicationLayer().(gopacket.Layer).(*layers.DNS); !ok || l.QR {
-// 			// only dns query packets can be procceed by api
-// 			continue
-// 		}
-// 
-// 		packets = append(packets, packet)
-// 	}
-// 	return packets, nil
-// }
-
-func SendPcapFile(c *client.Client, cfg* config.Config, file string) error {
-	s, err := sniffer.NewDNSSnifferFromFile(file, cfg.Network.Protocols, cfg.Network.Port)
-	if err != nil {
-		return err
-	}
-
-	buf := queries.NewBuffer(queries.Size(cfg.Queries.Size))
-	for packet := range s.Source.Packets() {
-		buf.Write(packet)
-		if buf.Len() < cfg.Queries.Size {
-			continue
-		}
-		packets := buf.Read()
-		if _, err := c.Queries(DecodePackets(packets)); err != nil {
-			return err
-		}
-		buf.Clear()
-	}
-
-	return os.Rename(file, file+"."+time.Now().Format(time.RFC3339))
+// IPNetIntersect checks for intersection of two net.IPNet
+// IPNet must have the same IP type
+func IPNetIntersect(n1, n2 *net.IPNet) bool {
+        for i := range n1.IP {
+                if n1.IP[i] & n1.Mask[i] != n2.IP[i] & n2.Mask[i] & n1.Mask[i] {
+                        return false
+                }
+        }
+        return true
 }

@@ -12,11 +12,10 @@ import (
 // Sniffer is performing DNS request sniffing on local NIC.
 type Sniffer struct {
 	handle     *pcap.Handle
-	Source     *gopacket.PacketSource
+	source     *gopacket.PacketSource
 }
 
-// NewDNSSniffer is preparing sniffer to capture packets.
-// After this function finish, packets can be retrieved from packetSource
+// NewDNSSnifferFromInterface is preparing sniffer to capture packets from interface.
 func NewDNSSnifferFromInterface(iface string, protocols []string, port int) (*Sniffer, error) {
 	handle, err := pcap.OpenLive(iface, 1600, false, pcap.BlockForever)
 	if err != nil {
@@ -25,6 +24,7 @@ func NewDNSSnifferFromInterface(iface string, protocols []string, port int) (*Sn
 	return newDNSSniffer(handle, protocols, port)
 }
 
+// NewDNSSnifferFromFile is preparing sniffer to capture packets from file.
 func NewDNSSnifferFromFile(file string, protocols []string, port int) (*Sniffer, error) {
 	handle, err := pcap.OpenOffline(file, 1600, false, pcap.BlockForever)
 	if err != nil {
@@ -41,9 +41,13 @@ func newDNSSniffer(handle pcap.Handle, protocols []string, port int) (*Sniffer, 
 	}
 
 	return &Sniffer{
-		Source: gopacket.NewPacketSource(handle, handle.LinkType()),
+		source: gopacket.NewPacketSource(handle, handle.LinkType()),
 		handle: handle,
 	}, nil
+}
+
+func (s *Sniffer) Packets() chan gopacket.Packet {
+	return s.source.Packets()
 }
 
 // Close stops Sniffer.
