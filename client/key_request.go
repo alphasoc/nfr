@@ -21,7 +21,7 @@ type KeyRequestRequest struct {
 }
 
 // KeyRequest returns new AlphaSOC account key.
-func (c *Client) KeyRequest() (*KeyRequestResponse, error) {
+func (c *AlphaSOCClient) KeyRequest() (*KeyRequestResponse, error) {
 	var req KeyRequestRequest
 	req.Platform.Name = fmt.Sprintf("namescore-%s-%s", runtime.GOOS, runtime.GOARCH)
 	resp, err := c.post(context.Background(), "key/request", nil, &req)

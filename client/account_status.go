@@ -17,7 +17,7 @@ type AccountStatusResponse struct {
 }
 
 // AccountStatus returns AlphaSOC account details status.
-func (c *Client) AccountStatus() (*AccountStatusResponse, error) {
+func (c *AlphaSOCClient) AccountStatus() (*AccountStatusResponse, error) {
 	if c.key == "" {
 		return nil, ErrNoAPIKey
 	}

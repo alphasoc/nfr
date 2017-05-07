@@ -10,7 +10,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/utils"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -24,8 +23,6 @@ type Config struct {
 	Alphasoc struct {
 		// AlphaSOC host server. Default: https://api.alpahsoc.net
 		Host string `yaml:"host,omitempty"`
-		// AlphaSOC api version (only v1 supported now).
-		APIVersion string `yaml:"api_version,omitempty"`
 		// AlphaSOC api key. Required for start sending dns traffic.
 		APIKey string `yaml:"api_key,omitempty"`
 	} `yaml:"alphasoc,omitempty"`
@@ -161,9 +158,6 @@ func (cfg *Config) setDefaults() *Config {
 	if cfg.Alphasoc.Host == "" {
 		cfg.Alphasoc.Host = "https://api.alphasoc.net"
 	}
-	if cfg.Alphasoc.APIVersion == "" {
-		cfg.Alphasoc.APIVersion = "v1"
-	}
 
 	if len(cfg.Network.Protocols) == 0 {
 		cfg.Network.Protocols = []string{"udp", "tcp"}
@@ -205,10 +199,6 @@ func (cfg *Config) setDefaults() *Config {
 func (cfg *Config) validate() error {
 	if _, err := http.Get(cfg.Alphasoc.Host); err != nil {
 		return fmt.Errorf("can't connect to alphasoc %q server: %s", cfg.Alphasoc.Host, err)
-	}
-
-	if cfg.Alphasoc.APIVersion != client.DefaultVersion {
-		return fmt.Errorf("alphasoc api version %q invalid (only version '%s' is supported)", cfg.Alphasoc.APIVersion, client.DefaultVersion)
 	}
 
 	if cfg.Network.Interface == "" {

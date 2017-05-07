@@ -15,7 +15,7 @@ type AccountRegisterRequest struct {
 }
 
 // AccountRegister registers new alphasoc account.
-func (c *Client) AccountRegister(req *AccountRegisterRequest) error {
+func (c *AlphaSOCClient) AccountRegister(req *AccountRegisterRequest) error {
 	resp, err := c.post(context.Background(), "account/register", nil, req)
 	if err != nil {
 		return err

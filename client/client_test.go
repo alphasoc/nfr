@@ -21,22 +21,6 @@ var (
 	internalServerErrorServer *httptest.Server
 )
 
-func newClient(t *testing.T, url string) *Client {
-	c, err := New(url, DefaultVersion)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return c
-}
-
-func newClientWithKey(t *testing.T, url string) *Client {
-	c, err := NewWithKey(url, DefaultVersion, "test-api-key")
-	if err != nil {
-		t.Fatal(err)
-	}
-	return c
-}
-
 func checkMethodAndPath(t *testing.T, r *http.Request, method string, path string) {
 	if r.Method != method {
 		t.Fatalf("method %s not found", method)
@@ -64,15 +48,28 @@ func TestCheckKey(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := newClientWithKey(t, ts.URL).CheckKey(); err != nil {
+	if err := NewClient(ts.URL, "test-key").CheckKey(); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSetKey(t *testing.T) {
-	c := newClient(t, "")
+	c := NewClient("", "")
 	if c.SetKey("test-api-key"); c.key != "test-api-key" {
 		t.Fatalf("invalid key")
+	}
+}
+
+func TestBasicAuth(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if username, password, ok := r.BasicAuth(); !ok || username != "test-key" || password != "" {
+			t.Fatalf("invalid basic auth")
+		}
+	}))
+	defer ts.Close()
+
+	if _, err := NewClient(ts.URL, "test-key").post(context.Background(), "/", nil, nil); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -84,7 +81,7 @@ func TestUserAgent(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := newClient(t, ts.URL).get(context.Background(), "/", nil); err != nil {
+	if _, err := NewClient(ts.URL, "test-key").get(context.Background(), "/", nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -95,7 +92,7 @@ func TestResponseStatusNotOk(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := newClient(t, ts.URL).get(context.Background(), "/", nil); err == nil {
+	if _, err := NewClient(ts.URL, "").get(context.Background(), "/", nil); err == nil {
 		t.Fatal("exptected error")
 	}
 }
@@ -107,31 +104,25 @@ func TestResponseErrorMessage(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := newClient(t, ts.URL).get(context.Background(), "/", nil); err == nil || err.Error() != "test-error" {
+	if _, err := NewClient(ts.URL, "").get(context.Background(), "/", nil); err == nil || err.Error() != "test-error" {
 		t.Fatal("exptected error")
 	}
 }
 
-func TestInvalidClientVersion(t *testing.T) {
-	if _, err := New("", "v2"); err != ErrInvalidVersion {
-		t.Fatalf("error expcted %s, got %s", ErrInvalidVersion, err)
-	}
-}
-
 func TestDoInvalidMethod(t *testing.T) {
-	if _, err := newClient(t, "").do(context.Background(), "/", "/", nil, nil, nil); err == nil {
+	if _, err := NewClient("", "").do(context.Background(), "/", "/", nil, nil, nil); err == nil {
 		t.Fatal("exptected invalid method error")
 	}
 }
 
 func TestPostMarshalError(t *testing.T) {
-	if _, err := newClient(t, noopServer.URL).post(context.Background(), "/", nil, func() {}); err == nil {
+	if _, err := NewClient(noopServer.URL, "").post(context.Background(), "/", nil, func() {}); err == nil {
 		t.Fatal("exptected json marshal error")
 	}
 }
 
 func TestDoInvalidRequest(t *testing.T) {
-	if _, err := newClient(t, "").do(context.Background(), "noop", "/", nil, nil, nil); err == nil {
+	if _, err := NewClient("", "").do(context.Background(), "noop", "/", nil, nil, nil); err == nil {
 		t.Fatal("exptected invalid method error")
 	}
 }

@@ -14,7 +14,7 @@ func TestEvents(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := newClientWithKey(t, ts.URL).Events(""); err != nil {
+	if _, err := NewClient(ts.URL, "test-key").Events(""); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -30,25 +30,25 @@ func TestEventsFollow(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := newClientWithKey(t, ts.URL).Events("1"); err != nil {
+	if _, err := NewClient(ts.URL, "test-key").Events("1"); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestEventsFail(t *testing.T) {
-	if _, err := newClientWithKey(t, internalServerErrorServer.URL).Events(""); err == nil {
+	if _, err := NewClient(internalServerErrorServer.URL, "test-key").Events(""); err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestEventsNoKey(t *testing.T) {
-	if _, err := newClient(t, "").Events(""); err != ErrNoAPIKey {
+	if _, err := NewClient("", "").Events(""); err != ErrNoAPIKey {
 		t.Fatalf("expected error %s", ErrNoAPIKey)
 	}
 }
 
 func TestEventsInvalidJSON(t *testing.T) {
-	if _, err := newClientWithKey(t, noopServer.URL).Events(""); err == nil {
+	if _, err := NewClient(noopServer.URL, "test-key").Events(""); err == nil {
 		t.Fatal("expected error")
 	}
 }

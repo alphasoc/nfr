@@ -13,7 +13,7 @@ func TestAccountRegister(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := newClient(t, ts.URL).AccountRegister(&AccountRegisterRequest{}); err != nil {
+	if err := NewClient(ts.URL, "test-key").AccountRegister(&AccountRegisterRequest{}); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -26,7 +26,7 @@ func TestAccountRegisterFail(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := newClient(t, ts.URL).AccountRegister(&AccountRegisterRequest{}); err == nil {
+	if err := NewClient(ts.URL, "test-key").AccountRegister(&AccountRegisterRequest{}); err == nil {
 		t.Fatal("expected error")
 	}
 }

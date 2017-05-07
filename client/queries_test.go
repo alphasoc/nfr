@@ -14,25 +14,25 @@ func TestQueries(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := newClientWithKey(t, ts.URL).Queries(&QueriesRequest{}); err != nil {
+	if _, err := NewClient(ts.URL, "test-key").Queries(&QueriesRequest{}); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestQueriesFail(t *testing.T) {
-	if _, err := newClientWithKey(t, internalServerErrorServer.URL).Queries(nil); err == nil {
+	if _, err := NewClient(internalServerErrorServer.URL, "test-key").Queries(nil); err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestQueriesNoKey(t *testing.T) {
-	if _, err := newClient(t, "").Queries(nil); err != ErrNoAPIKey {
+	if _, err := NewClient("", "").Queries(nil); err != ErrNoAPIKey {
 		t.Fatalf("expected error %s", ErrNoAPIKey)
 	}
 }
 
 func TestQueriesInvalidJSON(t *testing.T) {
-	if _, err := newClientWithKey(t, noopServer.URL).Queries(nil); err == nil {
+	if _, err := NewClient(noopServer.URL, "test-key").Queries(nil); err == nil {
 		t.Fatal("expected error")
 	}
 }

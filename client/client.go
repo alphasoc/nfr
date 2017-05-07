@@ -18,10 +18,24 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 )
 
+// Client interface for AlphaSOC API.
+type Client interface {
+	AccountRegister(*AccountRegisterRequest) error
+	AccountStatus() (*AccountStatusResponse, error)
+	Events(string) (*EventsResponse, error)
+	Queries(*QueriesRequest) (*QueriesResponse, error)
+	KeyRequest() (*KeyRequestResponse, error)
+	KeyReset(*KeyResetRequest) error
+}
+
 // ErrorResponse represents AlphaSOC API error response.
 type ErrorResponse struct {
 	Message string `json:"message"`
 }
+
+// ErrNoAPIKey is returned when Client method is called without
+// api key set if it's required.
+var ErrNoAPIKey = errors.New("no api key")
 
 // DefaultVersion for AlphaSOC API.
 const DefaultVersion = "v1"
@@ -29,64 +43,47 @@ const DefaultVersion = "v1"
 // default user agent for namescore.
 const defaultUserAgent = "AlphaSOC namescore/" + helpers.Version
 
-// Client handles connection to AlphaSOC server.
-type Client struct {
+// AlphaSOCClient handles connection to AlphaSOC server.
+type AlphaSOCClient struct {
 	host    string
-	version string
 	client  *http.Client
+	version string
 	key     string
 }
 
-// ErrInvalidVersion is returned when Client is created with
-// invalid version of AlphaSCO API.
-var ErrInvalidVersion = errors.New("invalid version")
-
-// ErrNoAPIKey is returned when Client method is called without
-// api key set if it's required.
-var ErrNoAPIKey = errors.New("no api key")
-
-// New creates new AlphaSOC client with given host.
+// NewClient creates new AlphaSOC client with given host.
 // It also sets timeout to 30 seconds.
-func New(host, version string) (*Client, error) {
-	return NewWithKey(host, version, "")
-}
-
-// NewWithKey creates new AlphaSOC client with given host and key.
-func NewWithKey(host, version, key string) (*Client, error) {
-	if version != "v1" {
-		return nil, ErrInvalidVersion
-	}
-
-	return &Client{
+func NewClient(host, key string) *AlphaSOCClient {
+	return &AlphaSOCClient{
 		client:  &http.Client{Timeout: 30 * time.Second},
 		host:    strings.TrimSuffix(host, "/"),
-		version: version,
+		version: DefaultVersion,
 		key:     key,
-	}, nil
+	}
 }
 
 // SetKey sets API key.
-func (c *Client) SetKey(key string) {
+func (c *AlphaSOCClient) SetKey(key string) {
 	c.key = key
 }
 
 // CheckKey check if client has valid AlphaSOC key.
-func (c *Client) CheckKey() error {
+func (c *AlphaSOCClient) CheckKey() error {
 	_, err := c.AccountStatus()
 	return err
 }
 
 // getAPIPath returns the versioned request path to call the api.
 // It appends the query parameters to the path if they are not empty.
-func (c *Client) getAPIPath(path string, query url.Values) string {
+func (c *AlphaSOCClient) getAPIPath(path string, query url.Values) string {
 	return fmt.Sprintf("%s/%s/%s?%s", c.host, c.version, path, query.Encode())
 }
 
-func (c *Client) get(ctx context.Context, path string, query url.Values) (*http.Response, error) {
+func (c *AlphaSOCClient) get(ctx context.Context, path string, query url.Values) (*http.Response, error) {
 	return c.do(ctx, http.MethodGet, path, query, nil, nil)
 }
 
-func (c *Client) post(ctx context.Context, path string, query url.Values, obj interface{}) (*http.Response, error) {
+func (c *AlphaSOCClient) post(ctx context.Context, path string, query url.Values, obj interface{}) (*http.Response, error) {
 	var buffer bytes.Buffer
 	headers := http.Header{
 		"Content-Type": []string{"application/json"},
@@ -99,7 +96,7 @@ func (c *Client) post(ctx context.Context, path string, query url.Values, obj in
 	return c.do(ctx, http.MethodPost, path, query, &buffer, headers)
 }
 
-func (c *Client) do(ctx context.Context, method, path string, query url.Values, body io.Reader, headers http.Header) (*http.Response, error) {
+func (c *AlphaSOCClient) do(ctx context.Context, method, path string, query url.Values, body io.Reader, headers http.Header) (*http.Response, error) {
 	req, err := http.NewRequest(method, c.getAPIPath(path, query), body)
 	if err != nil {
 		return nil, err

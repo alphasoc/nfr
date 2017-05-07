@@ -38,7 +38,7 @@ type Threat struct {
 }
 
 // Events returns AlphaSOC events that informs about potential risk.
-func (c *Client) Events(follow string) (*EventsResponse, error) {
+func (c *AlphaSOCClient) Events(follow string) (*EventsResponse, error) {
 	if c.key == "" {
 		return nil, ErrNoAPIKey
 	}
