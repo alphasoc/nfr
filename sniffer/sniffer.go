@@ -2,10 +2,9 @@
 package sniffer
 
 import (
-	"net"
+	"fmt"
 
 	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
 
@@ -34,7 +33,7 @@ func NewDNSSnifferFromFile(file string, protocols []string, port int) (*Sniffer,
 
 }
 
-func newDNSSniffer(handle pcap.Handle, protocols []string, port int) (*Sniffer, error) {
+func newDNSSniffer(handle *pcap.Handle, protocols []string, port int) (*Sniffer, error) {
 	if err := handle.SetBPFFilter(printBPFFilter(protocosl, port)); err != nil {
 		handle.Close()
 		return nil, err
