@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/helpers"
+	"github.com/alphasoc/namescore/logger"
 	"github.com/alphasoc/namescore/runner"
 	"github.com/spf13/cobra"
 )
@@ -28,9 +28,6 @@ API key must be set before calling this mode.`,
 }
 
 func start(cfg *config.Config, c *client.Client) error {
-	helpers.InstallSIGHUPForLog()
-	if err := runner.Start(cfg, c); err != nil {
-		return err
-	}
-	return nil
+	logger.InstallSIGHUP()
+	return runner.Start(cfg, c)
 }

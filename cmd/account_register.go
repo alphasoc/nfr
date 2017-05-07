@@ -6,7 +6,7 @@ import (
 
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/helpers"
+	"github.com/alphasoc/namescore/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -48,7 +48,7 @@ A valid email address is required to activate the key.
 By performing this request you agree to our Terms of Service and Privacy Policy
 https://www.alphasoc.com/terms-of-service
 `)
-	name, email, organization, err := helpers.GetAccountRegisterDetails()
+	req, err := utils.GetAccountRegisterDetails()
 	if err != nil {
 		return err
 	}
@@ -69,13 +69,7 @@ https://www.alphasoc.com/terms-of-service
 		errSave = cfg.Save(configPath)
 	}
 
-	var req client.AccountRegisterRequest
-	req.Details.Name = name
-	req.Details.Email = email
-	req.Details.Phone = "+48606690566"
-	req.Details.Address = [3]string{"a", "b", "c"}
-	req.Details.Organization = organization
-	if err := c.AccountRegister(&req); err != nil {
+	if err := c.AccountRegister(req); err != nil {
 		if errSave != nil {
 			fmt.Fprintf(os.Stderr, `We were unable to register your account.
 What's more there was problem with saving namescore config. In order to 

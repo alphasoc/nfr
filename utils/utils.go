@@ -1,9 +1,13 @@
 package utils
 
 import (
+        "bufio"
+        "fmt"
+        "os"
 	"net"
 	"time"
 
+        "github.com/asaskevich/govalidator"
 	"github.com/alphasoc/namescore/client"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
@@ -20,9 +24,9 @@ func DecodePackets(packets []gopacket.Packet) *client.QueriesRequest {
 			continue
 		}
 
-		timestamp := time.Now()
-		if md := packets[i].Metadata(); md != nil {
-			timestamp = md.Timestamp
+		md := packets[i].Metadata()
+		if md == nil {
+			continue
 		}
 
 		var srcIP net.IP
@@ -30,11 +34,13 @@ func DecodePackets(packets []gopacket.Packet) *client.QueriesRequest {
 			srcIP = lipv4.SrcIP
 		} else if lipv6, ok := packets[i].TransportLayer().(gopacket.Layer).(*layers.IPv6); ok {
 			srcIP = lipv6.SrcIP
+		} else {
+			continue
 		}
 
 		for _, q := range ldns.Questions {
 			qr.Data = append(qr.Data, [4]string{
-				timestamp.Format(time.RFC3339),
+				md.Timestamp.Format(time.RFC3339),
 				srcIP.String(),
 				q.Type.String(),
 				string(q.Name),
@@ -53,4 +59,47 @@ func IPNetIntersect(n1, n2 *net.IPNet) bool {
 		}
 	}
 	return true
+}
+
+// GetAccountRegisterDetails prompts user for registartion infos
+// like name, email, organizatoin.
+func GetAccountRegisterDetails() (*client.AccountRegisterRequest, error) {
+        name, err := getInfo("Full Name", nil)
+        if err != nil {
+                return nil, err
+        }
+
+        email, err := getInfo("Email", govalidator.IsEmail)
+        if err != nil {
+                return nil, err
+        }
+        organization, err := getInfo("Organization", nil)
+        if err != nil {
+                return nil, err
+        }
+
+	var req client.AccountRegisterRequest
+	req.Details.Name = name
+	req.Details.Email = email
+	req.Details.Organization = organization
+        return &req, nil
+}
+
+const maxTries = 2
+
+func getInfo(prompt string, validator func(string) bool) (string, error) {
+        scanner := bufio.NewScanner(os.Stdin)
+        fmt.Printf("%s: ", prompt)
+        for i := maxTries; scanner.Scan() && i > 0; i-- {
+                text := scanner.Text()
+                if text == "" {
+                        fmt.Printf("%s can't be black, try again (%d tries left)\n", prompt, i)
+                } else if validator != nil && !validator(text) {
+                        fmt.Printf("invalid format, try again (%d tries left)\n", i)
+                } else {
+                        return text, nil
+                }
+                fmt.Printf("%s: ", prompt)
+        }
+        return "", fmt.Errorf("No input for %s", prompt)
 }

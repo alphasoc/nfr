@@ -35,6 +35,7 @@ func send(cfg *config.Config, c *client.Client, files []string) error {
 		if err := runner.Send(cfg, c, files[i]); err != nil {
 			return err
 		}
+		log.Printf("file %s sent\n", files[i])
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
-package helpers
+package logger
 
 import (
 	"fmt"
@@ -13,8 +13,8 @@ var (
 	outpath string
 )
 
-// SetLogOutput sets output for global logger.
-func SetLogOutput(path string) error {
+// SetOutput sets output for global logger.
+func SetOutput(path string) error {
 	var (
 		f   *os.File
 		err error
@@ -39,22 +39,21 @@ func SetLogOutput(path string) error {
 	return nil
 }
 
-// ReloadLogOutput reopen output for global logger.
-func ReloadLogOutput() error {
+// Reload reopen output for global logger.
+func Reload() error {
 	if outpath != "" {
-		return SetLogOutput(outpath)
+		return SetOutput(outpath)
 	}
 	return nil
 }
 
-// InstallSIGHUPForLog install handler for HUP singal
-// Handler will reopen log file.
-func InstallSIGHUPForLog() {
+// InstallSIGHUP install handler for HUP singal, that will reopen log file.
+func InstallSIGHUP() {
 	go func() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGHUP)
 		for {
-			if err := ReloadLogOutput(); err != nil {
+			if err := Reload(); err != nil {
 				log.Print(err)
 			}
 		}

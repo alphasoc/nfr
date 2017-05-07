@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/alphasoc/namescore/helpers"
+	"github.com/alphasoc/namescore/version"
 	"github.com/spf13/cobra"
 )
 
@@ -16,6 +16,6 @@ func newVersionCommand() *cobra.Command {
 }
 
 func version(cmd *cobra.Command, args []string) error {
-	fmt.Printf("namescore version %s\n", helpers.Version)
+	fmt.Printf("namescore version %s\n", version.Version)
 	return nil
 }

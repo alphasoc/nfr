@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/helpers"
+	"github.com/alphasoc/namescore/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -38,7 +38,7 @@ func createConfigAndClient(configPath string, checkKey bool) (*config.Config, *c
 	if err != nil {
 		return nil, nil, err
 	}
-	if err := helpers.SetLogOutput(cfg.Log.File); err != nil {
+	if err := logger.SetOutput(cfg.Log.File); err != nil {
 		return nil, nil, err
 	}
 	c, err := client.NewWithKey(cfg.Alphasoc.Host, cfg.Alphasoc.APIVersion, cfg.Alphasoc.APIKey)
