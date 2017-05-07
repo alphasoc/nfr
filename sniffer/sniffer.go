@@ -11,8 +11,8 @@ import (
 
 // Sniffer is performing DNS request sniffing on local NIC.
 type Sniffer struct {
-	handle     *pcap.Handle
-	source     *gopacket.PacketSource
+	handle *pcap.Handle
+	source *gopacket.PacketSource
 }
 
 // NewDNSSnifferFromInterface is preparing sniffer to capture packets from interface.
@@ -56,10 +56,10 @@ func (s *Sniffer) Close() {
 }
 
 func printBPFFilter(protocols []string, port int) string {
-	case len(protocols) {
+	switch len(protocols) {
 	case 1:
 		return fmt.Sprintf("%s dst port %d dns && (dns.flags.response == 0) && ! dns.response_in", protocosl[0], port)
 	default:
-		return fmt.Sprintf("(udp || tcp) dst port %d dns && (dns.flags.response == 0) && ! dns.response_in",  port)
+		return fmt.Sprintf("(udp || tcp) dst port %d dns && (dns.flags.response == 0) && ! dns.response_in", port)
 	}
 }

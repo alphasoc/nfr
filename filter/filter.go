@@ -15,10 +15,10 @@ type Filter interface {
 }
 
 type group struct {
-	network *net.IPNet
-	excludedNets []*net.IPNet
-	excludedIPs []net.IP
-	excludedStrictDomains []string
+	network                   *net.IPNet
+	excludedNets              []*net.IPNet
+	excludedIPs               []net.IP
+	excludedStrictDomains     []string
 	excludedMultimatchDomains []string
 }
 
@@ -40,7 +40,7 @@ func NewGroupsFilter(cfg *config.Config) Filter {
 		for _, exn := range k.ExcludedNetworks {
 			if _, exn1, _ := net.ParseCIDR(exn); exn1 != nil {
 				g.excludedNets = append(g.excludedNets, exn1)
-			} else if exip := net.ParseIP(exn); exip !=  nil {
+			} else if exip := net.ParseIP(exn); exip != nil {
 				g.excludedIPs = append(g.excludedIPs, exip)
 			}
 		}
@@ -71,16 +71,16 @@ func (f *GroupsFilter) Filter(packets []gopacket.Packet) []gopacket.Packet {
 			continue
 		}
 
-                var srcIP net.IP
-                if lipv4, ok := packet.TransportLayer().(gopacket.Layer).(*layers.IPv4); ok {
-                        srcIP = lipv4.SrcIP
-                } else if lipv6, ok := packet.TransportLayer().(gopacket.Layer).(*layers.IPv6); ok {
-                        srcIP = lipv6.SrcIP
-                } else {
+		var srcIP net.IP
+		if lipv4, ok := packet.TransportLayer().(gopacket.Layer).(*layers.IPv4); ok {
+			srcIP = lipv4.SrcIP
+		} else if lipv6, ok := packet.TransportLayer().(gopacket.Layer).(*layers.IPv6); ok {
+			srcIP = lipv6.SrcIP
+		} else {
 			continue
 		}
 
-gLoop:
+	gLoop:
 		for _, g := range f.groups {
 			if g.network.Contains(srcIP) {
 				for _, exip := range g.excludedIPs {

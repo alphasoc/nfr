@@ -328,14 +328,14 @@ func (cfg *Config) validateWhiteListConfig() error {
 			if err != nil && ip != nil {
 				return fmt.Errorf("%s is not cidr nor ip", exclude)
 			}
-                         
+
 			if (ip != nil && len(ip) != len(netip.IP)) ||
-			   (excip != nil && len(excip.IP) != len(netip.IP)) {
+				(excip != nil && len(excip.IP) != len(netip.IP)) {
 				return fmt.Errorf("%s has diffrent ip type then %s", exclude, group.MonitoredNetwork)
 			}
 
-			if (ip != nil && !netip.Contains(ip)) || 
-			   utils.IPNetIntersect(netip, excip) {
+			if (ip != nil && !netip.Contains(ip)) ||
+				utils.IPNetIntersect(netip, excip) {
 				return fmt.Errorf("%s is not with %s network ip", exclude, group.MonitoredNetwork)
 			}
 		}

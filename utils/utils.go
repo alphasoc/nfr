@@ -47,10 +47,10 @@ func DecodePackets(packets []gopacket.Packet) *client.QueriesRequest {
 // IPNetIntersect checks for intersection of two net.IPNet
 // IPNet must have the same IP type
 func IPNetIntersect(n1, n2 *net.IPNet) bool {
-        for i := range n1.IP {
-                if n1.IP[i] & n1.Mask[i] != n2.IP[i] & n2.Mask[i] & n1.Mask[i] {
-                        return false
-                }
-        }
-        return true
+	for i := range n1.IP {
+		if n1.IP[i]&n1.Mask[i] != n2.IP[i]&n2.Mask[i]&n1.Mask[i] {
+			return false
+		}
+	}
+	return true
 }
