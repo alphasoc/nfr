@@ -1,6 +1,9 @@
 package runner
 
 import (
+	"os"
+	"time"
+
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/queries"
@@ -14,8 +17,12 @@ func Start(cfg *config.Config, c *client.Client) error {
 		return err
 	}
 
-	buf := queries.NewBuffer(queries.Size(cfg.Queries.Size), queries.FailedFile(cfg.Queries.Failed.File))
-	if err := loop(c, cfg, buf); err != nil {
+	buf, err := queries.NewBuffer(queries.Size(cfg.Queries.BufferSize), queries.FailedFile(cfg.Queries.Failed.File))
+	if err != nil {
+		return err
+	}
+
+	if err := loop(cfg, c, buf); err != nil {
 		return err
 	}
 	return nil
@@ -27,8 +34,9 @@ func Send(cfg *config.Config, c *client.Client, file string) error {
 		return err
 	}
 
-	buf := queries.NewBuffer(queries.Size(cfg.Queries.Size))
-	if err := loop(c, cfg, buf); err != nil {
+	// ignore error, because the failed filed is not being opened 
+	buf, _ := queries.NewBuffer(queries.Size(cfg.Queries.BufferSize))
+	if err := loop(cfg, c, buf); err != nil {
 		return err
 	}
 	if err := os.Rename(file, file+"."+time.Now().Format(time.RFC3339)); err != nil {
