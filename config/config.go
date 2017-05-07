@@ -38,7 +38,7 @@ type Config struct {
 
 	// Log configuration.
 	Log struct {
-		// File to which namescore should log. Default: /var/log/namescore.log
+		// File to which namescore should log. Default: stdout
 		// To print log to console use two special outputs: stderr or stdout
 		File  string `yaml:"file,omitempty"`
 		Level string `yaml:"level,omitempty"`
@@ -156,7 +156,7 @@ func (cfg *Config) setDefaults() *Config {
 	}
 
 	if cfg.Log.File == "" {
-		cfg.Log.File = "/var/log/namescore.log"
+		cfg.Log.File = "stdout"
 	}
 	if cfg.Log.Level == "" {
 		cfg.Log.Level = "info"
