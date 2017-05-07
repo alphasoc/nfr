@@ -4,6 +4,7 @@ import (
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/helpers"
+	"github.com/alphasoc/namescore/runner"
 	"github.com/spf13/cobra"
 )
 
@@ -28,5 +29,8 @@ API key must be set before calling this mode.`,
 
 func start(cfg *config.Config, c *client.Client) error {
 	helpers.InstallSIGHUPForLog()
+	if _, err := runner.Send(cfg, c, files[i]); err != nil {
+		return err
+	}
 	return nil
 }

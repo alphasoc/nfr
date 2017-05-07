@@ -5,7 +5,7 @@ import (
 
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/utils"
+	"github.com/alphasoc/namescore/runner"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ func newSendCommand() *cobra.Command {
 
 func send(cfg *config.Config, c *client.Client, files []string) error {
 	for i := range files {
-		if _, err := utils.SendPcapFile(c, files[i]); err != nil {
+		if _, err := runner.Send(cfg, c, files[i]); err != nil {
 			return err
 		}
 	}
