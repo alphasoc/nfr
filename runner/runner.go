@@ -47,7 +47,7 @@ func Send(cfg *config.Config, c *client.Client, file string) error {
 }
 
 func loop(cfg *config.Config, c *client.Client, s *sniffer.Sniffer, buf *queries.Buffer) error {
-	df := filter.NewGroupFilter(cfg)
+	df := filter.NewGroupsFilter(cfg)
 	for packet := range s.Packets() {
 		buf.Write(packet)
 		if buf.Len() < cfg.Queries.BufferSize {
