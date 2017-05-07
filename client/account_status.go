@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"encoding/json"
+	"fmt"
 )
 
 // AccountStatusResponse represents response for /account/status call.

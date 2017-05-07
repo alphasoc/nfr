@@ -34,7 +34,7 @@ identifying gaps in your security controls and highlighting targeted attacks.`,
 
 // createConfigAndClient takes one argument to check if key is active.
 func createConfigAndClient(configPath string, checkKey bool) (*config.Config, *client.Client, error) {
-	cfg, _, err := config.New(configPath)
+	cfg, err := config.New(configPath)
 	if err != nil {
 		return nil, nil, err
 	}

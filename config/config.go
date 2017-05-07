@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"path"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	yaml "gopkg.in/yaml.v2"
+	"github.com/alphasoc/namescore/client"
 )
 
 // DefaultLocation for config file.
@@ -57,6 +59,19 @@ type Config struct {
 		File string `yaml:"file,omitempty"`
 	} `yaml:"whitelist,omitempty"`
 
+	// WhiteListConfig is loaded when WhilteList.File is not empty.
+	WhiteListConfig struct {
+		GroupName map[string]struct {
+			// Networks is list of network address. If packet source ip match any 
+			// of this network, then the packet will not be send to analyze.
+			Networks []string `json:"networks"`
+			// Domains is list of fqdn. If dns packet fqdn match any 
+			// of this domains , then the packet will not be send to analyze.
+			Domains  []string `json:"domains"`
+			// 
+			Excludes []string `json:"excludes"`
+		}
+	}
 	// AlphaSOC events configuration.
 	Events struct {
 		// File where to store events. If not set then now events will be retrived.
@@ -89,7 +104,7 @@ type Config struct {
 // New reads the config from file location. If file is not set
 // then it tries to read from default location, if this fails, then
 // default config is returned.
-func New(file string) (*Config, *WhiteListConfig, error) {
+func New(file string) (*Config, error) {
 	cfg := Config{}
 
 	if file != "" {
@@ -98,28 +113,27 @@ func New(file string) (*Config, *WhiteListConfig, error) {
 	if _, err := os.Stat(DefaultLocation); err == nil {
 		return Read(DefaultLocation)
 	}
-	return cfg.setDefaults(), &WhiteListConfig{}, nil
+	return cfg.setDefaults(), nil
 }
 
 // Read reads config from the given file.
-func Read(file string) (*Config, *WhiteListConfig, error) {
+func Read(file string) (*Config, error) {
 	cfg := Config{}
 
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	if err := yaml.Unmarshal(content, &cfg); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	wlcfg, err := NewWhiteListConfig(cfg.WhiteList.File)
-	if err != nil {
-		return nil, nil, err
+	if err := cfg.loadWhiteListConfig(); err != nil {
+		return nil, err
 	}
 	cfg.setDefaults()
-	return &cfg, wlcfg, cfg.validate()
+	return &cfg, cfg.validate()
 }
 
 // Save saves config to file.
@@ -185,8 +199,8 @@ func (cfg *Config) validate() error {
 		return fmt.Errorf("can't connect to alphasoc %q server: %s", cfg.Alphasoc.Host, err)
 	}
 
-	if cfg.Alphasoc.APIVersion != "v1" {
-		return fmt.Errorf("alphasoc api version %q invalid (only version 'v1' is supported)", cfg.Alphasoc.APIVersion)
+	if cfg.Alphasoc.APIVersion != client.DefaultVersion {
+		return fmt.Errorf("alphasoc api version %q invalid (only version '%s' is supported)", cfg.Alphasoc.APIVersion, client.DefaultVersion)
 	}
 
 	if cfg.Network.Interface == "" {
@@ -254,4 +268,64 @@ func (cfg *Config) validate() error {
 	}
 
 	return nil
+}
+
+func validateFilename(file string) error {
+	dir := path.Dir(file)
+	stat, err := os.Stat(dir)
+	if err != nil {
+		return fmt.Errorf("can't stat %s directory: %s", dir, err)
+	}
+	if !stat.IsDir() {
+		return fmt.Errorf("%s is not directory", dir)
+	}
+
+	stat, err = os.Stat(file)
+	if err == nil && !stat.Mode().IsRegular() {
+		return fmt.Errorf("%s is not regular file", file)
+	}
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("can't stat %s file: %s", file, err)
+	}
+	return nil
+}
+
+func (cfg *Config) loadWhiteListConfig() (error) {
+        if cfg.WhiteList.File == "" {
+                return nil
+        }
+
+        content, err := ioutil.ReadFile(cfg.WhiteList.File)
+        if err != nil {
+                return err
+        }
+
+        if err := yaml.Unmarshal(content, &cfg.WhiteListConfig); err != nil {
+                return err
+        }
+
+        return cfg.validateWhiteListConfig()
+}
+
+func (cfg *Config) validateWhiteListConfig() error {
+        for _, group := range cfg.WhiteListConfig.GroupName {
+
+                for _, network := range group.Networks {
+                        _, _, errCIDR := net.ParseCIDR(network)
+                        ip := net.ParseIP(network)
+                        if errCIDR != nil && ip != nil {
+                                return fmt.Errorf("%s is not cidr nor ip", network)
+                        }
+                }
+
+                for _, exclude := range group.Excludes {
+                        _, _, errCIDR := net.ParseCIDR(exclude)
+                        ip := net.ParseIP(exclude)
+                        if errCIDR != nil && ip != nil {
+                                return fmt.Errorf("%s is not cidr nor ip", exclude)
+                        }
+                }
+        }
+
+        return nil
 }

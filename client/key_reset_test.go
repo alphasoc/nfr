@@ -1,9 +1,9 @@
 package client
 
 import (
-	"testing"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 )
 
 func TestKeyReset(t *testing.T) {

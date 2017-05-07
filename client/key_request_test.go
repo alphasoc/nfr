@@ -2,15 +2,15 @@ package client
 
 import (
 	"encoding/json"
-	"testing"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 )
 
 func TestKeyRequest(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		checkMethodAndPath(t, r, http.MethodPost, "/key/request")
-                json.NewEncoder(w).Encode(&KeyRequestResponse{})
+		json.NewEncoder(w).Encode(&KeyRequestResponse{})
 	}))
 	defer ts.Close()
 
@@ -20,13 +20,13 @@ func TestKeyRequest(t *testing.T) {
 }
 
 func TestKeyRequestFail(t *testing.T) {
-        if _, err := newClientWithKey(t, internalServerErrorServer.URL).KeyRequest(); err == nil {
-                t.Fatal("expected error")
-        }
+	if _, err := newClientWithKey(t, internalServerErrorServer.URL).KeyRequest(); err == nil {
+		t.Fatal("expected error")
+	}
 }
 
 func TestKeyRequestInvalidJSON(t *testing.T) {
-        if _, err := newClientWithKey(t, noopServer.URL).KeyRequest(); err == nil {
-                t.Fatal("expected error")
-        }
+	if _, err := newClientWithKey(t, noopServer.URL).KeyRequest(); err == nil {
+		t.Fatal("expected error")
+	}
 }

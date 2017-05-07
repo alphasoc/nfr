@@ -1,17 +1,17 @@
 package client
 
 import (
-	"os"
 	"context"
 	"encoding/json"
-	"testing"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"testing"
 )
 
 // noop server and handler for testing
 var (
-	noopServer *httptest.Server
+	noopServer  *httptest.Server
 	noopHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 	internalServerErrorHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +21,7 @@ var (
 	internalServerErrorServer *httptest.Server
 )
 
-func newClient(t *testing.T, url string) *Client{
+func newClient(t *testing.T, url string) *Client {
 	c, err := New(url, DefaultVersion)
 	if err != nil {
 		t.Fatal(err)
@@ -29,7 +29,7 @@ func newClient(t *testing.T, url string) *Client{
 	return c
 }
 
-func newClientWithKey(t *testing.T, url string) *Client{
+func newClientWithKey(t *testing.T, url string) *Client {
 	c, err := NewWithKey(url, DefaultVersion, "test-api-key")
 	if err != nil {
 		t.Fatal(err)
@@ -42,7 +42,7 @@ func checkMethodAndPath(t *testing.T, r *http.Request, method string, path strin
 		t.Fatalf("method %s not found", method)
 		return
 	}
-	if r.URL.Path != "/" + DefaultVersion + path {
+	if r.URL.Path != "/"+DefaultVersion+path {
 		t.Fatalf("invalid url path %s", r.URL.Path)
 		return
 	}
@@ -60,7 +60,7 @@ func TestMain(m *testing.M) {
 func TestCheckKey(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		checkMethodAndPath(t, r, http.MethodGet, "/account/status")
-                json.NewEncoder(w).Encode(&AccountStatusResponse{})
+		json.NewEncoder(w).Encode(&AccountStatusResponse{})
 	}))
 	defer ts.Close()
 
@@ -71,9 +71,9 @@ func TestCheckKey(t *testing.T) {
 
 func TestSetKey(t *testing.T) {
 	c := newClient(t, "")
-        if c.SetKey("test-api-key"); c.key != "test-api-key" {
+	if c.SetKey("test-api-key"); c.key != "test-api-key" {
 		t.Fatalf("invalid key")
-        }
+	}
 }
 
 func TestUserAgent(t *testing.T) {
@@ -125,7 +125,7 @@ func TestDoInvalidMethod(t *testing.T) {
 }
 
 func TestPostMarshalError(t *testing.T) {
-	if _, err := newClient(t, noopServer.URL).post(context.Background(), "/", nil, func(){}); err == nil {
+	if _, err := newClient(t, noopServer.URL).post(context.Background(), "/", nil, func() {}); err == nil {
 		t.Fatal("exptected json marshal error")
 	}
 }

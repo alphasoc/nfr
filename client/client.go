@@ -31,10 +31,10 @@ const defaultUserAgent = "AlphaSOC namescore/" + helpers.Version
 
 // Client handles connection to AlphaSOC server.
 type Client struct {
-	host      string
-	version   string
-	client    *http.Client
-	key       string
+	host    string
+	version string
+	client  *http.Client
+	key     string
 }
 
 // ErrInvalidVersion is returned when Client is created with
@@ -43,7 +43,7 @@ var ErrInvalidVersion = errors.New("invalid version")
 
 // ErrNoAPIKey is returned when Client method is called without
 // api key set if it's required.
-var ErrNoAPIKey= errors.New("no api key")
+var ErrNoAPIKey = errors.New("no api key")
 
 // New creates new AlphaSOC client with given host.
 // It also sets timeout to 30 seconds.
@@ -58,10 +58,10 @@ func NewWithKey(host, version, key string) (*Client, error) {
 	}
 
 	return &Client{
-		client:    &http.Client{Timeout: 30 * time.Second},
-		host:      strings.TrimSuffix(host, "/"),
-		version:   version,
-		key:       key,
+		client:  &http.Client{Timeout: 30 * time.Second},
+		host:    strings.TrimSuffix(host, "/"),
+		version: version,
+		key:     key,
 	}, nil
 }
 
@@ -88,7 +88,7 @@ func (c *Client) get(ctx context.Context, path string, query url.Values) (*http.
 
 func (c *Client) post(ctx context.Context, path string, query url.Values, obj interface{}) (*http.Response, error) {
 	var buffer bytes.Buffer
-	headers := http.Header {
+	headers := http.Header{
 		"Content-Type": []string{"application/json"},
 	}
 	if obj != nil {

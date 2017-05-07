@@ -2,9 +2,9 @@ package client
 
 import (
 	"encoding/json"
-	"testing"
 	"net/http"
 	"net/http/httptest"
+	"testing"
 )
 
 func TestAccountStatus(t *testing.T) {
