@@ -29,28 +29,25 @@ func (b *Buffer) Len() int {
 	return len(b.packets)
 }
 
-func (b *Buffer) Write(packets []gopacket.Packet) error {
-	b.packets = append(b.packets, packets...)
-	if b.w != nil {
-		// save to file
-		for i := range packets {
-			md := packets[i].Metadata()
-			if md != nil {
-				continue
-			}
-			if err := b.w.WritePacket(md.CaptureInfo, packets[i].Data()); err != nil {
-				return err
-			}
-		}
+func (b *Buffer) Write(packet gopacket.Packet) error {
+	b.packets = append(b.packets, packet)
+	if b.w == nil {
+		return nil
 	}
-
-	return nil
+	// save to file
+	md := packet.Metadata()
+	if md == nil {
+		return nil
+	}
+	return b.w.WritePacket(md.CaptureInfo, packet.Data())
 }
 
 func (b *Buffer) Read() []gopacket.Packet {
-	packets := b.packets
+	return b.packets
+}
+
+func (b *Buffer) Clear() {
 	b.packets = make([]gopacket.Packet, 0, b.bufSize)
-	return packets
 }
 
 func (b *Buffer) Close() error {

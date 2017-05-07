@@ -68,10 +68,12 @@ type Config struct {
 			// Domains is list of fqdn. If dns packet fqdn match any 
 			// of this domains , then the packet will not be send to analyze.
 			Domains  []string `json:"domains"`
-			// 
+			// Exclueds is list of network address excludes from networks.
+			// This list has higher priority then networks list
 			Excludes []string `json:"excludes"`
 		}
 	}
+
 	// AlphaSOC events configuration.
 	Events struct {
 		// File where to store events. If not set then now events will be retrived.

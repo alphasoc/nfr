@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"io"
 	"net"
 	"os"
 	"time"
@@ -9,7 +8,6 @@ import (
 	"github.com/alphasoc/namescore/client"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"github.com/google/gopacket/pcapgo"
 )
 
 // DecodePackets into api Queries request.
@@ -18,8 +16,8 @@ func DecodePackets(packets []gopacket.Packet) *client.QueriesRequest {
 	qr := client.QueriesRequest{Data: make([][4]string, 0, len(packets))}
 
 	for i := range packets {
-		ldns, ok := packets[i].Layer(layers.LayerTypeDNS).(*layers.DNS)
-		if !ok {
+		ldns, ok := packets[i].ApplicationLayer().(gopacket.Layer).(*layers.DNS)
+		if !ok || ldns.QR {
 			continue
 		}
 
@@ -29,9 +27,9 @@ func DecodePackets(packets []gopacket.Packet) *client.QueriesRequest {
 		}
 
 		var srcIP net.IP
-		if lipv4, ok := packets[i].Layer(layers.LayerTypeIPv4).(*layers.IPv4); ok {
+		if lipv4, ok := packets[i].TransportLayer().(gopacket.Layer).(*layers.IPv4); ok {
 			srcIP = lipv4.SrcIP
-		} else if lipv6, ok := packets[i].Layer(layers.LayerTypeIPv6).(*layers.IPv6); ok {
+		} else if lipv6, ok := packets[i].TransportLayer().(gopacket.Layer).(*layers.IPv6); ok {
 			srcIP = lipv6.SrcIP
 		}
 
@@ -47,54 +45,62 @@ func DecodePackets(packets []gopacket.Packet) *client.QueriesRequest {
 	return nil
 }
 
-func ReadPcapFile(file string) ([]gopacket.Packet, error) {
-	f, err := os.Open(file)
+// func ReadPcapFile(file string) ([]gopacket.Packet, error) {
+// 	f, err := os.Open(file)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer f.Close()
+// 
+// 	r, err := pcapgo.NewReader(f)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 
+// 	var packets []gopacket.Packet
+// 	for {
+// 		data, _, err := r.ReadPacketData()
+// 		if err == io.EOF {
+// 			break
+// 		}
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 
+// 		packet := gopacket.NewPacket(data, layers.LinkTypeRaw, gopacket.DecodeOptions{
+// 			Lazy:               true,
+// 			NoCopy:             true,
+// 			SkipDecodeRecovery: true,
+// 		})
+// 
+// 		if l, ok := packet.ApplicationLayer().(gopacket.Layer).(*layers.DNS); !ok || l.QR {
+// 			// only dns query packets can be procceed by api
+// 			continue
+// 		}
+// 
+// 		packets = append(packets, packet)
+// 	}
+// 	return packets, nil
+// }
+
+func SendPcapFile(c *client.Client, cfg* config.Config, file string) error {
+	s, err := sniffer.NewDNSSnifferFromFile(file, cfg.Network.Protocols, cfg.Network.Port)
 	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	r, err := pcapgo.NewReader(f)
-	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var packets []gopacket.Packet
-	for {
-		data, _, err := r.ReadPacketData()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return nil, err
-		}
-
-		packet := gopacket.NewPacket(data, layers.LinkTypeRaw, gopacket.DecodeOptions{
-			Lazy:               true,
-			NoCopy:             true,
-			SkipDecodeRecovery: true,
-		})
-
-		if packet.Layer(layers.LayerTypeDNS) == nil {
-			// only DNS packets can be procced by api
+	buf := queries.NewBuffer(queries.Size(cfg.Queries.Size))
+	for packet := range s.Source.Packets() {
+		buf.Write(packet)
+		if buf.Len() < cfg.Queries.Size {
 			continue
 		}
-
-		packets = append(packets, packet)
-	}
-	return packets, nil
-}
-
-func SendPcapFile(c *client.Client, file string) (*client.QueriesResponse, error) {
-	packets, err := ReadPcapFile(file)
-	if err != nil {
-		return nil, err
+		packets := buf.Read()
+		if _, err := c.Queries(DecodePackets(packets)); err != nil {
+			return err
+		}
+		buf.Clear()
 	}
 
-	resp, err := c.Queries(DecodePackets(packets))
-	if err != nil {
-		return nil, err
-	}
-
-	return resp, os.Rename(file, file+"."+time.Now().Format(time.RFC3339))
+	return os.Rename(file, file+"."+time.Now().Format(time.RFC3339))
 }
