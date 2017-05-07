@@ -25,7 +25,7 @@ func NewDNSSnifferFromInterface(iface string, protocols []string, port int) (*Sn
 
 // NewDNSSnifferFromFile is preparing sniffer to capture packets from file.
 func NewDNSSnifferFromFile(file string, protocols []string, port int) (*Sniffer, error) {
-	handle, err := pcap.OpenOffline(file, 1600, false, pcap.BlockForever)
+	handle, err := pcap.OpenOffline(file)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func NewDNSSnifferFromFile(file string, protocols []string, port int) (*Sniffer,
 }
 
 func newDNSSniffer(handle *pcap.Handle, protocols []string, port int) (*Sniffer, error) {
-	if err := handle.SetBPFFilter(printBPFFilter(protocosl, port)); err != nil {
+	if err := handle.SetBPFFilter(printBPFFilter(protocols, port)); err != nil {
 		handle.Close()
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (s *Sniffer) Close() {
 func printBPFFilter(protocols []string, port int) string {
 	switch len(protocols) {
 	case 1:
-		return fmt.Sprintf("%s dst port %d dns && (dns.flags.response == 0) && ! dns.response_in", protocosl[0], port)
+		return fmt.Sprintf("%s dst port %d dns && (dns.flags.response == 0) && ! dns.response_in", protocols[0], port)
 	default:
 		return fmt.Sprintf("(udp || tcp) dst port %d dns && (dns.flags.response == 0) && ! dns.response_in", port)
 	}
