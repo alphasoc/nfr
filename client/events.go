@@ -39,6 +39,9 @@ type Threat struct {
 
 // Events returns AlphaSOC events that informs about potential risk.
 func (c *Client) Events(follow string) (*EventsResponse, error) {
+	if c.key == "" {
+		return nil, ErrNoAPIKey
+	}
 	query := url.Values{}
 	if follow != "" {
 		query.Add("follow", follow)

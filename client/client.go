@@ -23,18 +23,27 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
+// DefaultVersion for AlphaSOC API.
+const DefaultVersion = "v1"
+
+// default user agent for namescore.
+const defaultUserAgent = "AlphaSOC namescore/" + helpers.Version
+
 // Client handles connection to AlphaSOC server.
 type Client struct {
 	host      string
 	version   string
 	client    *http.Client
 	key       string
-	userAgent string
 }
 
-// ErrUnsupportedVersion is returned when Client is created with
-// unssported version of AlphaSCO API.
-var ErrUnsupportedVersion = errors.New("unsupported version")
+// ErrInvalidVersion is returned when Client is created with
+// invalid version of AlphaSCO API.
+var ErrInvalidVersion = errors.New("invalid version")
+
+// ErrNoAPIKey is returned when Client method is called without
+// api key set if it's required.
+var ErrNoAPIKey= errors.New("no api key")
 
 // New creates new AlphaSOC client with given host.
 // It also sets timeout to 30 seconds.
@@ -45,7 +54,7 @@ func New(host, version string) (*Client, error) {
 // NewWithKey creates new AlphaSOC client with given host and key.
 func NewWithKey(host, version, key string) (*Client, error) {
 	if version != "v1" {
-		return nil, ErrUnsupportedVersion
+		return nil, ErrInvalidVersion
 	}
 
 	return &Client{
@@ -53,7 +62,6 @@ func NewWithKey(host, version, key string) (*Client, error) {
 		host:      strings.TrimSuffix(host, "/"),
 		version:   version,
 		key:       key,
-		userAgent: fmt.Sprintf("AlphaSOC namescore/%s", helpers.Version),
 	}, nil
 }
 
@@ -71,7 +79,7 @@ func (c *Client) CheckKey() error {
 // getAPIPath returns the versioned request path to call the api.
 // It appends the query parameters to the path if they are not empty.
 func (c *Client) getAPIPath(path string, query url.Values) string {
-	return fmt.Sprintf("%s/%s/%s%s", c.host, c.version, path, query.Encode())
+	return fmt.Sprintf("%s/%s/%s?%s", c.host, c.version, path, query.Encode())
 }
 
 func (c *Client) get(ctx context.Context, path string, query url.Values) (*http.Response, error) {
@@ -80,12 +88,13 @@ func (c *Client) get(ctx context.Context, path string, query url.Values) (*http.
 
 func (c *Client) post(ctx context.Context, path string, query url.Values, obj interface{}) (*http.Response, error) {
 	var buffer bytes.Buffer
-	headers := make(http.Header, 1)
+	headers := http.Header {
+		"Content-Type": []string{"application/json"},
+	}
 	if obj != nil {
 		if err := json.NewEncoder(&buffer).Encode(obj); err != nil {
 			return nil, err
 		}
-		headers["Content-Type"] = []string{"application/json"}
 	}
 	return c.do(ctx, http.MethodPost, path, query, &buffer, headers)
 }
@@ -98,7 +107,7 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 	if c.key != "" {
 		req.SetBasicAuth(c.key, "")
 	}
-	req.Header.Set("User-Agent", c.userAgent)
+	req.Header.Set("User-Agent", defaultUserAgent)
 	for key, value := range headers {
 		req.Header[key] = value
 	}

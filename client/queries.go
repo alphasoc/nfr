@@ -25,6 +25,9 @@ type QueriesResponse struct {
 
 // Queries pushs dns queries to AlphaSOC api for futher analize.
 func (c *Client) Queries(req *QueriesRequest) (*QueriesResponse, error) {
+	if c.key == "" {
+		return nil, ErrNoAPIKey
+	}
 	resp, err := c.post(context.Background(), "queries", nil, req)
 	if err != nil {
 		return nil, err

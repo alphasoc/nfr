@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"encoding/json"
 )
 
@@ -17,6 +18,9 @@ type AccountStatusResponse struct {
 
 // AccountStatus returns AlphaSOC account details status.
 func (c *Client) AccountStatus() (*AccountStatusResponse, error) {
+	if c.key == "" {
+		return nil, ErrNoAPIKey
+	}
 	resp, err := c.get(context.Background(), "account/status", nil)
 	if err != nil {
 		return nil, err
@@ -25,7 +29,7 @@ func (c *Client) AccountStatus() (*AccountStatusResponse, error) {
 
 	var r AccountStatusResponse
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("json decoding error: %s", err)
 	}
 	return &r, nil
 }
