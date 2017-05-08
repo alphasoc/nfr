@@ -27,7 +27,7 @@ API key must be set before calling this mode.`,
 	return cmd
 }
 
-func start(cfg *config.Config, c *client.Client) error {
+func start(cfg *config.Config, c client.Client) error {
 	logger.InstallSIGHUP()
 	return runner.Start(cfg, c)
 }

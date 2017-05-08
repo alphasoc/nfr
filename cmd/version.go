@@ -11,11 +11,11 @@ func newVersionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Show version",
-		RunE:  version,
+		RunE:  printversion,
 	}
 }
 
-func version(cmd *cobra.Command, args []string) error {
+func printversion(cmd *cobra.Command, args []string) error {
 	fmt.Printf("namescore version %s\n", version.Version)
 	return nil
 }

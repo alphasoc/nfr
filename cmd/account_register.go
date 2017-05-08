@@ -28,7 +28,7 @@ func newAccountRegisterCommand(configPath *string) *cobra.Command {
 	return cmd
 }
 
-func register(cfg *config.Config, c *client.Client, configPath, key string) error {
+func register(cfg *config.Config, c *client.AlphaSOCClient, configPath, key string) error {
 	if key != "" {
 		c.SetKey(key)
 		fmt.Printf("Using key %s for registration.\n\n", key)

@@ -11,13 +11,13 @@ import (
 	"github.com/alphasoc/namescore/utils"
 )
 
-func Start(cfg *config.Config, c *client.Client) error {
+func Start(cfg *config.Config, c client.Client) error {
 	s, err := sniffer.NewDNSSnifferFromInterface(cfg.Network.Interface, cfg.Network.Protocols, cfg.Network.Port)
 	if err != nil {
 		return err
 	}
 
-	buf, err := queries.NewBuffer(queries.Size(cfg.Queries.BufferSize), queries.FailedFile(cfg.Queries.Failed.File))
+	buf, err := utils.NewPacketBuffer(utils.Size(cfg.Queries.BufferSize), utils.FailedFile(cfg.Queries.Failed.File))
 	if err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func Start(cfg *config.Config, c *client.Client) error {
 	return nil
 }
 
-func Send(cfg *config.Config, c *client.Client, file string) error {
+func Send(cfg *config.Config, c client.Client, file string) error {
 	s, err := sniffer.NewDNSSnifferFromFile(file, cfg.Network.Protocols, cfg.Network.Port)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func Send(cfg *config.Config, c *client.Client, file string) error {
 	return nil
 }
 
-func loop(cfg *config.Config, c *client.Client, s *sniffer.Sniffer, buf *queries.Buffer) error {
+func loop(cfg *config.Config, c client.Client, s *sniffer.Sniffer, buf *utils.PacketBuffer) error {
 	df := filter.NewGroupsFilter(cfg)
 	for packet := range s.Packets() {
 		buf.Write(packet)

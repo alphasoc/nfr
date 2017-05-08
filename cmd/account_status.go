@@ -27,7 +27,7 @@ The following informations are provided:
 	return cmd
 }
 
-func accountStatus(c *client.Client) error {
+func accountStatus(c client.Client) error {
 	status, err := c.AccountStatus()
 	if err != nil {
 		return err

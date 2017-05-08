@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"log"
 	"errors"
 
 	"github.com/alphasoc/namescore/client"
@@ -30,7 +31,7 @@ func newSendCommand() *cobra.Command {
 	return cmd
 }
 
-func send(cfg *config.Config, c *client.Client, files []string) error {
+func send(cfg *config.Config, c client.Client, files []string) error {
 	for i := range files {
 		if err := runner.Send(cfg, c, files[i]); err != nil {
 			return err

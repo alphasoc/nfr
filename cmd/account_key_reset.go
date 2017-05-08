@@ -26,7 +26,7 @@ func newAccountKeyResetCommand(configPath *string) *cobra.Command {
 	return cmd
 }
 
-func accountKeyReset(c *client.Client, email string) error {
+func accountKeyReset(c client.Client, email string) error {
 	if err := c.KeyReset(&client.KeyResetRequest{Email: email}); err != nil {
 		return err
 	}
