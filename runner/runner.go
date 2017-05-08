@@ -7,7 +7,6 @@ import (
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/filter"
-	"github.com/alphasoc/namescore/queries"
 	"github.com/alphasoc/namescore/sniffer"
 	"github.com/alphasoc/namescore/utils"
 )
@@ -35,8 +34,8 @@ func Send(cfg *config.Config, c *client.Client, file string) error {
 		return err
 	}
 
-	// ignore error, because the failed filed is not being opened 
-	buf, _ := queries.NewBuffer(queries.Size(cfg.Queries.BufferSize))
+	// ignore error, because the failed filed is not being opened
+	buf, _ := utils.NewPacketBuffer(utils.Size(cfg.Queries.BufferSize))
 	if err := loop(cfg, c, s, buf); err != nil {
 		return err
 	}

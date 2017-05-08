@@ -1,3 +1,4 @@
+// package logger provides functions to configure global logger behaviour.
 package logger
 
 import (

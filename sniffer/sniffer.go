@@ -1,4 +1,4 @@
-// Package dns provides functions for DNS packet sniffing.
+// Package sniffer provides functions for sniffing dns packets.
 package sniffer
 
 import (
