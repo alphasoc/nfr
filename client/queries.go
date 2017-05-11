@@ -16,6 +16,16 @@ type QueriesRequest struct {
 	Data [][4]string `json:"data"`
 }
 
+// NewQueriesRequest creates and returns QueriesRequest.
+func NewQueriesRequest() *QueriesRequest {
+	return &QueriesRequest{Data: make([][4]string, 0)}
+}
+
+// AddQuery adds query to request.
+func (q *QueriesRequest) AddQuery(query [4]string) {
+	q.Data = append(q.Data, query)
+}
+
 // QueriesResponse represents reponse for /quiery call.
 type QueriesResponse struct {
 	Received int            `json:"received"`

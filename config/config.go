@@ -41,8 +41,7 @@ type Config struct {
 	Log struct {
 		// File to which namescore should log. Default: stdout
 		// To print log to console use two special outputs: stderr or stdout
-		File  string `yaml:"file,omitempty"`
-		Level string `yaml:"level,omitempty"`
+		File string `yaml:"file,omitempty"`
 	} `yaml:"log,omitempty"`
 
 	// Internal namescore data.
@@ -73,15 +72,16 @@ type Config struct {
 			// of this domains , then the packet will not be send to analyze.
 			ExcludedDomains []string `yaml:"excluded_domains"`
 		}
-	}
+	} `yaml:"-"`
 
 	// AlphaSOC events configuration.
 	Events struct {
-		// File where to store events. If not set then now events will be retrived.
-		// Default: (none)
+		// File where to store events. If not set then none events will be retrived.
+		// To print events to console use two special outputs: stderr or stdout
+		// Default: "stdout"
 		File string `yaml:"file,omitempty"`
 		// Interval for polling events from AlphaSOC server. Default: 30s
-		PollInterval time.Duration `yaml:"pool_interval,omitempty"`
+		PollInterval time.Duration `yaml:"poll_interval,omitempty"`
 	} `yaml:"events,omitempty"`
 
 	// DNS queries configuration.
@@ -167,18 +167,19 @@ func (cfg *Config) setDefaults() *Config {
 		cfg.Network.Port = 53
 	}
 
+	if cfg.Events.File == "" {
+		cfg.Events.File = "stdout"
+	}
+
 	if cfg.Log.File == "" {
 		cfg.Log.File = "stdout"
-	}
-	if cfg.Log.Level == "" {
-		cfg.Log.Level = "info"
 	}
 
 	if cfg.Data.File == "" {
 		if runtime.GOOS == "windows" {
 			cfg.Data.File = path.Join(os.Getenv("APPDATA"), "namescore.data")
 		} else {
-			cfg.Data.File = path.Join("run", "namescore.data")
+			cfg.Data.File = path.Join("/run", "namescore.data")
 		}
 	}
 
@@ -201,14 +202,6 @@ func (cfg *Config) validate() error {
 		return fmt.Errorf("can't connect to alphasoc %q server: %s", cfg.Alphasoc.Host, err)
 	}
 
-	if cfg.Network.Interface == "" {
-		return fmt.Errorf("empty network interface name")
-	}
-
-	if _, err := net.InterfaceByName(cfg.Network.Interface); err != nil {
-		return fmt.Errorf("invalid %q network interface: %s", cfg.Network.Interface, err)
-	}
-
 	if len(cfg.Network.Protocols) == 0 {
 		return fmt.Errorf("empty protocol list")
 	}
@@ -229,12 +222,6 @@ func (cfg *Config) validate() error {
 
 	if err := validateFilename(cfg.Log.File); err != nil {
 		return err
-	}
-	if cfg.Log.Level != "debug" &&
-		cfg.Log.Level != "info" &&
-		cfg.Log.Level != "warn" &&
-		cfg.Log.Level != "fatal" {
-		return fmt.Errorf("invalid %q log level", cfg.Log.Level)
 	}
 
 	if err := validateFilename(cfg.Data.File); err != nil {

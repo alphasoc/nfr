@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/alphasoc/namescore/utils"
 )
 
 var (
@@ -15,28 +17,21 @@ var (
 )
 
 // SetOutput sets output for global logger.
-func SetOutput(path string) error {
+func SetOutput(file string) error {
 	var (
 		f   *os.File
 		err error
 	)
-
-	if path == "stdout" {
-		f = os.Stdout
-	} else if path == "stderr" {
-		f = os.Stderr
-	} else {
-		f, err = os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			return fmt.Errorf("can't set logger output: %s", err)
-		}
+	f, err = utils.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("can't set logger output: %s", err)
 	}
 	log.SetOutput(f)
 	if outlog != nil && outlog != os.Stdout && outlog != os.Stderr {
 		outlog.Close()
 	}
 	outlog = f
-	outpath = path
+	outpath = file
 	return nil
 }
 

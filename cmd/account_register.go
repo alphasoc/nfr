@@ -50,13 +50,15 @@ https://www.alphasoc.com/terms-of-service
 `)
 	req, err := utils.GetAccountRegisterDetails()
 	if err != nil {
-		return err
+		fmt.Fprintf(os.Stderr, "\n%s\n", err)
+		return nil
 	}
 
 	if key == "" && cfg.Alphasoc.APIKey == "" {
 		keyReq, err := c.KeyRequest()
 		if err != nil {
-			return err
+			fmt.Fprintf(os.Stderr, "\n%s\n", err)
+			return nil
 		}
 		c.SetKey(keyReq.Key)
 		cfg.Alphasoc.APIKey = keyReq.Key
@@ -71,7 +73,8 @@ https://www.alphasoc.com/terms-of-service
 
 	if err := c.AccountRegister(req); err != nil {
 		if errSave != nil {
-			fmt.Fprintf(os.Stderr, `We were unable to register your account.
+			fmt.Fprintf(os.Stderr, `
+We were unable to register your account (%s).
 What's more there was problem with saving namescore config. In order to 
 register account please run namescore again with following command
 and follow the instructions:
@@ -82,17 +85,20 @@ Also put your config in /etc/namescore.yml for future usage.
 Config format below:
 
 alphasoc:
-  api_key: %s`, cfg.Alphasoc.APIKey, cfg.Alphasoc.APIKey)
-			return errSave
+  api_key: %s
+`, err, cfg.Alphasoc.APIKey, cfg.Alphasoc.APIKey)
+			return nil
 		}
 
-		fmt.Fprintf(os.Stderr, `We were unable to register your account.
+		fmt.Fprintf(os.Stderr, `
+We were unable to register your account (%s)
 Please run namescore again with following command and follow the instructions:
 
-$ namescore`)
-		return err
+$ namescore
+`, err)
+		return nil
 	}
 
-	fmt.Println("Success! Check your email and click the verification link to activate your API key")
+	fmt.Println("\nSuccess! Check your email and click the verification link to activate your API key")
 	return nil
 }

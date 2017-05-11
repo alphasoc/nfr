@@ -1,13 +1,14 @@
-package utils
+package events
 
 import (
 	"encoding/json"
 	"os"
 
 	"github.com/alphasoc/namescore/client"
+	"github.com/alphasoc/namescore/utils"
 )
 
-type EventsLogger interface {
+type Logger interface {
 	Log(*client.EventsResponse) error
 }
 
@@ -16,7 +17,7 @@ type JSONFileLogger struct {
 }
 
 func NewJSONFileLogger(file string) (*JSONFileLogger, error) {
-	f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0755)
+	f, err := utils.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +35,7 @@ func (l *JSONFileLogger) Log(e *client.EventsResponse) error {
 	return err
 }
 
+// Close closes the File. It returns an error, if any.
 func (l *JSONFileLogger) Close() error {
 	return l.f.Close()
 }

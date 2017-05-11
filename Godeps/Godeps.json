@@ -7,11 +7,6 @@
 	],
 	"Deps": [
 		{
-			"ImportPath": "github.com/asaskevich/govalidator",
-			"Comment": "v6-2-g133eba7",
-			"Rev": "133eba7d8257761201f2d4d8dcbf774692fdb946"
-		},
-		{
 			"ImportPath": "github.com/google/gopacket",
 			"Comment": "v1.1.12-59-gb0b789b",
 			"Rev": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3"

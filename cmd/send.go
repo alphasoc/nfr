@@ -1,12 +1,14 @@
 package cmd
 
 import (
-	"log"
 	"errors"
+	"log"
+	"os"
+	"time"
 
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/runner"
+	"github.com/alphasoc/namescore/executor"
 	"github.com/spf13/cobra"
 )
 
@@ -32,10 +34,19 @@ func newSendCommand() *cobra.Command {
 }
 
 func send(cfg *config.Config, c client.Client, files []string) error {
+	e, err := executor.New(c, cfg)
+	if err != nil {
+		return err
+	}
+
 	for i := range files {
-		if err := runner.Send(cfg, c, files[i]); err != nil {
+		if err := e.Send(files[i]); err != nil {
 			return err
 		}
+		if err := os.Rename(files[i], files[i]+"."+time.Now().Format(time.RFC3339)); err != nil {
+			return err
+		}
+
 		log.Printf("file %s sent\n", files[i])
 	}
 	return nil
