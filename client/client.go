@@ -50,9 +50,9 @@ type AlphaSOCClient struct {
 	key     string
 }
 
-// NewClient creates new AlphaSOC client with given host.
+// New creates new AlphaSOC client with given host.
 // It also sets timeout to 30 seconds.
-func NewClient(host, key string) *AlphaSOCClient {
+func New(host, key string) *AlphaSOCClient {
 	return &AlphaSOCClient{
 		client:  &http.Client{Timeout: 30 * time.Second},
 		host:    strings.TrimSuffix(host, "/"),

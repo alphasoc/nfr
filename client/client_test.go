@@ -48,13 +48,13 @@ func TestCheckKey(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := NewClient(ts.URL, "test-key").CheckKey(); err != nil {
+	if err := New(ts.URL, "test-key").CheckKey(); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestSetKey(t *testing.T) {
-	c := NewClient("", "")
+	c := New("", "")
 	if c.SetKey("test-api-key"); c.key != "test-api-key" {
 		t.Fatalf("invalid key")
 	}
@@ -68,7 +68,7 @@ func TestBasicAuth(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := NewClient(ts.URL, "test-key").post(context.Background(), "/", nil, nil); err != nil {
+	if _, err := New(ts.URL, "test-key").post(context.Background(), "/", nil, nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -81,7 +81,7 @@ func TestUserAgent(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := NewClient(ts.URL, "test-key").get(context.Background(), "/", nil); err != nil {
+	if _, err := New(ts.URL, "test-key").get(context.Background(), "/", nil); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -92,7 +92,7 @@ func TestResponseStatusNotOk(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := NewClient(ts.URL, "").get(context.Background(), "/", nil); err == nil {
+	if _, err := New(ts.URL, "").get(context.Background(), "/", nil); err == nil {
 		t.Fatal("exptected error")
 	}
 }
@@ -104,25 +104,25 @@ func TestResponseErrorMessage(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := NewClient(ts.URL, "").get(context.Background(), "/", nil); err == nil || err.Error() != "test-error" {
+	if _, err := New(ts.URL, "").get(context.Background(), "/", nil); err == nil || err.Error() != "test-error" {
 		t.Fatal("exptected error")
 	}
 }
 
 func TestDoInvalidMethod(t *testing.T) {
-	if _, err := NewClient("", "").do(context.Background(), "/", "/", nil, nil, nil); err == nil {
+	if _, err := New("", "").do(context.Background(), "/", "/", nil, nil, nil); err == nil {
 		t.Fatal("exptected invalid method error")
 	}
 }
 
 func TestPostMarshalError(t *testing.T) {
-	if _, err := NewClient(noopServer.URL, "").post(context.Background(), "/", nil, func() {}); err == nil {
+	if _, err := New(noopServer.URL, "").post(context.Background(), "/", nil, func() {}); err == nil {
 		t.Fatal("exptected json marshal error")
 	}
 }
 
 func TestDoInvalidRequest(t *testing.T) {
-	if _, err := NewClient("", "").do(context.Background(), "noop", "/", nil, nil, nil); err == nil {
+	if _, err := New("", "").do(context.Background(), "noop", "/", nil, nil, nil); err == nil {
 		t.Fatal("exptected invalid method error")
 	}
 }

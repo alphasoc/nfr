@@ -63,9 +63,9 @@ type Config struct {
 
 	// WhiteListConfig is loaded when WhilteList.File is not empty.
 	WhiteListConfig struct {
-		GroupByName map[string]struct {
+		Groups map[string]struct {
 			// If packet source ip match this network, then the packet will be send to analyze.
-			MonitoredNetwork string `yaml:"monitored_network"`
+			MonitoredNetwork []string `yaml:"monitored_network"`
 			// Exclueds is list of network address excludes from monitoring networks.
 			// This list has higher priority then networks list
 			ExcludedNetworks []string `yaml:"excluded_networks"`
@@ -306,27 +306,24 @@ func (cfg *Config) loadWhiteListConfig() error {
 }
 
 func (cfg *Config) validateWhiteListConfig() error {
-	for _, group := range cfg.WhiteListConfig.GroupByName {
-		_, netip, err := net.ParseCIDR(group.MonitoredNetwork)
-		if err != nil {
-			return fmt.Errorf("%s is not cidr", group.MonitoredNetwork)
+	for _, group := range cfg.WhiteListConfig.Groups {
+		for _, n := range group.MonitoredNetwork {
+			if _, _, err := net.ParseCIDR(n); err != nil {
+				return fmt.Errorf("%s is not cidr", n)
+			}
 		}
 
-		for _, exclude := range group.ExcludedNetworks {
-			_, excip, err := net.ParseCIDR(exclude)
-			ip := net.ParseIP(exclude)
+		for _, n := range group.ExcludedNetworks {
+			_, _, err := net.ParseCIDR(n)
+			ip := net.ParseIP(n)
 			if err != nil && ip != nil {
-				return fmt.Errorf("%s is not cidr nor ip", exclude)
+				return fmt.Errorf("%s is not cidr nor ip", n)
 			}
+		}
 
-			if (ip != nil && len(ip) != len(netip.IP)) ||
-				(excip != nil && len(excip.IP) != len(netip.IP)) {
-				return fmt.Errorf("%s has diffrent ip type then %s", exclude, group.MonitoredNetwork)
-			}
-
-			if (ip != nil && !netip.Contains(ip)) ||
-				utils.IPNetIntersect(netip, excip) {
-				return fmt.Errorf("%s is not with %s network ip", exclude, group.MonitoredNetwork)
+		for _, domain := range group.ExcludedDomains {
+			if !utils.IsDomainName(domain) {
+				return fmt.Errorf("%s is not domain", domain)
 			}
 		}
 	}

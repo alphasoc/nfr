@@ -12,13 +12,13 @@ func TestKeyReset(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := NewClient(ts.URL, "").KeyReset(&KeyResetRequest{}); err != nil {
+	if err := New(ts.URL, "").KeyReset(&KeyResetRequest{}); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestResetFail(t *testing.T) {
-	if err := NewClient(internalServerErrorServer.URL, "").KeyReset(nil); err == nil {
+	if err := New(internalServerErrorServer.URL, "").KeyReset(nil); err == nil {
 		t.Fatal("expected error")
 	}
 }

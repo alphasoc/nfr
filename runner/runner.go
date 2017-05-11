@@ -6,7 +6,7 @@ import (
 
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/filter"
+	"github.com/alphasoc/namescore/groups"
 	"github.com/alphasoc/namescore/sniffer"
 	"github.com/alphasoc/namescore/utils"
 )

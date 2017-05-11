@@ -41,7 +41,7 @@ func createConfigAndClient(configPath string, checkKey bool) (*config.Config, *c
 	if err := logger.SetOutput(cfg.Log.File); err != nil {
 		return nil, nil, err
 	}
-	c := client.NewClient(cfg.Alphasoc.Host, cfg.Alphasoc.APIKey)
+	c := client.New(cfg.Alphasoc.Host, cfg.Alphasoc.APIKey)
 	if checkKey {
 		if err := c.CheckKey(); err != nil {
 			return nil, nil, err

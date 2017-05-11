@@ -14,19 +14,19 @@ func TestKeyRequest(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := NewClient(ts.URL, "").KeyRequest(); err != nil {
+	if _, err := New(ts.URL, "").KeyRequest(); err != nil {
 		t.Fatal(err)
 	}
 }
 
 func TestKeyRequestFail(t *testing.T) {
-	if _, err := NewClient(internalServerErrorServer.URL, "").KeyRequest(); err == nil {
+	if _, err := New(internalServerErrorServer.URL, "").KeyRequest(); err == nil {
 		t.Fatal("expected error")
 	}
 }
 
 func TestKeyRequestInvalidJSON(t *testing.T) {
-	if _, err := NewClient(noopServer.URL, "").KeyRequest(); err == nil {
+	if _, err := New(noopServer.URL, "").KeyRequest(); err == nil {
 		t.Fatal("expected error")
 	}
 }

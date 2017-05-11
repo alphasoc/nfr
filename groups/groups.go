@@ -1,8 +1,7 @@
-package filter
+package groups
 
 import (
 	"net"
-	"sort"
 	"strings"
 
 	"github.com/alphasoc/namescore/config"
@@ -10,23 +9,27 @@ import (
 	"github.com/google/gopacket/layers"
 )
 
-type Filter interface {
-	Filter([]gopacket.Packet) []gopacket.Packet
+type Group struct {
+	Name 		string
+	network         []*net.IPNet
+	excludedNetworks []*net.IPNet
+	excludedIPs     []net.IP
+	excludedDomains []string
 }
 
-type group struct {
-	network                   *net.IPNet
-	excludedNets              []*net.IPNet
-	excludedIPs               []net.IP
-	excludedStrictDomains     []string
-	excludedMultimatchDomains []string
+func NewGroup(name string, networks []string, excludedNetworks []string, excludedDomains) *Group {
 }
 
-type GroupsFilter struct {
-	groups map[string]group
+type matchers struct {
+	dm *utils.DomainMatcher
+	nm *utils.NetworkMacher
 }
 
-func NewGroupsFilter(cfg *config.Config) Filter {
+type Groups struct {
+	groups map[string] matchers
+}
+
+func New() *Groups {
 	gs := cfg.WhiteListConfig.GroupByName
 	if len(gs) == 0 {
 		return nil
@@ -52,22 +55,26 @@ func NewGroupsFilter(cfg *config.Config) Filter {
 				g.excludedStrictDomains = append(g.excludedStrictDomains, domain)
 			}
 		}
-		sort.Strings(g.excludedStrictDomains)
-		sort.Strings(g.excludedMultimatchDomains)
 		gf.groups[name] = g
 	}
 	return &gf
 }
 
-func (f *GroupsFilter) Filter(packets []gopacket.Packet) []gopacket.Packet {
-	if f == nil {
+func (g *Groups) Add(g *Group) {
+	if g == nil {
+		return
+	}
+}
+
+func (g *Groups) Filter(packets []gopacket.Packet) []gopacket.Packet {
+	if g == nil {
 		return packets
 	}
 
 	n := 0
 	for _, packet := range packets {
 		l, ok := packet.ApplicationLayer().(gopacket.Layer).(*layers.DNS)
-		if !ok || l.QR {
+		if !ok || l.QR || len(l.Questions) == 0 {
 			continue
 		}
 
@@ -80,36 +87,18 @@ func (f *GroupsFilter) Filter(packets []gopacket.Packet) []gopacket.Packet {
 			continue
 		}
 
-	gLoop:
-		for _, g := range f.groups {
-			if g.network.Contains(srcIP) {
-				for _, exip := range g.excludedIPs {
-					if srcIP.Equal(exip) {
-						continue gLoop
-					}
-				}
-				for _, exnet := range g.excludedNets {
-					if exnet.Contains(srcIP) {
-						continue gLoop
-					}
-				}
-				for i := range l.Questions {
-					j := sort.SearchStrings(g.excludedStrictDomains, string(l.Questions[i].Name))
-					if j < len(g.excludedStrictDomains) && g.excludedStrictDomains[j] == string(l.Questions[i].Name) {
-						continue gLoop
-					}
-
-					for _, md := range g.excludedMultimatchDomains {
-						if strings.HasSuffix(md, string(l.Questions[i].Name)) {
-							continue gLoop
-						}
-					}
-				}
+		match := false
+		for _, m := range f.groups {
+			if m.nm.Match(srcIP) && !m.dm.Match(string(l.Questions[0].Name)) {
+				match = true
+				break
 			}
 		}
 
-		packets[n] = packet
-		n++
+		if match {
+			packets[n] = packet
+			n++
+		}
 	}
 	return packets[:n]
 }

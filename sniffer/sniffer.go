@@ -8,14 +8,14 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-// Sniffer is performing DNS request sniffing on local NIC.
-type Sniffer struct {
+// DNSSniffer is performing DNS request sniffing on local NIC.
+type DNSSniffer struct {
 	handle *pcap.Handle
 	source *gopacket.PacketSource
 }
 
-// NewDNSSnifferFromInterface is preparing sniffer to capture packets from interface.
-func NewDNSSnifferFromInterface(iface string, protocols []string, port int) (*Sniffer, error) {
+// NewLive is preparing sniffer to capture packets from interface.
+func NewLive(iface string, protocols []string, port int) (*DNSSniffer, error) {
 	handle, err := pcap.OpenLive(iface, 1600, false, pcap.BlockForever)
 	if err != nil {
 		return nil, err
@@ -23,8 +23,8 @@ func NewDNSSnifferFromInterface(iface string, protocols []string, port int) (*Sn
 	return newDNSSniffer(handle, protocols, port)
 }
 
-// NewDNSSnifferFromFile is preparing sniffer to capture packets from file.
-func NewDNSSnifferFromFile(file string, protocols []string, port int) (*Sniffer, error) {
+// NewOffline is preparing sniffer to capture packets from file.
+func NewOffline(file string, protocols []string, port int) (*DNSSniffer, error) {
 	handle, err := pcap.OpenOffline(file)
 	if err != nil {
 		return nil, err
