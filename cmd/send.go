@@ -17,8 +17,8 @@ func newSendCommand() *cobra.Command {
 	var configPath string
 	var cmd = &cobra.Command{
 		Use:   "send",
-		Short: "send dns queries to AlphaSOC server",
-		Long:  `Read file in pcap fromat and send DNS packet to AlphaSOC server`,
+		Short: "send dns queries stored in file",
+		Long:  `Read file in pcap fromat and send DNS packet to AlphaSOC for futher analyze`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("at least 1 file required")

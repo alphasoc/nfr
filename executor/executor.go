@@ -2,6 +2,8 @@
 package executor
 
 import (
+	"os"
+	"os/signal"
 	"sync"
 	"time"
 
@@ -71,6 +73,7 @@ func (e *Executor) Start() error {
 		}
 	}
 
+	go e.installSignalHandler()
 	go e.startEventPoller(e.cfg.Events.PollInterval, e.cfg.Events.File, e.cfg.Data.File)
 	go e.startPacketSender(e.cfg.Queries.FlushInterval)
 
@@ -131,59 +134,98 @@ func (e *Executor) startPacketSender(interval time.Duration) {
 func (e *Executor) startPacketWriter(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for range ticker.C {
-		if e.dnsWriter != nil {
-			if err := e.dnsWriter.Write(e.buf.Packets()); err != nil {
-				log.Warnln(err)
-				continue
-			} else {
-				log.Infof("%d queries wrote to file", len(e.buf.Packets()))
-			}
-		} else if len(e.buf.Packets()) > 0 {
-			log.Infof("no queries failed file set, %d queries will be discarded", len(e.buf.Packets()))
+		packets := e.buf.Packets()
+		if len(packets) == 0 {
+			continue
+		} else if e.dnsWriter == nil {
+			log.Infof("no queries failed file set, %d queries will be discarded", len(packets))
+		} else if err := e.dnsWriter.Write(packets); err != nil {
+			log.Warnln(err)
+			continue
+		} else {
+			log.Infof("%d queries wrote to file", len(packets))
 		}
-		e.buf.Reset()
 	}
 }
 
 func (e *Executor) sendPackets() {
 	e.mx.Lock()
-	defer e.mx.Unlock()
-
 	packets := e.buf.Packets()
+	e.mx.Unlock()
+
 	if len(packets) == 0 {
 		return
 	}
 
 	log.Infof("sending %d packets to analyze", len(packets))
-	if _, err := e.c.Queries(dnsPacketsToQueries(packets)); err != nil {
+	resp, err := e.c.Queries(dnsPacketsToQueries(packets))
+	if err != nil {
 		log.Errorln(err)
 
 		if e.dnsWriter != nil {
-			// try to write packets to file. If success then resset
-			// buffer, else keep in buffer and try in a moment.
+			// try to write packets to file. On success resset
+			// buffer, else keep packets in buffer.
 			if err := e.dnsWriter.Write(packets); err != nil {
 				log.Warnln(err)
 			} else {
-				log.Infof("%d queries wrote to file", len(e.buf.Packets()))
+				log.Infof("%d queries wrote to file", len(packets))
+				return
 			}
+
 		}
+
+		// write unsaved packets back to buffer
+		e.mx.Lock()
+		e.buf.Write(packets...)
+		e.mx.Unlock()
+		return
 	}
-	// all packets sent, reset buffer
-	e.buf.Reset()
+
+	if resp.Received == resp.Accepted {
+		log.Infof("%d queries were successfully send", resp.Accepted)
+	} else {
+		log.Infof("%d of %d queries were send - rejected reason %v",
+			resp.Accepted, resp.Received, resp.Rejected)
+	}
 }
 
 func (e *Executor) do() error {
 	for packet := range e.sniffer.Packets() {
-		e.buf.Write(packet)
-		if e.buf.Len() < e.cfg.Queries.BufferSize {
+		e.mx.Lock()
+		l := e.buf.Write(packet)
+		e.mx.Unlock()
+		if l < e.cfg.Queries.BufferSize {
 			continue
 		}
-		e.sendPackets()
+
+		// do not wait for sending packets
+		go e.sendPackets()
 	}
 
 	// send what left in the buffer
+	// and wait for other gorutines to finish
+	// thanks to mutex lock in sendPackets
 	e.sendPackets()
 	return nil
+}
+
+func (e *Executor) installSignalHandler() {
+	// Unless writer is set, then no handler is needed
+	if e.dnsWriter == nil {
+		return
+	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	for range c {
+		packets := e.buf.Packets()
+		if err := e.dnsWriter.Write(packets); err != nil {
+			log.Warnln(err)
+		} else {
+			log.Infof("%d queries wrote to file", len(packets))
+		}
+		os.Exit(1)
+	}
 }
 
 func createGroups(cfg *config.Config) (*groups.Groups, error) {

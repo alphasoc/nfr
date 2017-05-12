@@ -4,6 +4,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"log"
 )
 
 // QueriesRequest contains slice of queries for sending.
@@ -41,8 +42,10 @@ func (c *AlphaSOCClient) Queries(req *QueriesRequest) (*QueriesResponse, error) 
 
 	resp, err := c.post(context.Background(), "queries", nil, req)
 	if err != nil {
+		log.Println("queries error", resp, err)
 		return nil, err
 	}
+	log.Println("queries", resp)
 	defer resp.Body.Close()
 
 	var r QueriesResponse

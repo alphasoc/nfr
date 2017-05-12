@@ -11,7 +11,7 @@ import (
 
 func emailValidator(email string) bool {
 	_, err := mail.ParseAddress(email)
-	return err != nil
+	return err == nil
 }
 
 // GetAccountRegisterDetails prompts user for registartion data

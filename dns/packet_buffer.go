@@ -11,22 +11,26 @@ func NewPacketBuffer() *PacketBuffer {
 	return &PacketBuffer{}
 }
 
-// Len returns the number of packets.
-func (b *PacketBuffer) Len() int {
-	return len(b.packets)
-}
-
 // Writes appends single packet to buffer.
-func (b *PacketBuffer) Write(packets ...*Packet) {
+// Returns number of packets in buffer
+func (b *PacketBuffer) Write(packets ...*Packet) int {
 	b.packets = append(b.packets, packets...)
+	return b.len()
 }
 
 // Packets returns slice of packets.
 func (b *PacketBuffer) Packets() []*Packet {
-	return b.packets
+	packets := b.packets[:]
+	b.reset()
+	return packets
+}
+
+// len returns the number of packets.
+func (b *PacketBuffer) len() int {
+	return len(b.packets)
 }
 
 // Reset resets the buffer to be empty.
-func (b *PacketBuffer) Reset() {
+func (b *PacketBuffer) reset() {
 	b.packets = b.packets[0:0]
 }
