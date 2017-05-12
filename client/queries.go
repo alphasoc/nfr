@@ -45,7 +45,6 @@ func (c *AlphaSOCClient) Queries(req *QueriesRequest) (*QueriesResponse, error) 
 		log.Println("queries error", resp, err)
 		return nil, err
 	}
-	log.Println("queries", resp)
 	defer resp.Body.Close()
 
 	var r QueriesResponse
