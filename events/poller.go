@@ -47,6 +47,11 @@ func (p *Poller) Do(interval time.Duration) error {
 		if err := p.l.Log(events); err != nil {
 			return err
 		}
+
+		if p.follow == events.Follow {
+			continue
+		}
+
 		p.follow = events.Follow
 		if p.followFile != "" {
 			if err := ioutil.WriteFile(p.followFile, []byte(p.follow), 0644); err != nil {

@@ -1,6 +1,7 @@
 package dns
 
 import (
+	"fmt"
 	"net"
 	"time"
 
@@ -19,12 +20,25 @@ type Packet struct {
 	FQDN       string
 }
 
+func (p *Packet) String() string {
+	return fmt.Sprintf("(%s) %s %s from %s", p.Timestamp, p.FQDN, p.RecordType, p.SourceIP.String())
+}
+
 // newPackets creates packet from gopacket type.
 // It returns nil if packet is not dns quesiton packet
 // or metadata is missing.
 func newPacket(packet gopacket.Packet) *Packet {
-	l, ok := packet.ApplicationLayer().(gopacket.Layer).(*layers.DNS)
-	if !ok || l.QR || len(l.Questions) == 0 {
+	var (
+		l  *layers.DNS
+		ok bool
+	)
+
+	if layer := packet.ApplicationLayer(); layer != nil {
+		l, ok = layer.(gopacket.Layer).(*layers.DNS)
+		if !ok || l.QR || len(l.Questions) == 0 {
+			return nil
+		}
+	} else {
 		return nil
 	}
 
@@ -34,9 +48,9 @@ func newPacket(packet gopacket.Packet) *Packet {
 	}
 
 	var srcIP net.IP
-	if lipv4, ok := packet.TransportLayer().(gopacket.Layer).(*layers.IPv4); ok {
+	if lipv4, ok := packet.NetworkLayer().(gopacket.Layer).(*layers.IPv4); ok {
 		srcIP = lipv4.SrcIP
-	} else if lipv6, ok := packet.TransportLayer().(gopacket.Layer).(*layers.IPv6); ok {
+	} else if lipv6, ok := packet.NetworkLayer().(gopacket.Layer).(*layers.IPv6); ok {
 		srcIP = lipv6.SrcIP
 	} else {
 		return nil
@@ -60,38 +74,3 @@ func (p *Packet) ToRequestQuery() [4]string {
 		p.FQDN,
 	}
 }
-
-// Decode decodes slice of packets into packets that could be converted to feed AlphaSOC api.
-// func Decode(packets []gopacket.Packet) []*Packet {
-// 	p := make([]*Packet, 0, len(packets))
-//
-// 	for i := range packets {
-// 		l, ok := packets[i].ApplicationLayer().(gopacket.Layer).(*layers.DNS)
-// 		if !ok || l.QR || len(l.Questions) == 0 {
-// 			continue
-// 		}
-//
-// 		md := packets[i].Metadata()
-// 		if md == nil {
-// 			continue
-// 		}
-//
-// 		var srcIP net.IP
-// 		if lipv4, ok := packets[i].TransportLayer().(gopacket.Layer).(*layers.IPv4); ok {
-// 			srcIP = lipv4.SrcIP
-// 		} else if lipv6, ok := packets[i].TransportLayer().(gopacket.Layer).(*layers.IPv6); ok {
-// 			srcIP = lipv6.SrcIP
-// 		} else {
-// 			continue
-// 		}
-//
-// 		p[i] = &Packet{
-// 			raw:        packets[i],
-// 			Timestamp:  md.Timestamp,
-// 			SourceIP:   srcIP,
-// 			RecordType: l.Questions[0].Type.String(),
-// 			FQDN:       string(l.Questions[0].Name),
-// 		}
-// 	}
-// 	return p
-// }

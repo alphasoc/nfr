@@ -20,7 +20,6 @@ The following informations are provided:
 			if err != nil {
 				return err
 			}
-
 			return accountStatus(c)
 		},
 	}
@@ -30,7 +29,7 @@ The following informations are provided:
 func accountStatus(c client.Client) error {
 	status, err := c.AccountStatus()
 	if err != nil {
-		return err
+		return fmt.Errorf("get account status failed: %s", err)
 	}
 
 	fmt.Printf("Account registered: %t\n", status.Registered)

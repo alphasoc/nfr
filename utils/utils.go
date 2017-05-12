@@ -26,7 +26,11 @@ func GetAccountRegisterDetails() (*client.AccountRegisterRequest, error) {
 	if err != nil {
 		return nil, err
 	}
-	address, _ := mail.ParseAddress(email)
+
+	address, err := mail.ParseAddress(email)
+	if err != nil {
+		return nil, err
+	}
 	email = address.Address
 
 	var req client.AccountRegisterRequest

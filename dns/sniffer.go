@@ -35,7 +35,25 @@ func NewOfflineSniffer(file string, protocols []string, port int) (*Sniffer, err
 
 }
 
+// newsniffer creates new sniffer and sets pcap filter for it.
 func newsniffer(handle *pcap.Handle, protocols []string, port int) (*Sniffer, error) {
+	if len(protocols) > 2 {
+		handle.Close()
+		return nil, fmt.Errorf("too many protocols in list")
+	}
+
+	for _, proto := range protocols {
+		if proto != "udp" && proto != "tcp" {
+			handle.Close()
+			return nil, fmt.Errorf("invalid protocol %q name", proto)
+		}
+	}
+
+	if port < 0 || port > 65355 {
+		handle.Close()
+		return nil, fmt.Errorf("invalid %d port number", port)
+	}
+
 	if err := handle.SetBPFFilter(sprintBPFFilter(protocols, port)); err != nil {
 		handle.Close()
 		return nil, err
@@ -78,12 +96,13 @@ func (s *Sniffer) readPackets() {
 		}
 	}
 }
+
+// print pcap format filter based on protocols and port
 func sprintBPFFilter(protocols []string, port int) string {
-	fmt.Printf("(udp || tcp) dst port %d dns && (dns.flags.response == 0) && ! dns.response_in", port)
 	switch len(protocols) {
 	case 1:
-		return fmt.Sprintf("%s dst port %d dns && (dns.flags.response == 0) && ! dns.response_in", protocols[0], port)
+		return fmt.Sprintf("%s dst port %d", protocols[0], port)
 	default:
-		return fmt.Sprintf("(udp || tcp) dst port %d dns && (dns.flags.response == 0) && ! dns.response_in", port)
+		return fmt.Sprintf("tcp or udp dst port %d", port)
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/utils"
 )
 
 type Logger interface {
@@ -17,21 +16,35 @@ type JSONFileLogger struct {
 }
 
 func NewJSONFileLogger(file string) (*JSONFileLogger, error) {
-	f, err := utils.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-	if err != nil {
-		return nil, err
+	switch file {
+	case "stdout":
+		return &JSONFileLogger{os.Stdout}, nil
+	case "stderr":
+		return &JSONFileLogger{os.Stderr}, nil
+	default:
+		f, err := os.OpenFile(file, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err != nil {
+			return nil, err
+		}
+		return &JSONFileLogger{f}, nil
 	}
-
-	return &JSONFileLogger{f}, nil
 }
 
 func (l *JSONFileLogger) Log(e *client.EventsResponse) error {
+	// do not log if there is no events
+	if len(e.Events) == 0 {
+		return nil
+	}
+
 	b, err := json.Marshal(e)
 	if err != nil {
 		return err
 	}
 
-	_, err = l.f.Write(b)
+	if _, err = l.f.Write(b); err != nil {
+		return err
+	}
+	_, err = l.f.Write([]byte("\n"))
 	return err
 }
 

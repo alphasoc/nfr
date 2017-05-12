@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/logger"
@@ -20,7 +23,14 @@ identifying gaps in your security controls and highlighting targeted attacks.`,
 			if err != nil {
 				return err
 			}
-			return register(cfg, c, "", "")
+
+			// do not send error to log output, print on console for user
+			if err := register(cfg, c, "", ""); err != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", err)
+				os.Exit(1)
+			}
+			return nil
+
 		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
@@ -38,9 +48,12 @@ func createConfigAndClient(configPath string, checkKey bool) (*config.Config, *c
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if err := logger.SetOutput(cfg.Log.File); err != nil {
 		return nil, nil, err
 	}
+	logger.SetLevel(cfg.Log.Level)
+
 	c := client.New(cfg.Alphasoc.Host, cfg.Alphasoc.APIKey)
 	if checkKey {
 		if err := c.CheckKey(); err != nil {

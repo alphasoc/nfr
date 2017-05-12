@@ -11,8 +11,8 @@ import (
 type EventsResponse struct {
 	Follow  string            `json:"follow"`
 	More    bool              `json:"more"`
-	Events  []Event           `json:"events"`
-	Threats map[string]Threat `json:"threats"`
+	Events  []Event           `json:"events,omitempty"`
+	Threats map[string]Threat `json:"threats,omitempty"`
 }
 
 // Event provides result of analysis of DNS

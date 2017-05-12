@@ -21,7 +21,12 @@ func newAccountRegisterCommand(configPath *string) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return register(cfg, c, *configPath, key)
+			// do not send error to log output, print on console for user
+			if err := register(cfg, c, *configPath, key); err != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", err)
+				os.Exit(1)
+			}
+			return nil
 		},
 	}
 	cmd.Flags().StringVar(&key, "key", "", "AlphaSOC api key")
@@ -31,15 +36,14 @@ func newAccountRegisterCommand(configPath *string) *cobra.Command {
 func register(cfg *config.Config, c *client.AlphaSOCClient, configPath, key string) error {
 	if key != "" {
 		c.SetKey(key)
-		fmt.Printf("Using key %s for registration.\n\n", key)
+		fmt.Printf("Using key %s for registration\n", key)
 	} else if cfg.Alphasoc.APIKey != "" {
 		c.SetKey(cfg.Alphasoc.APIKey)
-		fmt.Printf("Using key %s for registration.\n\n", cfg.Alphasoc.APIKey)
+		fmt.Printf("Using key %s for registration\n", cfg.Alphasoc.APIKey)
 	}
 
 	if status, err := c.AccountStatus(); err == nil && status.Registered {
-		fmt.Println("Account is already registered.")
-		return nil
+		return fmt.Errorf("account is already registered")
 	}
 
 	fmt.Println(`Provide your details to generate an API key and complete setup.
@@ -50,15 +54,13 @@ https://www.alphasoc.com/terms-of-service
 `)
 	req, err := utils.GetAccountRegisterDetails()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "\n%s\n", err)
-		return nil
+		return err
 	}
 
 	if key == "" && cfg.Alphasoc.APIKey == "" {
 		keyReq, err := c.KeyRequest()
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "\n%s\n", err)
-			return nil
+			return err
 		}
 		c.SetKey(keyReq.Key)
 		cfg.Alphasoc.APIKey = keyReq.Key
@@ -74,7 +76,7 @@ https://www.alphasoc.com/terms-of-service
 	if err := c.AccountRegister(req); err != nil {
 		if errSave != nil {
 			fmt.Fprintf(os.Stderr, `
-We were unable to register your account (%s).
+We were unable to register your account.
 What's more there was problem with saving namescore config. In order to 
 register account please run namescore again with following command
 and follow the instructions:
@@ -86,17 +88,19 @@ Config format below:
 
 alphasoc:
   api_key: %s
-`, err, cfg.Alphasoc.APIKey, cfg.Alphasoc.APIKey)
-			return nil
+
+`, cfg.Alphasoc.APIKey, cfg.Alphasoc.APIKey)
+			return err
 		}
 
 		fmt.Fprintf(os.Stderr, `
-We were unable to register your account (%s)
+We were unable to register your account.
 Please run namescore again with following command and follow the instructions:
 
 $ namescore
-`, err)
-		return nil
+
+`)
+		return err
 	}
 
 	fmt.Println("\nSuccess! Check your email and click the verification link to activate your API key")

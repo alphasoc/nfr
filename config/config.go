@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"net/http"
 	"os"
 	"path"
 	"runtime"
@@ -31,7 +30,7 @@ type Config struct {
 	Network struct {
 		// Interface on which namescore should listen. Default: (none)
 		Interface string `yaml:"interface,omitempty"`
-		// Protocols on which namescore should listen. Default: ["udp", "tcp"]
+		// Protocols on which namescore should listen. Default: [udp]
 		Protocols []string `yaml:"protocols,omitempty"`
 		// Protocols on which namescore should listen. Default: 53
 		Port int `yaml:"port,omitempty"`
@@ -42,6 +41,10 @@ type Config struct {
 		// File to which namescore should log. Default: stdout
 		// To print log to console use two special outputs: stderr or stdout
 		File string `yaml:"file,omitempty"`
+
+		// Level for logger. Possibles values are: debug, info, warn, error
+		// Default: info
+		Level string `yaml:"level,omitempty"`
 	} `yaml:"log,omitempty"`
 
 	// Internal namescore data.
@@ -160,7 +163,7 @@ func (cfg *Config) setDefaults() *Config {
 	}
 
 	if len(cfg.Network.Protocols) == 0 {
-		cfg.Network.Protocols = []string{"udp", "tcp"}
+		cfg.Network.Protocols = []string{"udp"}
 	}
 
 	if cfg.Network.Port == 0 {
@@ -173,6 +176,9 @@ func (cfg *Config) setDefaults() *Config {
 
 	if cfg.Log.File == "" {
 		cfg.Log.File = "stdout"
+	}
+	if cfg.Log.Level == "" {
+		cfg.Log.Level = "info"
 	}
 
 	if cfg.Data.File == "" {
@@ -198,10 +204,6 @@ func (cfg *Config) setDefaults() *Config {
 }
 
 func (cfg *Config) validate() error {
-	if _, err := http.Get(cfg.Alphasoc.Host); err != nil {
-		return fmt.Errorf("can't connect to alphasoc %q server: %s", cfg.Alphasoc.Host, err)
-	}
-
 	if len(cfg.Network.Protocols) == 0 {
 		return fmt.Errorf("empty protocol list")
 	}
@@ -220,16 +222,22 @@ func (cfg *Config) validate() error {
 		return fmt.Errorf("invalid %d port number", cfg.Network.Port)
 	}
 
-	if err := validateFilename(cfg.Log.File); err != nil {
+	if err := validateFilename(cfg.Log.File, true); err != nil {
 		return err
 	}
+	if cfg.Log.Level != "debug" &&
+		cfg.Log.Level != "info" &&
+		cfg.Log.Level != "warn" &&
+		cfg.Log.Level != "error" {
+		return fmt.Errorf("invalid %s log level", cfg.Log.Level)
+	}
 
-	if err := validateFilename(cfg.Data.File); err != nil {
+	if err := validateFilename(cfg.Data.File, false); err != nil {
 		return err
 	}
 
 	if cfg.Events.File != "" {
-		if err := validateFilename(cfg.Events.File); err != nil {
+		if err := validateFilename(cfg.Events.File, true); err != nil {
 			return err
 		}
 	}
@@ -247,7 +255,7 @@ func (cfg *Config) validate() error {
 	}
 
 	if cfg.Queries.Failed.File != "" {
-		if err := validateFilename(cfg.Queries.Failed.File); err != nil {
+		if err := validateFilename(cfg.Queries.Failed.File, false); err != nil {
 			return err
 		}
 	}
@@ -255,7 +263,11 @@ func (cfg *Config) validate() error {
 	return nil
 }
 
-func validateFilename(file string) error {
+func validateFilename(file string, noFileOutput bool) error {
+	if noFileOutput && (file == "stdout" || file == "stderr") {
+		return nil
+	}
+
 	dir := path.Dir(file)
 	stat, err := os.Stat(dir)
 	if err != nil {

@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 
 	"github.com/alphasoc/namescore/version"
 	"golang.org/x/net/context/ctxhttp"
@@ -54,7 +53,7 @@ type AlphaSOCClient struct {
 // It also sets timeout to 30 seconds.
 func New(host, key string) *AlphaSOCClient {
 	return &AlphaSOCClient{
-		client:  &http.Client{Timeout: 30 * time.Second},
+		client:  &http.Client{},
 		host:    strings.TrimSuffix(host, "/"),
 		version: DefaultVersion,
 		key:     key,
@@ -75,6 +74,9 @@ func (c *AlphaSOCClient) CheckKey() error {
 // getAPIPath returns the versioned request path to call the api.
 // It appends the query parameters to the path if they are not empty.
 func (c *AlphaSOCClient) getAPIPath(path string, query url.Values) string {
+	if query == nil {
+		return fmt.Sprintf("%s/%s/%s", c.host, c.version, path)
+	}
 	return fmt.Sprintf("%s/%s/%s?%s", c.host, c.version, path, query.Encode())
 }
 
@@ -96,7 +98,8 @@ func (c *AlphaSOCClient) post(ctx context.Context, path string, query url.Values
 }
 
 func (c *AlphaSOCClient) do(ctx context.Context, method, path string, query url.Values, body io.Reader, headers http.Header) (*http.Response, error) {
-	req, err := http.NewRequest(method, c.getAPIPath(path, query), body)
+	fullPath := c.getAPIPath(path, query)
+	req, err := http.NewRequest(method, fullPath, body)
 	if err != nil {
 		return nil, err
 	}
@@ -110,6 +113,9 @@ func (c *AlphaSOCClient) do(ctx context.Context, method, path string, query url.
 
 	resp, err := ctxhttp.Do(ctx, c.client, req)
 	if err != nil {
+		if err == context.DeadlineExceeded {
+			return nil, fmt.Errorf("%s %s i/o timeout", method, fullPath)
+		}
 		return nil, err
 	}
 

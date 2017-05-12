@@ -38,6 +38,7 @@ func (c *AlphaSOCClient) Queries(req *QueriesRequest) (*QueriesResponse, error) 
 	if c.key == "" {
 		return nil, ErrNoAPIKey
 	}
+
 	resp, err := c.post(context.Background(), "queries", nil, req)
 	if err != nil {
 		return nil, err

@@ -20,6 +20,5 @@ func (c *AlphaSOCClient) AccountRegister(req *AccountRegisterRequest) error {
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
-	return nil
+	return resp.Body.Close()
 }

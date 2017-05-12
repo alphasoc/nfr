@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"errors"
-	"log"
 	"os"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/executor"
+
 	"github.com/spf13/cobra"
 )
 
@@ -22,6 +23,7 @@ func newSendCommand() *cobra.Command {
 			if len(args) == 0 {
 				return errors.New("at least 1 file required")
 			}
+
 			cfg, c, err := createConfigAndClient(configPath, true)
 			if err != nil {
 				return err
@@ -46,8 +48,7 @@ func send(cfg *config.Config, c client.Client, files []string) error {
 		if err := os.Rename(files[i], files[i]+"."+time.Now().Format(time.RFC3339)); err != nil {
 			return err
 		}
-
-		log.Printf("file %s sent\n", files[i])
+		log.Infof("file %s sent\n", files[i])
 	}
 	return nil
 }

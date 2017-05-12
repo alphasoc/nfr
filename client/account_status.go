@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 )
 
 // AccountStatusResponse represents response for /account/status call.
@@ -21,7 +22,9 @@ func (c *AlphaSOCClient) AccountStatus() (*AccountStatusResponse, error) {
 	if c.key == "" {
 		return nil, ErrNoAPIKey
 	}
-	resp, err := c.get(context.Background(), "account/status", nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	resp, err := c.get(ctx, "account/status", nil)
 	if err != nil {
 		return nil, err
 	}

@@ -19,7 +19,7 @@ func NewWriter(file string) (*Writer, error) {
 	if err == nil {
 		// set file header only for new files
 		w := pcapgo.NewWriter(f)
-		if err := w.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
+		if err = w.WriteFileHeader(65536, layers.LinkTypeEthernet); err != nil {
 			return nil, err
 		}
 		return &Writer{w, f}, nil
