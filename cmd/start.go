@@ -16,7 +16,13 @@ func newStartCommand() *cobra.Command {
 		Use:   "start",
 		Short: "start namescore dns sniffer",
 		Long: `Captures DNS traffic and provides analysis of them.
-API key must be set before calling this mode.`,
+API key must be set before calling this mode.
+
+In --offline mode no requests will be sent to alphasoc, it also
+includes that not sending dns queries. In offline mode
+it is recomended to set option quries.failed.file in config
+to store dns queries, otherwise none of dns quieres will be saved.
+`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, c, err := createConfigAndClient(configPath, !offlineMode)
 			if err != nil {

@@ -11,7 +11,8 @@ func newAccountKeyResetCommand(configPath *string) *cobra.Command {
 	var email string
 	var cmd = &cobra.Command{
 		Use:   "key-reset",
-		Short: "Reset AlphaSOC API key.",
+		Short: "Resets the AlphaSOC API key.",
+		Long:  "Resets the AlphaSOC API key and send message with reset link to email.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, c, err := createConfigAndClient(*configPath, false)
 			if err != nil {

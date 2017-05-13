@@ -20,7 +20,7 @@ type Executor struct {
 	cfg *config.Config
 
 	eventsPoller *events.Poller
-	eventsLogger events.Logger
+	eventsWriter events.Writer
 
 	groups *groups.Groups
 
@@ -37,12 +37,12 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		return nil, err
 	}
 
-	eventsLogger, err := events.NewJSONFileLogger(cfg.Events.File)
+	eventsWriter, err := events.NewJSONFileWriter(cfg.Events.File)
 	if err != nil {
 		return nil, err
 	}
 
-	eventsPoller := events.NewPoller(c, eventsLogger)
+	eventsPoller := events.NewPoller(c, eventsWriter)
 	if err = eventsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 	return &Executor{
 		c:            c,
 		cfg:          cfg,
-		eventsLogger: eventsLogger,
+		eventsWriter: eventsWriter,
 		eventsPoller: eventsPoller,
 		groups:       groups,
 		buf:          dns.NewPacketBuffer(),
@@ -157,7 +157,7 @@ func (e *Executor) sendPackets() {
 		return
 	}
 
-	log.Infof("sending %d packets to analyze", len(packets))
+	log.Infof("sending %d dns queries to analyze", len(packets))
 	resp, err := e.c.Queries(dnsPacketsToQueries(packets))
 	if err != nil {
 		log.Errorln(err)
@@ -168,7 +168,7 @@ func (e *Executor) sendPackets() {
 			if err := e.dnsWriter.Write(packets); err != nil {
 				log.Warnln(err)
 			} else {
-				log.Infof("%d queries wrote to file", len(packets))
+				log.Infof("%d dns queries wrote to file", len(packets))
 				return
 			}
 
@@ -182,9 +182,9 @@ func (e *Executor) sendPackets() {
 	}
 
 	if resp.Received == resp.Accepted {
-		log.Infof("%d queries were successfully send", resp.Accepted)
+		log.Infof("%d dns queries were successfully send", resp.Accepted)
 	} else {
-		log.Infof("%d of %d queries were send - rejected reason %v",
+		log.Infof("%d of %d dns queries were send - rejected reason %v",
 			resp.Accepted, resp.Received, resp.Rejected)
 	}
 }
@@ -233,14 +233,14 @@ func createGroups(cfg *config.Config) (*groups.Groups, error) {
 		return nil, nil
 	}
 
-	log.Infof("creating groups")
+	log.Infof("found %d whiltelist groups", len(cfg.WhiteListConfig.Groups))
 	gs := groups.New()
 	for name, group := range cfg.WhiteListConfig.Groups {
 		g := &groups.Group{
 			Name:     name,
-			Includes: group.MonitoredNetwork,
-			Excludes: group.ExcludedNetworks,
-			Domains:  group.ExcludedDomains,
+			Includes: group.Networks,
+			Excludes: group.Exclude.Networks,
+			Domains:  group.Exclude.Domains,
 		}
 		if err := gs.Add(g); err != nil {
 			return nil, err

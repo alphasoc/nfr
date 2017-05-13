@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/alphasoc/namescore/utils"
@@ -57,6 +58,11 @@ type Config struct {
 	} `yaml:"data,omitempty"`
 
 	// Whitelist rules file.
+	// The IP exclusion list is used to prune 'noisy' hosts, such as mail servers
+	// or workstations within the IP ranges provided.
+	// Finally, the domain whitelist is used to specify internal and trusted domains and
+	// hostnames (supporting wildcards, e.g. *.google.com) to ignore.
+	// If you do not whitelist domains, local DNS traffic will be forwarded to the AlphaSOC API for scoring.
 	WhiteList struct {
 		// File with whitelist rule. See WhiteListConfig for more info.
 		// Default: (none)
@@ -67,14 +73,16 @@ type Config struct {
 	WhiteListConfig struct {
 		Groups map[string]struct {
 			// If packet source ip match this network, then the packet will be send to analyze.
-			MonitoredNetwork []string `yaml:"monitored_network"`
-			// Exclueds is list of network address excludes from monitoring networks.
-			// This list has higher priority then networks list
-			ExcludedNetworks []string `yaml:"excluded_networks"`
-			// Domains is list of fqdn. If dns packet fqdn match any
-			// of this domains , then the packet will not be send to analyze.
-			ExcludedDomains []string `yaml:"excluded_domains"`
-		}
+			Networks []string `yaml:"networks,omitempty"`
+			Exclude  struct {
+				// Exclueds is list of network address excludes from monitoring networks.
+				// This list has higher priority then networks list
+				Networks []string `yaml:"networks,omitempty"`
+				// Domains is list of fqdn. If dns packet fqdn match any
+				// of this domains , then the packet will not be send to analyze.
+				Domains []string `yaml:"domains,omitempty"`
+			} `yaml:"exclude,omitempty"`
+		} `yaml:"groups,omitempty"`
 	} `yaml:"-"`
 
 	// AlphaSOC events configuration.
@@ -306,23 +314,25 @@ func (cfg *Config) loadWhiteListConfig() error {
 
 func (cfg *Config) validateWhiteListConfig() error {
 	for _, group := range cfg.WhiteListConfig.Groups {
-		for _, n := range group.MonitoredNetwork {
+		for _, n := range group.Networks {
 			if _, _, err := net.ParseCIDR(n); err != nil {
 				return fmt.Errorf("%s is not cidr", n)
 			}
 		}
 
-		for _, n := range group.ExcludedNetworks {
+		for _, n := range group.Exclude.Networks {
 			_, _, err := net.ParseCIDR(n)
 			ip := net.ParseIP(n)
-			if err != nil && ip != nil {
+			if err != nil && ip == nil {
 				return fmt.Errorf("%s is not cidr nor ip", n)
 			}
 		}
 
-		for _, domain := range group.ExcludedDomains {
-			if !utils.IsDomainName(domain) {
-				return fmt.Errorf("%s is not domain", domain)
+		for _, domain := range group.Exclude.Domains {
+			// TrimPrefix *. for multimatch domain
+			if !utils.IsDomainName(domain) &&
+				!utils.IsDomainName(strings.TrimPrefix(domain, "*.")) {
+				return fmt.Errorf("%s is not valid domain name", domain)
 			}
 		}
 	}

@@ -3,7 +3,7 @@ package client
 // MockAlphaSOCClient creates Client for testing.
 type MockAlphaSOCClient struct{}
 
-// NewMockClient creates new AlphaSOC mock client for testing.
+// NewMock creates new AlphaSOC mock client for testing.
 func NewMock() Client {
 	return &MockAlphaSOCClient{}
 }

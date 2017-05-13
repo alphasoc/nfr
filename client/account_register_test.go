@@ -13,7 +13,11 @@ func TestAccountRegister(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := New(ts.URL, "test-key").AccountRegister(&AccountRegisterRequest{}); err != nil {
+	var accountRegisterRequest = &AccountRegisterRequest{}
+	accountRegisterRequest.Details.Name = "test-name"
+	accountRegisterRequest.Details.Email = "test-email@alphasoc.com"
+
+	if err := New(ts.URL, "test-key").AccountRegister(accountRegisterRequest); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -26,7 +30,11 @@ func TestAccountRegisterFail(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := New(ts.URL, "test-key").AccountRegister(&AccountRegisterRequest{}); err == nil {
+	var accountRegisterRequest = &AccountRegisterRequest{}
+	accountRegisterRequest.Details.Name = "test-name"
+	accountRegisterRequest.Details.Email = "test-email@alphasoc.com"
+
+	if err := New(ts.URL, "test-key").AccountRegister(accountRegisterRequest); err == nil {
 		t.Fatal("expected error")
 	}
 }

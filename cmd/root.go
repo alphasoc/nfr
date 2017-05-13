@@ -14,7 +14,7 @@ import (
 func NewRootCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "namescore listen|register|status",
-		Short: "AlphaSOC namescore client.",
+		Short: "namescore is main command used to send dns queries to AlphaSOC API.",
 		Long: `namescore is application which captures DNS requests and provides
 deep analysis and alerting of suspicious events,
 identifying gaps in your security controls and highlighting targeted attacks.`,

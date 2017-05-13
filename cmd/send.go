@@ -17,8 +17,10 @@ func newSendCommand() *cobra.Command {
 	var configPath string
 	var cmd = &cobra.Command{
 		Use:   "send",
-		Short: "send dns queries stored in file",
-		Long:  `Read file in pcap fromat and send DNS packet to AlphaSOC for futher analyze`,
+		Short: "send dns queries stored in pcap file",
+		Long: `Read file in pcap fromat and send DNS queries to AlphaSOC for analyze
+The queries could be save to file via tools like tcpdump or namescore in offline mode.
+See namescore start --help for more informations.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("at least 1 file required")

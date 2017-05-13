@@ -9,7 +9,7 @@ func newAccountCommand() *cobra.Command {
 	var configPath string
 	var cmd = &cobra.Command{
 		Use:   "account",
-		Short: "Manage alphasoc account",
+		Short: "Manage AlphaSOC account",
 	}
 	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for namescore")
 	cmd.AddCommand(newAccountStatusCommand(&configPath))

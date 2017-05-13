@@ -7,12 +7,17 @@ import (
 	"github.com/alphasoc/namescore/utils"
 )
 
+// Domain matches domain on blacklist.
 type Domain struct {
 	snames    map[string]bool // strict domain names
 	mnames    map[string]bool // multimatch domain names
 	maxLabels int             // maxLabels is max count of '.' char in multimatch domains map
 }
 
+// NewDomain returns Domain macher for given domains list.
+// It retrus errors if any of domain has invalid format.
+// Domains could be strict domain like alphasoc.com or
+// multimatch domain with prefix *. like *.alphasoc.com.
 func NewDomain(domains []string) (*Domain, error) {
 	d := &Domain{
 		snames: make(map[string]bool),
@@ -21,19 +26,24 @@ func NewDomain(domains []string) (*Domain, error) {
 	return d, d.add(domains)
 }
 
+// add adds domains to Domain matcher.
 func (m *Domain) add(domains []string) error {
 	for _, domain := range domains {
-		if !utils.IsDomainName(domain) {
+		// check if it's valid strict or multimatch domain
+		if !utils.IsDomainName(domain) &&
+			!utils.IsDomainName(strings.TrimPrefix(domain, "*.")) {
 			// Do not add invalid domains
 			return fmt.Errorf("%s is not valid domain name", domain)
 		}
 
+		// if it's strict domain then put it on list
 		if !strings.HasPrefix(domain, "*") {
 			domain = strings.Trim(domain, ".")
 			m.snames[domain] = true
 			continue
 		}
 
+		// otherwise domain must be multimatch domain
 		domain = strings.TrimPrefix(domain, "*")
 		domain = strings.Trim(domain, ".")
 		m.mnames[domain] = true
@@ -45,34 +55,41 @@ func (m *Domain) add(domains []string) error {
 	return nil
 }
 
-// Match returns the longest matching suffix.
-// If nothing matches empty string is returned.
-func (m *Domain) Match(name string) bool {
-	if name == "" {
+// Match matches domain and check if it's on any domain blacklist.
+func (m *Domain) Match(domain string) bool {
+	if domain == "" {
 		return false
 	}
 
-	if m.snames[name] {
+	if m.snames[domain] {
 		return true
 	}
 
-	// shrink to longest suffix
-	dot := len(name)
-	for n := m.maxLabels; n > 0 && dot > 0; n-- {
-		dot = strings.LastIndexByte(name[:dot], '.')
+	if len(m.mnames) == 0 {
+		return false
 	}
-	name = name[dot+1:]
 
-	// Find matching suffix
-	for len(name) > 0 {
-		if _, ok := m.mnames[name]; ok {
+	// shrink to longest suffix, used to search in map
+	dot := len(domain)
+	for n := m.maxLabels; n > 0 && dot > 0; n-- {
+		dot = strings.LastIndexByte(domain[:dot], '.')
+	}
+	domain = domain[dot+1:]
+
+	// find matching suffix
+	for len(domain) > 0 {
+		if _, ok := m.mnames[domain]; ok {
 			return true
 		}
-		dot := strings.IndexByte(name, '.')
+
+		// remove first subdomain and check if the
+		// rest of domain is in map, for example:
+		// a.b.c becomes b.c and is checked in blacklist map.
+		dot := strings.IndexByte(domain, '.')
 		if dot < 0 {
 			return false
 		}
-		name = name[dot+1:]
+		domain = domain[dot+1:]
 	}
 
 	return false

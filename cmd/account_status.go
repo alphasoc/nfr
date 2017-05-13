@@ -11,10 +11,7 @@ import (
 func newAccountStatusCommand(configPath *string) *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "status",
-		Short: "Shows status of namescore",
-		Long: `This command return status of current namescore setup.
-The following informations are provided:
-- API key status`,
+		Short: "Show status of AlphaSOC account",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, c, err := createConfigAndClient(*configPath, false)
 			if err != nil {

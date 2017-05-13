@@ -14,8 +14,10 @@ func newAccountRegisterCommand(configPath *string) *cobra.Command {
 	var key string
 	var cmd = &cobra.Command{
 		Use:   "register",
-		Short: "Acquire and register API key.",
-		Long:  `This command provides interactive mode to retrieve API key and register it.`,
+		Short: "Acquire and register AlphaSOC API key.",
+		Long: `This command provides interactive mode to retrieve API key and register it.
+After register you are able to use AlphaSOC API. API key verification is needed to recive
+events about possible threats.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, c, err := createConfigAndClient(*configPath, false)
 			if err != nil {

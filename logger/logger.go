@@ -1,4 +1,4 @@
-// package logger provides functions to configure global logger behaviour.
+// Package logger provides functions to configure global logger behaviour.
 package logger
 
 import (
@@ -10,6 +10,9 @@ import (
 
 // SetOutput sets output for global logger.
 func SetOutput(file string) error {
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+	})
 	switch file {
 	case "stdout":
 		log.SetOutput(os.Stdout)
@@ -25,6 +28,7 @@ func SetOutput(file string) error {
 	return nil
 }
 
+// SetLevel sets the standard logger level.
 func SetLevel(level string) {
 	switch level {
 	case "debug":

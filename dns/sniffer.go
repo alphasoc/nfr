@@ -89,12 +89,15 @@ func (s *Sniffer) Close() {
 func (s *Sniffer) readPackets() {
 	defer close(s.c)
 	for packet := range s.source.Packets() {
-		if p := newPacket(packet); p != nil &&
-			(s.groups == nil || (s.groups.IsDomainBlacklisted(p.FQDN) &&
-				s.groups.IsIPWhitelisted(p.SourceIP))) {
+		if p := newPacket(packet); p != nil && s.shouldSendPacket(p) {
 			s.c <- p
 		}
 	}
+}
+
+// shouldSendPackets test if packet should be send to channel
+func (s *Sniffer) shouldSendPacket(p *Packet) bool {
+	return s.groups.IsDNSQueryWhitelisted(p.FQDN, p.SourceIP)
 }
 
 // print pcap format filter based on protocols and port

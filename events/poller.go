@@ -1,3 +1,4 @@
+// Package events polls and writes events from AlphaSOC api.
 package events
 
 import (
@@ -8,23 +9,30 @@ import (
 	"github.com/alphasoc/namescore/client"
 )
 
+// Poller polls events from ALphaSOC api and user logger
+// to store it into writer
 type Poller struct {
 	c          client.Client
-	l          Logger
+	l          Writer
 	ticker     *time.Ticker
 	follow     string
 	followFile string
 }
 
-func NewPoller(c client.Client, l Logger) *Poller {
+// NewPoller creates new poller base on give client and writer.
+func NewPoller(c client.Client, l Writer) *Poller {
 	return &Poller{
 		c: c,
 		l: l,
 	}
 }
 
+// SetFollowDataFile sets file for storing follow id.
+// If not used then poller will be retriving all events from the beging.
+// If set then only new events are polled.
 func (p *Poller) SetFollowDataFile(file string) error {
 	p.followFile = file
+
 	// try to read existing follow id
 	b, err := ioutil.ReadFile(file)
 	if err != nil && !os.IsNotExist(err) {
@@ -34,6 +42,9 @@ func (p *Poller) SetFollowDataFile(file string) error {
 	return nil
 }
 
+// Do polls events within a period specified by the interval argument.
+// The events are writtne to writer used to create new poller.
+// If the error occurrs Do method should be call again.
 func (p *Poller) Do(interval time.Duration) error {
 	p.ticker = time.NewTicker(interval)
 	defer p.stop()
@@ -44,7 +55,7 @@ func (p *Poller) Do(interval time.Duration) error {
 			return err
 		}
 
-		if err := p.l.Log(events); err != nil {
+		if err := p.l.Write(events); err != nil {
 			return err
 		}
 
@@ -62,6 +73,7 @@ func (p *Poller) Do(interval time.Duration) error {
 	panic("not reached")
 }
 
+// stop stops poller do, by stoping ticker.
 func (p *Poller) stop() {
 	if p.ticker != nil {
 		p.ticker.Stop()

@@ -10,7 +10,7 @@ import (
 func newVersionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
-		Short: "Show version",
+		Short: "Print the version number of namescore",
 		RunE:  printversion,
 	}
 }
