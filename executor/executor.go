@@ -15,6 +15,9 @@ import (
 	"github.com/alphasoc/namescore/groups"
 )
 
+// Executor executes the main namescore lop.
+// It's respnsible for start the sniffer, send dns queries to server
+// and poll events from server.
 type Executor struct {
 	c   client.Client
 	cfg *config.Config
@@ -28,9 +31,11 @@ type Executor struct {
 	sniffer   *dns.Sniffer
 	buf       *dns.PacketBuffer
 
+	// mutex for synchronize sending packets.
 	mx sync.Mutex
 }
 
+// New creates new executor.
 func New(c client.Client, cfg *config.Config) (*Executor, error) {
 	groups, err := createGroups(cfg)
 	if err != nil {
@@ -57,6 +62,7 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 	}, nil
 }
 
+// Start starts sniffer in online mode, where dns queries are sent to api.
 func (e *Executor) Start() error {
 	log.Infof("creating sniffer for %s interface, port %d, protocols %v",
 		e.cfg.Network.Interface, e.cfg.Network.Port, e.cfg.Network.Protocols)
@@ -80,6 +86,7 @@ func (e *Executor) Start() error {
 	return e.do()
 }
 
+// StartOffline starts sniffer in offline mode, where no dns queries are sent to api.
 func (e *Executor) StartOffline() error {
 	log.Infof("creating offline sniffer for %s interface, port %d, protocols %v",
 		e.cfg.Network.Interface, e.cfg.Network.Port, e.cfg.Network.Protocols)
@@ -101,6 +108,7 @@ func (e *Executor) StartOffline() error {
 	return e.do()
 }
 
+// Send sends dns queries from file in pcap format to api.
 func (e *Executor) Send(file string) error {
 	log.Infof("creating sniffer for %s file", file)
 	sniffer, err := dns.NewOfflineSniffer(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
@@ -113,6 +121,7 @@ func (e *Executor) Send(file string) error {
 	return e.do()
 }
 
+// startEventPoller periodcly checks for new events.
 func (e *Executor) startEventPoller(interval time.Duration, logFile, dataFile string) {
 	// event poller will return error from api or
 	// wrinting to disk. In both cases log the error
@@ -124,6 +133,7 @@ func (e *Executor) startEventPoller(interval time.Duration, logFile, dataFile st
 	}
 }
 
+// startPacketSender periodcly send dns packets to api.
 func (e *Executor) startPacketSender(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for range ticker.C {
@@ -131,6 +141,7 @@ func (e *Executor) startPacketSender(interval time.Duration) {
 	}
 }
 
+// startPacketWriter for offline mode, which writes packets or drop them.
 func (e *Executor) startPacketWriter(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for range ticker.C {
@@ -148,7 +159,9 @@ func (e *Executor) startPacketWriter(interval time.Duration) {
 	}
 }
 
+// sendPackets sends dns packets to api.
 func (e *Executor) sendPackets() {
+	// retrive copy of packet and reset the buffer
 	e.mx.Lock()
 	packets := e.buf.Packets()
 	e.mx.Unlock()
@@ -189,6 +202,7 @@ func (e *Executor) sendPackets() {
 	}
 }
 
+// do retrives packets from sniffer and send it to api.
 func (e *Executor) do() error {
 	for packet := range e.sniffer.Packets() {
 		e.mx.Lock()
@@ -209,6 +223,10 @@ func (e *Executor) do() error {
 	return nil
 }
 
+// installSignalHandler install os.Interrupt handler
+// for writing dns queries into file if there some in the buffer.
+// If the dns writer is not configured, signal handler
+// is not installed.
 func (e *Executor) installSignalHandler() {
 	// Unless writer is set, then no handler is needed
 	if e.dnsWriter == nil {
@@ -249,6 +267,7 @@ func createGroups(cfg *config.Config) (*groups.Groups, error) {
 	return gs, nil
 }
 
+// dnsPacketsToQueries change dns packets to client queries request.
 func dnsPacketsToQueries(packets []*dns.Packet) *client.QueriesRequest {
 	qr := client.NewQueriesRequest()
 	for i := range packets {

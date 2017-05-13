@@ -14,7 +14,7 @@ type Domain struct {
 	maxLabels int             // maxLabels is max count of '.' char in multimatch domains map
 }
 
-// NewDomain returns Domain macher for given domains list.
+// NewDomain creates Domain macher for given domains list.
 // It retrus errors if any of domain has invalid format.
 // Domains could be strict domain like alphasoc.com or
 // multimatch domain with prefix *. like *.alphasoc.com.
