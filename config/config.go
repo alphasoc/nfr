@@ -60,14 +60,14 @@ type Config struct {
 		File string `yaml:"file,omitempty"`
 	} `yaml:"data,omitempty"`
 
-	// Whitelist rules file.
+	// Whitelist groups file.
 	// The IP exclusion list is used to prune 'noisy' hosts, such as mail servers
 	// or workstations within the IP ranges provided.
 	// Finally, the domain whitelist is used to specify internal and trusted domains and
 	// hostnames (supporting wildcards, e.g. *.google.com) to ignore.
 	// If you do not whitelist domains, local DNS traffic will be forwarded to the AlphaSOC API for scoring.
 	WhiteList struct {
-		// File with whitelist rule. See WhiteListConfig for more info.
+		// File with whitelist groups . See WhiteListConfig for more info.
 		// Default: (none)
 		File string `yaml:"file,omitempty"`
 	} `yaml:"whitelist,omitempty"`
@@ -94,19 +94,19 @@ type Config struct {
 		// To print events to console use two special outputs: stderr or stdout
 		// Default: "stdout"
 		File string `yaml:"file,omitempty"`
-		// Interval for polling events from AlphaSOC server. Default: 30s
+		// Interval for polling events from AlphaSOC api. Default: 30s
 		PollInterval time.Duration `yaml:"poll_interval,omitempty"`
 	} `yaml:"events,omitempty"`
 
 	// DNS queries configuration.
 	Queries struct {
 		// Buffer size for dns queries queue. If the size will be exceded then
-		// namescore send quries to AlphaSOC server. Default: 2048
+		// namescore send quries to AlphaSOC api. Default: 2048
 		BufferSize int `yaml:"buffer_size,omitempty"`
-		// Interval for flushing queries to AlphaSOC server. Default: 30s
+		// Interval for flushing queries to AlphaSOC api. Default: 30s
 		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
 
-		// Queries that were unable to send to AlphaSOC server.
+		// Queries that were unable to send to AlphaSOC api.
 		// If file is set, then unsent queries will be saved on disk
 		// and then send again.
 		// Pcap format is used to store queries. You can view it in
