@@ -86,11 +86,10 @@ and follow the instructions:
 $ namescore account register --key %s
 
 Also put your config in /etc/namescore.yml for future usage. 
-Config format below:
+Config below:
 
 alphasoc:
   api_key: %s
-
 `, cfg.Alphasoc.APIKey, cfg.Alphasoc.APIKey)
 			return err
 		}
@@ -105,6 +104,6 @@ $ namescore
 		return err
 	}
 
-	fmt.Println("\nSuccess! Check your email and click the verification link to activate your API key")
+	fmt.Println("\nSuccess! Check your email and click the verification link to activate your API key.")
 	return nil
 }

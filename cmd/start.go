@@ -14,7 +14,7 @@ func newStartCommand() *cobra.Command {
 	)
 	var cmd = &cobra.Command{
 		Use:   "start",
-		Short: "start namescore dns sniffer",
+		Short: "Start namescore dns sniffer",
 		Long: `Captures DNS traffic and provides analysis of them.
 API key must be set before calling this mode.
 
@@ -31,7 +31,7 @@ to store dns queries, otherwise none of dns quieres will be saved.
 			return start(c, cfg, offlineMode)
 		},
 	}
-	cmd.Flags().StringVar(&configPath, "config", config.DefaultLocation, "Config path for namescore")
+	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for namescore")
 	cmd.Flags().BoolVar(&offlineMode, "offline", false, "Run namescore in offline mode (dns queries would not be sent to AlphaSOC")
 	return cmd
 }

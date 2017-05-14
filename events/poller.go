@@ -9,7 +9,7 @@ import (
 	"github.com/alphasoc/namescore/client"
 )
 
-// Poller polls events from ALphaSOC api and user logger
+// Poller polls events from AlphaSOC api and user logger
 // to store it into writer
 type Poller struct {
 	c          client.Client

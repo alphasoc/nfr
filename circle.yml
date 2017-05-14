@@ -11,11 +11,6 @@ machine:
 compile:
   override:
     - GOOS=linux GOARCH=amd64 GOBIN="$BUILD_DIR" go install $PKG
-    - mv "$BUILD_DIR/namescore" namescore_linux-amd64
-    - GOOS=linux GOARCH=amd64 GOBIN="$BUILD_DIR" go install -ldflags "-linkmode external -extldflags -static" $PKG
-    - mv "$BUILD_DIR/namescore" namescore_pcap_linux-amd64
-    - GOOS=windows GOARCH=amd64 GOBIN="$BUILD_DIR" go install $PKG
-    - mv "$BUILD_DIR/namescore" namescore_windows-amd64.exe
 
 deployment:
   release:

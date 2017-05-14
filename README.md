@@ -19,76 +19,79 @@ Namescore requires the development library for libpcap. Installation steps are a
 ## Installation
 Follow these steps to install Namescore:
 ```
-# git clone https://github.com/alphasoc/namescore.git
-# cd namescore
-# govendor sync
-# go install
+# go get github.com/alphasoc/namescore.git
 ```
 
 Upon installation, test Namescore as follows:
 ```
-# namescore
+# namescore --help
 namescore is application which captures DNS requests and provides
 deep analysis and alerting of suspicious events,
 identifying gaps in your security controls and highlighting targeted attacks.
 
 Usage:
+  namescore listen|register|status [flags]
   namescore [command]
 
-  Available Commands:
-    listen      daemon mode
-    register    Acquire and register API key.
-    status      Shows status of namescore
+Available Commands:
+  account     Manage AlphaSOC account
+  help        Help about any command
+  send        Send dns queries stored in pcap file
+  start       Start namescore dns sniffer
+  version     Print the version number of namescore
 
-    Use "namescore [command] --help" for more information about a command.
+Use "namescore [command] --help" for more information about a command.
 ```
 
 ## Configuration
 
-Namescore expects to find its configuration file in `/etc/alphasoc/namescore.toml`. You can find an example configuration file in the repository's root directory. Copy this file to `/etc/alphasoc` and if you already have AlphaSOC API key, update the file with your key. Otherwise, simply run `namescore` which will prompt you for configuration and account details, e.g.
+Namescore expects to find its configuration file in `/etc/namescore.yml`. You can find an example configuration file namescore.yml in the repository's root directory. Copy this file to `/etc/` and if you already have AlphaSOC API key, update the file with your key. Otherwise, simply run `namescore` which will prompt you for configuration and account details, e.g.
 
 ```
 # namescore
-AlphaSOC Namescore Setup and API Key Generation
+Provide your details to generate an API key and complete setup.
+A valid email address is required to activate the key. 
 
-Select a network interface to monitor for DNS traffic
-Detected interfaces:
-  - lo
-  - eth0
+By performing this request you agree to our Terms of Service and Privacy Policy
+https://www.alphasoc.com/terms-of-service
 
-Interface to monitor: eth0
-
-Provide your details to generate an API key and complete setup. A valid email
-address is required to activate the key. By performing this request you agree to
-our Terms of Service and Privacy Policy (https://www.alphasoc.com/terms-of-service)
-
-Full name: Joey Bag O'Donuts
-Organization: AlphaSOC
+Full Name: Joey Bag O'Donuts
 Email: joey@alphasoc.com
 
-Success! Check your email and click the verification link to activate your API key
+Success! Check your email and click the verification link to activate your API key.
 ```
 
 ## Monitoring Scope
-Use directives within `/etc/namescore/whitelist.toml` to define the monitoring scope. DNS requests from the IP ranges within scope will be captured and sent to the AlphaSOC DNS Analytics API for scoring, and domains that are whitelisted (e.g. internal trusted domains) will be ignored and not sent to the API, e.g.
+Use directives within `/etc/namescore/whitelist.yml` to define the monitoring scope. DNS requests from the IP ranges within scope will be captured and sent to the AlphaSOC DNS Analytics API for scoring, and domains that are whitelisted (e.g. internal trusted domains) will be ignored and not sent to the API, e.g.
 
 ```
-[networks]
-1.1.1.250
-10.100.1.5/32
-192.168.1.0/24
-127.0.0.1/8
-
-[domains] 
-*.example.com 
-whatever.com
-google.com
-site.net
-internal.company.org
+groups:
+  private_network:
+    networks:
+      - 10.0.0.0/8
+      - 192.168.0.0/16
+    exclude:
+      networks:
+        - 10.1.0.0/16
+        - 10.2.0.254
+      domains:
+        - "*.example.com"
+        - "*.alphasoc.net"
+        - "google.com"
+  public_network:
+    networks:
+    - 131.1.0.0/16
+  my_own_group:
+    networks:
+    - 131.2.0.0/16
+    exclude:
+      domains:
+        - "site.net"
+        - "*.internal.company.org"
 ```
 
-## Status command
-Use `namescore status` to quickly check the most important parameters and diagnose basic problems.
+## Account status command
+Use `namescore account status` to quickly check the most important parameters about account.
 
 ## Running
-Run `namescore listen` in tmux or screen, or provide a startup script to start namescore at system startup. To debug possible problems, you can use `namescore listen debug` which is more verbose.
+Run `namescore start` in tmux or screen, or provide a startup script to start namescore at system startup.

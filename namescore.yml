@@ -1,0 +1,78 @@
+# AlphaSOC server configuration
+alphasoc:
+  # AlphaSOC host server. Default: https://api.alpahsoc.net
+  host: https://api.alphasoc.net
+ 
+  # AlphaSOC api key. Required for start sending dns queries.
+  api_key: test-api-key
+
+# Network interface configuration.
+network:
+  # Interface on which namescore should listen.
+  interface: <interface-name>
+
+  # Protocols on which namescore should listen.
+  # Possible values are udp and tcp.
+  # Default: [udp]
+  protocols:
+  - udp
+ 
+  # Port on which namescore should listen. Default: 53
+  port: 53
+
+# Log configuration.
+log:
+  # File to which namescore should log.
+  # To print log to console use two special outputs: stderr or stdout
+  # Default: stdout
+  file: stdout
+  
+  # Log level. Possibles values are: debug, info, warn, error
+  # Default: info
+  level: info
+
+# Internal namescore data.
+data:
+  # File for internal data.
+  # Default:
+  #   - linux /run/namescore.data
+  file: /run/namescore.data
+
+# Whitelist groups file.
+# The IP exclusion list is used to prune 'noisy' hosts, such as mail servers
+# or workstations within the IP ranges provided.
+# Finally, the domain whitelist is used to specify internal and trusted domains and
+# hostnames (supporting wildcards, e.g. *.google.com) to ignore.
+# If you do not whitelist domains, local DNS traffic will be forwarded to the AlphaSOC API for scoring.
+whitelist:
+   # File with whitelist groups . See README.mdfor more info.
+   # Default: (none)
+  file:
+
+# AlphaSOC events configuration.
+events:
+  # File where to store events. If not set then none events will be retrived.
+  # To print events to console use two special outputs: stderr or stdout
+  # Default: "stdout"
+  file: stdout
+
+  # Interval for polling events from AlphaSOC server. Default: 30s
+  poll_interval: 30s
+
+# DNS queries configuration.
+queries:
+  # Buffer size for dns queries queue. If the size will be exceded then
+  # namescore send quries to AlphaSOC api. Default: 2048
+  buffer_size: 2048
+
+  # Interval for flushing queries to AlphaSOC api. Default: 30s
+  flush_interval: 30s
+
+  # Queries that were unable to send to AlphaSOC api.
+  # If file is set, then unsent queries will be saved on disk
+  # and then send again.
+  # Pcap format is used to store queries. You can view it in
+  # programs like tcpdump or whireshark.
+  failed:
+    # File to store DNS Queries. Default: (none)
+    file:

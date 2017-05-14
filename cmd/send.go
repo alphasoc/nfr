@@ -17,7 +17,7 @@ func newSendCommand() *cobra.Command {
 	var configPath string
 	var cmd = &cobra.Command{
 		Use:   "send",
-		Short: "send dns queries stored in pcap file",
+		Short: "Send dns queries stored in pcap file",
 		Long: `Read file in pcap fromat and send DNS queries to AlphaSOC for analyze
 The queries could be save to file via tools like tcpdump or namescore in offline mode.
 See namescore start --help for more informations.`,

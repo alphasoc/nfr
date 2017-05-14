@@ -23,7 +23,7 @@ type Config struct {
 	Alphasoc struct {
 		// AlphaSOC host server. Default: https://api.alpahsoc.net
 		Host string `yaml:"host,omitempty"`
-		// AlphaSOC api key. Required for start sending dns traffic.
+		// AlphaSOC api key. Required for start sending dns queries.
 		APIKey string `yaml:"api_key,omitempty"`
 	} `yaml:"alphasoc,omitempty"`
 
@@ -31,19 +31,22 @@ type Config struct {
 	Network struct {
 		// Interface on which namescore should listen. Default: (none)
 		Interface string `yaml:"interface,omitempty"`
-		// Protocols on which namescore should listen. Default: [udp]
+		// Protocols on which namescore should listen.
+		// Possible values are udp and tcp.
+		// Default: [udp]
 		Protocols []string `yaml:"protocols,omitempty"`
-		// Protocols on which namescore should listen. Default: 53
+		// Port on which namescore should listen. Default: 53
 		Port int `yaml:"port,omitempty"`
 	} `yaml:"network,omitempty"`
 
 	// Log configuration.
 	Log struct {
-		// File to which namescore should log. Default: stdout
+		// File to which namescore should log.
 		// To print log to console use two special outputs: stderr or stdout
+		// Default: stdout
 		File string `yaml:"file,omitempty"`
 
-		// Level for logger. Possibles values are: debug, info, warn, error
+		// Log level. Possibles values are: debug, info, warn, error
 		// Default: info
 		Level string `yaml:"level,omitempty"`
 	} `yaml:"log,omitempty"`
