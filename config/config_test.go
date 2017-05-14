@@ -1,190 +1,163 @@
 package config
 
 import (
-	"bytes"
 	"io/ioutil"
+	"log"
 	"os"
 	"testing"
-
-	"github.com/alphasoc/namescore/utils"
+	"time"
 )
 
-func TestSaveConfig(t *testing.T) {
-	var (
-		testFilePath = "/tmp/namescore_test.toml"
-		apiKey       = "abcd"
-		iface        = "eth0"
-	)
-	defer func() {
-		if err := os.Remove(testFilePath); err != nil {
-			t.Fatalf("Remove(%q) unexpected error: %v", testFilePath, err)
-		}
-	}()
-
-	c := Config{ConfigFilePath: testFilePath, APIKey: apiKey, NetworkInterface: iface}
-
-	if exist, err := c.ConfigFileExists(); err != nil {
-		t.Errorf("ConfigFileExists() unexpected error=%v", err)
-	} else if exist {
-		t.Errorf("ConfigFileExists() returned unexpected true before storing file.")
+func checkDefaults(t *testing.T, cfg *Config) {
+	if cfg.Alphasoc.Host != "https://api.alphasoc.net" {
+		t.Fatalf("invalid alphasoc host - got %v; expected %v", cfg.Alphasoc.Host, "https://api.alphasoc.net")
 	}
-
-	if err := c.SaveToFile(); err != nil {
-		t.Errorf("SaveToFile() unexpected err=%v", err)
+	if len(cfg.Network.Protocols) != 1 && cfg.Network.Protocols[0] != "udp" {
+		t.Fatalf("invalid network protocols - got %v; expected %v", cfg.Network.Protocols, []string{"udp"})
 	}
-
-	if exist, err := c.ConfigFileExists(); err != nil {
-		t.Errorf("ConfigFileExists() unexpected error=%v after saving file", err)
-	} else if !exist {
-		t.Errorf("ConfigFileExists() expected to have file after calling SaveToFile()")
+	if cfg.Network.Port != 53 {
+		t.Fatalf("invalid network port - got %d; expected %d", cfg.Network.Port, 53)
 	}
-
-	c.APIKey = "key_should_be_overwritten"
-	c.NetworkInterface = "iface_should_be_overwritten"
-
-	if err := c.ReadFromFile(); err != nil {
-		t.Errorf("ReadFromFile() expected error=%v", err)
+	if cfg.Events.File != "stdout" {
+		t.Fatalf("invalid events file - got %s; expected %s", cfg.Events.File, "stdout")
 	}
-
-	if c.APIKey != apiKey {
-		t.Errorf("c.APIKey expected %q, got %q", apiKey, c.APIKey)
+	if cfg.Log.File != "stdout" {
+		t.Fatalf("invalid log file - got %s; expected %s", cfg.Log.File, "stdout")
 	}
+	if cfg.Log.Level != "info" {
+		t.Fatalf("invalid log level - got %s; expected %s", cfg.Log.Level, "info")
+	}
+	if cfg.Data.File != "/run/namescore.data" {
+		t.Fatalf("invalid data file - got %s; expected %s", cfg.Data.File, "/run/namescore.data")
+	}
+	if cfg.Events.PollInterval != 30*time.Second {
 
-	if c.NetworkInterface != iface {
-		t.Errorf("c.NetworkInterface expected %q, got %q", iface, c.NetworkInterface)
+		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Events.PollInterval, 30*time.Second)
+	}
+	if cfg.Queries.BufferSize != 2048 {
+		t.Fatalf("invalid queries buffer size - got %d; expected %d", cfg.Queries.BufferSize, 30*time.Second)
+	}
+	if cfg.Queries.FlushInterval != 30*time.Second {
+		t.Fatalf("invalid queries flush interval - got %s; expected %s", cfg.Queries.FlushInterval, 30*time.Second)
 	}
 }
 
-func TestDoubleSaveConfig(t *testing.T) {
-	var (
-		testFilePath = "/tmp/namescore_config_test.toml"
-		apiKey       = "defgh"
-		iface        = "eth1"
-	)
-	defer func() {
-		if err := os.Remove(testFilePath); err != nil {
-			t.Fatalf("Remove(%q) unexpected error: %v", testFilePath, err)
-		}
-	}()
-
-	c := Config{ConfigFilePath: testFilePath, APIKey: apiKey, NetworkInterface: iface}
-	if err := c.SaveToFile(); err != nil {
-		t.Errorf("SaveToFile() unexpected err=%v", err)
-	}
-
-	content1, err := ioutil.ReadFile(testFilePath)
+func TestDefaultConfig(t *testing.T) {
+	cfg, err := New("")
 	if err != nil {
-		t.Errorf("ReadFile() unexpected err=%v", err)
+		t.Fatal(err)
+	}
+	checkDefaults(t, cfg)
+}
+
+func TestReadConfig(t *testing.T) {
+	var content = []byte(`
+alphasoc:
+  host: https://api.alphasoc.net
+  api_key: test-api-key
+network:
+  interface: eth0
+  protocols:
+  - udp
+  port: 53
+log:
+  file: stdout
+  level: info
+data:
+  file: /run/namescore.data
+events:
+  file: stdout
+  poll_interval: 30s
+queries:
+  buffer_size: 2048
+  flush_interval: 30s
+  failed:
+    file: /run/namescore.pcap`)
+	f, err := ioutil.TempFile("", "namescore-config")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(f.Name())
+	defer f.Close()
+
+	if _, err = f.Write(content); err != nil {
+		log.Fatal(err)
 	}
 
-	if len(content1) == 0 {
-		t.Errorf("%q is empty file after saving", testFilePath)
+	cfg, err := New(f.Name())
+	if err != nil {
+		t.Fatal(err)
 	}
-
-	if err := c.SaveToFile(); err != nil {
-		t.Errorf("SaveToFile() unexpected err=%v after saving for second time", err)
+	checkDefaults(t, cfg)
+	if cfg.Alphasoc.APIKey != "test-api-key" {
+		t.Fatalf("invalid alphasoc api key - got %s; expected %s", cfg.Alphasoc.APIKey, "test-api-key")
 	}
-
-	if content2, err := ioutil.ReadFile(testFilePath); err != nil {
-		t.Errorf("ReadFile() unexpected err=%v", err)
-	} else if !bytes.Equal(content1, content2) {
-		t.Errorf("Config file content mismatch \n%s!=\n%s\n", content1, content2)
+	if cfg.Network.Interface != "eth0" {
+		t.Fatalf("invalid network interface name - got %s; expected %s", cfg.Network.Interface, "eth0")
 	}
 }
 
-func TestDefaults(t *testing.T) {
-	c := Get()
+func TestReadWhitelist(t *testing.T) {
+	var content = []byte(`
+groups:
+  private:
+    networks:
+    - 10.0.0.0/8
+    exclude:
+      networks:
+       - 10.1.0.0/16
+      domains:
+       - "alphasoc.com"
+  public:
+    networks:
+    - 0.0.0.0/0
+    exclude:
+      networks:
+       - 120.0.0.0/8
+       - 8.8.8.8
+      domains:
+       - "*.io"`)
+	f, err := ioutil.TempFile("", "namescore-whitelist")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(f.Name())
+	defer f.Close()
 
-	if c.FollowFilePath == "" {
-		t.Errorf("FollowFilePath is empty")
+	if _, err := f.Write(content); err != nil {
+		log.Fatal(err)
 	}
 
-	if c.AlertFilePath == "" {
-		t.Errorf("AlertFilePath is empty")
+	var cfg Config
+	cfg.WhiteList.File = f.Name()
+	if err := cfg.loadWhiteListConfig(); err != nil {
+		t.Fatal(err)
 	}
 
-	if c.ConfigFilePath == "" {
-		t.Errorf("ConfigFilePath is empty")
+	groups := cfg.WhiteListConfig.Groups
+	if len(groups) != 2 {
+		t.Fatalf("invalid groups length - got %d; exptected %d", len(groups), 2)
+	}
+	if _, ok := groups["private"]; !ok {
+		t.Fatal("no private groups found")
+	}
+	if _, ok := groups["public"]; !ok {
+		t.Fatal("no public groups found")
 	}
 
-	if c.AlphaSOCAddress == "" {
-		t.Errorf("AlphaSOCAddress is empty")
+	private := groups["private"]
+	if len(private.Networks) != 1 || len(private.Exclude.Networks) != 1 || len(private.Exclude.Domains) != 1 {
+		t.Fatal("invalid private groups data")
 	}
 
-	if c.WhitelistFilePath == "" {
-		t.Errorf("whitelistFile is empty")
+	public := groups["public"]
+	if len(public.Networks) != 1 || len(public.Exclude.Networks) != 2 || len(public.Exclude.Domains) != 1 {
+		t.Fatal("invalid public groups data")
 	}
-
-	if c.FailedQueriesDir == "" {
-		t.Errorf("failedQueriesDir is empty")
-	}
-
-	if c.Version == "" {
-		t.Errorf("Version is empty")
-	}
-
-	if c.AlertRequestInterval == 0 {
-		t.Errorf("alertRequestInterval is 0")
-	}
-
-	if c.SendIntervalTime == 0 {
-		t.Errorf("sendIntervalTime is 0")
-	}
-
-	if c.LocalQueriesInterval == 0 {
-		t.Errorf("LocalQueriesInterval is 0")
-	}
-
 }
 
-func TestInitialDirsCreate(t *testing.T) {
-	var (
-		testDir = "/tmp/namescore_test/"
-		file1   = "/tmp/namescore_test/dir1/file1.txt"
-		dir1    = "/tmp/namescore_test/dir1/"
-		file2   = "/tmp/namescore_test/dir2/file2.txt"
-		dir2    = "/tmp/namescore_test/dir2/"
-		file3   = "/tmp/namescore_test/dir3/file3.txt"
-		dir3    = "/tmp/namescore_test/dir3/"
-		file4   = "/tmp/namescore_test/dir4/file4.txt"
-		dir4    = "/tmp/namescore_test/dir4/"
-		dir5    = "/tmp/namescore_test/dir5/"
-	)
+func TestConfigValidation(t *testing.T) {
+}
 
-	cfg := Config{
-		AlertFilePath:     file1,
-		ConfigFilePath:    file2,
-		FollowFilePath:    file3,
-		WhitelistFilePath: file4,
-		FailedQueriesDir:  dir5,
-	}
-	defer func() {
-		if err := os.RemoveAll(testDir); err != nil {
-			t.Fatalf("RemoveAll(%q) unexpected error: %v", testDir, err)
-		}
-	}()
-
-	if err := cfg.InitialDirsCreate(); err != nil {
-		t.Fatalf("InitialDirsCreate(), unexpected error %v", err)
-	}
-
-	if exist, _ := utils.FileExists(dir1); !exist {
-		t.Fatalf("%q, was not created!", dir1)
-	}
-
-	if exist, _ := utils.FileExists(dir2); !exist {
-		t.Fatalf("%q, was not created!", dir2)
-	}
-
-	if exist, _ := utils.FileExists(dir3); !exist {
-		t.Fatalf("%q, was not created!", dir3)
-	}
-
-	if exist, _ := utils.FileExists(dir4); !exist {
-		t.Fatalf("%q, was not created!", dir4)
-	}
-
-	if exist, _ := utils.FileExists(dir5); !exist {
-		t.Fatalf("%q, was not created!", dir5)
-	}
+func TestWhitelistValidation(t *testing.T) {
 }

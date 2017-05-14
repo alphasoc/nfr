@@ -2,32 +2,28 @@ machine:
   environment:
     PKG: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     BUILD_DIR: "$HOME/build"
-    BUILD_TAR_FILE: "$CIRCLE_ARTIFACTS/build.tar.gz"
-    GCP_KEY_NAME: $(case $CIRCLE_BRANCH in master) echo GCP_PROD_SERVICE_KEY;; staging) echo GCP_STAGING_SERVICE_KEY;; esac)
-    BUCKET_NAME: $(case $CIRCLE_BRANCH in master) echo asoc-prod-release;; staging) echo asoc-staging-release;; esac)
   post:
     - sudo rm -rf /usr/local/go
     - curl -s -o - https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz | sudo tar -C /usr/local -xzf -
-    - sudo apt-get install --yes libpcap-dev
-    - if test $GCP_KEY_NAME; then
-        echo ${!GCP_KEY_NAME} | base64 --decode > ~/.gcp-key.json &&
-        gcloud auth activate-service-account --key-file ~/.gcp-key.json;
-      fi
-
+    - sudo apt-get install --quiet --yes libpcap-dev
+    - go get github.com/aktau/github-release
 
 compile:
   override:
-    - GOBIN="$BUILD_DIR" go install $PKG
-
-test:
-  override:
-    - go test -v -race $(go list $PKG/... | grep -v /vendor/)
-  post:
-    - tar -czv -C "$BUILD_DIR" -f "$BUILD_TAR_FILE" .
+    - GOOS=linux GOARCH=amd64 GOBIN="$BUILD_DIR" go install $PKG
+    - mv "$BUILD_DIR/namescore" namescore_linux-amd64
+    - GOOS=linux GOARCH=amd64 GOBIN="$BUILD_DIR" go install -ldflags "-linkmode external -extldflags -static" $PKG
+    - mv "$BUILD_DIR/namescore" namescore_pcap_linux-amd64
+    - GOOS=windows GOARCH=amd64 GOBIN="$BUILD_DIR" go install $PKG
+    - mv "$BUILD_DIR/namescore" namescore_windows-amd64.exe
 
 deployment:
   release:
-    branch: [master, staging]
+    tag: /v[0-9]+\.[0-9]+\.[0-9]+/
     commands:
-      - gsutil cp "$BUILD_TAR_FILE" gs://${BUCKET_NAME}/$CIRCLE_PROJECT_REPONAME/latest.tar.gz
-      - gsutil cp "$BUILD_TAR_FILE" gs://${BUCKET_NAME}/$CIRCLE_PROJECT_REPONAME/$CIRCLE_PROJECT_REPONAME-${CIRCLE_SHA1}.tar.gz
+      - github-release release \
+          --user alphasoc \
+          --repo namescore \
+          --tag $CIRCLE_TAG
+          --name "namescoure $CIRCLE_TAG"
+          --file "$BUILD_DIR/namescore.linux-amd64"

@@ -1,113 +1,111 @@
-// Package dns provides functions for DNS packet sniffing.
 package dns
 
 import (
-	"net"
-	"time"
+	"fmt"
 
-	"github.com/alphasoc/namescore/asoc"
+	"github.com/alphasoc/namescore/groups"
 	"github.com/google/gopacket"
-	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
 )
 
-// FQDNFilter is a type representing domain filter.
-// If domain is found in filter, packet is not stored.
-type FQDNFilter func(string) bool
-
-// IPFilter is a type representing IP filter.
-// If IP is found in filter, packet is not stored.
-type IPFilter func(net.IP) bool
-
-// Capture is interface for DNS packet sniffer.
-type Capture interface {
-	Sniff() gopacket.Packet
-	PacketToEntry(packet gopacket.Packet) []asoc.Entry
-	Close()
-}
-
-// Sniffer is performing DNS request sniffing on local NIC.
+// Sniffer sniffs dns packets.
 type Sniffer struct {
-	handle     *pcap.Handle
-	source     *gopacket.PacketSource
-	ipFilter   IPFilter
-	fqdnFilter FQDNFilter
+	handle *pcap.Handle
+	source *gopacket.PacketSource
+	groups *groups.Groups
+	c      chan *Packet
 }
 
-// Start is preparing sniffer to capture packets.
-// After this function finish, packets can be retrieved from packetSource
-// by using Sniff() function.
-func Start(iface string) (*Sniffer, error) {
+// NewLiveSniffer creates sniffer that capture packets from interface.
+func NewLiveSniffer(iface string, protocols []string, port int) (*Sniffer, error) {
 	handle, err := pcap.OpenLive(iface, 1600, false, pcap.BlockForever)
 	if err != nil {
 		return nil, err
 	}
+	return newsniffer(handle, protocols, port)
+}
 
-	if err := handle.SetBPFFilter("udp dst port 53"); err != nil {
+// NewOfflineSniffer creates sniffer that capture packets from file.
+func NewOfflineSniffer(file string, protocols []string, port int) (*Sniffer, error) {
+	handle, err := pcap.OpenOffline(file)
+	if err != nil {
+		return nil, err
+	}
+	return newsniffer(handle, protocols, port)
+
+}
+
+// newsniffer creates new sniffer and sets pcap filter for it.
+func newsniffer(handle *pcap.Handle, protocols []string, port int) (*Sniffer, error) {
+	if len(protocols) > 2 {
+		handle.Close()
+		return nil, fmt.Errorf("too many protocols in list")
+	}
+
+	for _, proto := range protocols {
+		if proto != "udp" && proto != "tcp" {
+			handle.Close()
+			return nil, fmt.Errorf("invalid protocol %q name", proto)
+		}
+	}
+
+	if port < 0 || port > 65355 {
+		handle.Close()
+		return nil, fmt.Errorf("invalid %d port number", port)
+	}
+
+	if err := handle.SetBPFFilter(sprintBPFFilter(protocols, port)); err != nil {
 		handle.Close()
 		return nil, err
 	}
-	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 
-	return &Sniffer{source: packetSource, handle: handle}, nil
+	return &Sniffer{
+		source: gopacket.NewPacketSource(handle, handle.LinkType()),
+		handle: handle,
+	}, nil
 }
 
-// SetFQDNFilter sets domain filter on Sniffer
-func (s *Sniffer) SetFQDNFilter(f FQDNFilter) {
-	s.fqdnFilter = f
+// Packets returns a channel of packets, allowing easy iterating over packets.
+func (s *Sniffer) Packets() chan *Packet {
+	if s.c == nil {
+		s.c = make(chan *Packet, 2048)
+		go s.readPackets()
+	}
+	return s.c
 }
 
-// SetIPFilter sets IP filter on Sniffer
-func (s *Sniffer) SetIPFilter(f IPFilter) {
-	s.ipFilter = f
+// SetGroups sets sniffer groups that will be used to filter caputered packets.
+func (s *Sniffer) SetGroups(groups *groups.Groups) {
+	s.groups = groups
 }
 
-// Sniff returs valid packet from packetSource
-func (s *Sniffer) Sniff() gopacket.Packet {
-	for {
-		if packet, err := s.source.NextPacket(); err == nil {
-			return packet
-		}
-	}
-}
-
-// PacketToEntry converts packet to asoc.Entry.
-// If packet does not meet requirements nil is retured.
-func (s *Sniffer) PacketToEntry(packet gopacket.Packet) []asoc.Entry {
-	dnsLayer := packet.Layer(layers.LayerTypeDNS)
-	if dnsLayer == nil {
-		return nil
-	}
-	dns, _ := dnsLayer.(*layers.DNS)
-	if dns.QR {
-		return nil
-	}
-
-	var IP net.IP
-	if IP4layer := packet.Layer(layers.LayerTypeIPv4); IP4layer != nil {
-		ip, _ := IP4layer.(*layers.IPv4)
-		IP = ip.SrcIP
-	} else if IP6layer := packet.Layer(layers.LayerTypeIPv6); IP6layer != nil {
-		ip, _ := IP6layer.(*layers.IPv6)
-		IP = ip.SrcIP
-	}
-	var entries []asoc.Entry
-	t := time.Now()
-	for i := range dns.Questions {
-		if s.fqdnFilter != nil {
-			if s.fqdnFilter(string(dns.Questions[i].Name)) {
-				return nil
-			}
-			if s.ipFilter(IP) {
-				return nil
-			}
-		}
-		entries = append(entries, asoc.Entry{Time: t, IP: IP, QType: dns.Questions[i].Type.String(), FQDN: string(dns.Questions[i].Name)})
-	}
-	return entries
-}
-
-// Close stops Sniffer.
+// Close closes underlying handle and stops sniffer.
 func (s *Sniffer) Close() {
 	s.handle.Close()
+}
+
+// readPackets reads in all packets from the pcap source and creates
+// new *Packet that is sent to the channel.
+func (s *Sniffer) readPackets() {
+	defer close(s.c)
+	for packet := range s.source.Packets() {
+		if p := newPacket(packet); p != nil && s.shouldSendPacket(p) {
+			s.c <- p
+		}
+	}
+}
+
+// shouldSendPackets test if packet should be send to channel
+func (s *Sniffer) shouldSendPacket(p *Packet) bool {
+	return s.groups.IsDNSQueryWhitelisted(p.FQDN, p.SourceIP)
+}
+
+// print pcap format filter based on protocols and port
+func sprintBPFFilter(protocols []string, port int) string {
+	switch len(protocols) {
+	case 1:
+		return fmt.Sprintf("%s dst port %d", protocols[0], port)
+	default:
+		return fmt.Sprintf("tcp or udp dst port %d", port)
+	}
 }
