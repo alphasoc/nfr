@@ -80,7 +80,7 @@ func (e *Executor) Start() error {
 	}
 
 	go e.installSignalHandler()
-	go e.startEventPoller(e.cfg.Events.PollInterval, e.cfg.Events.File, e.cfg.Data.File)
+	go e.startEventPoller(e.cfg.Events.PollInterval)
 	go e.startPacketSender(e.cfg.Queries.FlushInterval)
 
 	return e.do()
@@ -122,7 +122,7 @@ func (e *Executor) Send(file string) error {
 }
 
 // startEventPoller periodcly checks for new events.
-func (e *Executor) startEventPoller(interval time.Duration, logFile, dataFile string) {
+func (e *Executor) startEventPoller(interval time.Duration) {
 	// event poller will return error from api or
 	// wrinting to disk. In both cases log the error
 	// and try again in a moment.

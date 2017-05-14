@@ -17,7 +17,7 @@ func TestGroups(t *testing.T) {
 		{
 			"allow any ips",
 			[]*Group{
-				&Group{
+				{
 					Name:     "allow any",
 					Includes: []string{"0.0.0.0/0"},
 				},
@@ -29,11 +29,11 @@ func TestGroups(t *testing.T) {
 		{
 			"allow private networks",
 			[]*Group{
-				&Group{
+				{
 					Name:     "private network 1",
 					Includes: []string{"10.0.0.0/8"},
 				},
-				&Group{
+				{
 					Name:     "private network 2",
 					Includes: []string{"192.168.0.0/16"},
 				},
@@ -45,12 +45,12 @@ func TestGroups(t *testing.T) {
 		{
 			"allow private networks with excludes",
 			[]*Group{
-				&Group{
+				{
 					Name:     "private network 1",
 					Includes: []string{"10.0.0.0/8"},
 					Excludes: []string{"10.1.0.0/16"},
 				},
-				&Group{
+				{
 					Name:     "private network 2",
 					Includes: []string{"192.168.0.0/16"},
 					Excludes: []string{"10.2.0.0/16"},
@@ -63,11 +63,11 @@ func TestGroups(t *testing.T) {
 		{
 			"include in one group then exclude in next group",
 			[]*Group{
-				&Group{
+				{
 					Name:     "private network 1",
 					Includes: []string{"10.0.0.0/8"},
 				},
-				&Group{
+				{
 					Name:     "private network 2",
 					Includes: []string{"10.1.0.0/16"},
 					Excludes: []string{"10.1.1.0/24"},
@@ -80,12 +80,12 @@ func TestGroups(t *testing.T) {
 		{
 			"exclude domain in multiple groups",
 			[]*Group{
-				&Group{
+				{
 					Name:     "private network 1",
 					Includes: []string{"10.0.0.0/16"},
 					Domains:  []string{"a"},
 				},
-				&Group{
+				{
 					Name:     "private network 2",
 					Includes: []string{"10.1.0.0/16"},
 					Domains:  []string{"b"},
