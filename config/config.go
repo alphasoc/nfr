@@ -90,7 +90,7 @@ type Config struct {
 
 	// AlphaSOC events configuration.
 	Events struct {
-		// File where to store events. If not set then none events will be retrived.
+		// File where to store events. If not set then none events will be retrieved.
 		// To print events to console use two special outputs: stderr or stdout
 		// Default: "stdout"
 		File string `yaml:"file,omitempty"`

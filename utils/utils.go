@@ -14,7 +14,7 @@ func emailValidator(email string) bool {
 	return err == nil
 }
 
-// GetAccountRegisterDetails prompts user for registartion data
+// GetAccountRegisterDetails prompts user for registration data
 // like name, email, organizatoin.
 func GetAccountRegisterDetails() (*client.AccountRegisterRequest, error) {
 	name, err := getInfo("Full Name", nil)

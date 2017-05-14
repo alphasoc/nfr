@@ -12,7 +12,7 @@ type KeyRequestResponse struct {
 	Key string `json:"key"`
 }
 
-// KeyRequestRequest contasin infromation needed for key registration.
+// KeyRequestRequest contasin information needed for key registration.
 type KeyRequestRequest struct {
 	Platform struct {
 		Name string `json:"name"`

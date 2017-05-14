@@ -2,7 +2,7 @@ package client
 
 import "context"
 
-// KeyResetRequest contasin infromation needed for key reset.
+// KeyResetRequest contasin information needed for key reset.
 type KeyResetRequest struct {
 	Email string `json:"email"`
 }

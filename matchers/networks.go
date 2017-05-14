@@ -15,7 +15,7 @@ type Network struct {
 	ips      map[string]bool // compare ip as string
 }
 
-// NewNetwork creates Network matcher for given includes and exludes netowrks.
+// NewNetwork creates Network matcher for given includes and excludes netowrks.
 // The excludes network acceptable format is cidr and ip.
 func NewNetwork(includes []string, excludes []string) (*Network, error) {
 	if len(includes) == 0 {

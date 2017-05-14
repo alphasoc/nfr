@@ -51,7 +51,7 @@ func TestWriteHeader(t *testing.T) {
 	}
 
 	if len(b1) == 0 || !bytes.Equal(b1, b2) {
-		t.Fatal("file headers diffrent between writes", "\n", b1, "\n", b2)
+		t.Fatal("file headers different between writes", "\n", b1, "\n", b2)
 	}
 }
 
@@ -71,7 +71,7 @@ func TestWrite(t *testing.T) {
 
 	// write one packet to file
 	rawPacket := gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default)
-	// set proper packet lenght
+	// set proper packet length
 	md := rawPacket.Metadata()
 	md.CaptureLength, md.Length = testPacketDNSQueryLenght, testPacketDNSQueryLenght
 	if err = w.Write([]*Packet{newPacket(rawPacket)}); err != nil {

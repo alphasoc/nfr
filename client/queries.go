@@ -26,14 +26,14 @@ func (q *QueriesRequest) AddQuery(query [4]string) {
 	q.Data = append(q.Data, query)
 }
 
-// QueriesResponse represents reponse for /quiery call.
+// QueriesResponse represents response for /quiery call.
 type QueriesResponse struct {
 	Received int            `json:"received"`
 	Accepted int            `json:"accepted"`
 	Rejected map[string]int `json:"rejected"`
 }
 
-// Queries pushs dns queries to AlphaSOC api for futher analize.
+// Queries pushes dns queries to AlphaSOC api for analize.
 func (c *AlphaSOCClient) Queries(req *QueriesRequest) (*QueriesResponse, error) {
 	if c.key == "" {
 		return nil, ErrNoAPIKey

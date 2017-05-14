@@ -35,7 +35,7 @@ func TestNetwork(t *testing.T) {
 			[]bool{true, true, true, false},
 		},
 		{
-			"many diffrent networks",
+			"many different networks",
 			[]string{"10.0.0.0/16", "10.1.0.0/16"},
 			[]string{"10.0.0.0/24", "10.1.0.0"},
 			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 0, 1, 0), net.IPv4(10, 1, 1, 0)},
