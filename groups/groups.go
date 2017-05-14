@@ -54,6 +54,10 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, ip net.IP) bool {
 		return true
 	}
 
+	if domain == "" || ip == nil {
+		return false
+	}
+
 	ok := false
 	// ip must be included in at least 1 group, while
 	// being not excluded from others groups.
