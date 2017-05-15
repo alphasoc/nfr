@@ -95,3 +95,9 @@ Use `namescore account status` to quickly check the most important parameters ab
 
 ## Running
 Run `namescore start` in tmux or screen, or provide a startup script to start namescore at system startup.
+
+## Offline mode
+Run `namescore start --offline` to cature dns queries but do not send it to AlphaSOC.
+In offline mode rquests won't be send to AlphaSOC api, which also means the events won't be poll to naemscore, so
+you won't be albe to indentify threats.
+In config you can set option `quereis.failed.file` which will allow to store captured dns quereis in offline mode.
