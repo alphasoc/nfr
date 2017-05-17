@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/alphasoc/namescore/client"
 	"github.com/alphasoc/namescore/config"
 	"github.com/alphasoc/namescore/logger"
@@ -18,20 +15,6 @@ func NewRootCommand() *cobra.Command {
 		Long: `namescore is application which captures DNS requests and provides
 deep analysis and alerting of suspicious events,
 identifying gaps in your security controls and highlighting targeted attacks.`,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, c, err := createConfigAndClient("", false)
-			if err != nil {
-				return err
-			}
-
-			// do not send error to log output, print on console for user
-			if err := register(cfg, c, "", ""); err != nil {
-				fmt.Fprintf(os.Stderr, "%s\n", err)
-				os.Exit(1)
-			}
-			return nil
-
-		},
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
