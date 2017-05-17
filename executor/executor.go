@@ -213,10 +213,12 @@ func (e *Executor) sendPackets() {
 // do retrives packets from sniffer and send it to api.
 func (e *Executor) do() error {
 	for packet := range e.sniffer.Packets() {
-		log.Debugf("add dns query %s to sending buffer", packet)
 		e.mx.Lock()
-		l := e.buf.Write(packet)
+		added, l := e.buf.Write(packet)
 		e.mx.Unlock()
+		if added > 0 {
+			log.Debugf("add dns query %s to sending buffer", packet)
+		}
 		if l < e.cfg.Queries.BufferSize {
 			continue
 		}

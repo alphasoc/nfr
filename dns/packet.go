@@ -24,6 +24,16 @@ func (p *Packet) String() string {
 	return fmt.Sprintf("%s %s from %s", p.FQDN, p.RecordType, p.SourceIP.String())
 }
 
+// Equal checks if two packets are equal.
+func (p *Packet) Equal(p1 *Packet) bool {
+	if p == nil || p1 == nil {
+		return false
+	}
+	return p.SourceIP.Equal(p1.SourceIP) &&
+		p.RecordType == p1.RecordType &&
+		p.FQDN == p1.FQDN
+}
+
 // newPackets creates packet from gopacket type.
 // It returns nil if packet is not dns quesiton packet
 // or metadata is missing.
