@@ -94,14 +94,14 @@ type Config struct {
 		// To print events to console use two special outputs: stderr or stdout
 		// Default: "stdout"
 		File string `yaml:"file,omitempty"`
-		// Interval for polling events from AlphaSOC api. Default: 30s
+		// Interval for polling events from AlphaSOC api. Default: 5m
 		PollInterval time.Duration `yaml:"poll_interval,omitempty"`
 	} `yaml:"events,omitempty"`
 
 	// DNS queries configuration.
 	Queries struct {
 		// Buffer size for dns queries queue. If the size will be exceded then
-		// namescore send quries to AlphaSOC api. Default: 2048
+		// namescore send quries to AlphaSOC api. Default: 65355
 		BufferSize int `yaml:"buffer_size,omitempty"`
 		// Interval for flushing queries to AlphaSOC api. Default: 30s
 		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
@@ -201,11 +201,11 @@ func (cfg *Config) setDefaults() *Config {
 	}
 
 	if cfg.Events.PollInterval == 0 {
-		cfg.Events.PollInterval = 30 * time.Second
+		cfg.Events.PollInterval = 5 * time.Minute
 	}
 
 	if cfg.Queries.BufferSize == 0 {
-		cfg.Queries.BufferSize = 2048
+		cfg.Queries.BufferSize = 65355
 	}
 	if cfg.Queries.FlushInterval == 0 {
 		cfg.Queries.FlushInterval = 30 * time.Second

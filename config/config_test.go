@@ -30,12 +30,11 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Data.File != "/run/namescore.data" {
 		t.Fatalf("invalid data file - got %s; expected %s", cfg.Data.File, "/run/namescore.data")
 	}
-	if cfg.Events.PollInterval != 30*time.Second {
-
-		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Events.PollInterval, 30*time.Second)
+	if cfg.Events.PollInterval != 5*time.Minute {
+		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Events.PollInterval, 5*time.Minute)
 	}
-	if cfg.Queries.BufferSize != 2048 {
-		t.Fatalf("invalid queries buffer size - got %d; expected %d", cfg.Queries.BufferSize, 30*time.Second)
+	if cfg.Queries.BufferSize != 65355 {
+		t.Fatalf("invalid queries buffer size - got %d; expected %d", cfg.Queries.BufferSize, 65355)
 	}
 	if cfg.Queries.FlushInterval != 30*time.Second {
 		t.Fatalf("invalid queries flush interval - got %s; expected %s", cfg.Queries.FlushInterval, 30*time.Second)
