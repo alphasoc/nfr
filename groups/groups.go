@@ -48,39 +48,39 @@ func (g *Groups) Add(group *Group) error {
 }
 
 // IsDNSQueryWhitelisted returns true if dns query is not match any of groups
-func (g *Groups) IsDNSQueryWhitelisted(domain string, ip net.IP) bool {
+func (g *Groups) IsDNSQueryWhitelisted(domain string, ip net.IP) (string, bool) {
 	// if there is no groups, then every query is whitelisted
 	if g == nil || len(g.groups) == 0 {
-		return true
+		return "<no-whitelsit>", true
 	}
 
 	if domain == "" || ip == nil {
-		return false
+		return "<no-data>", false
 	}
 
-	ok := false
+	ok, groupName := false, ""
 	// ip must be included in at least 1 group, while
 	// being not excluded from others groups.
 	// At the same time domain can't be included in
 	// groups' excluded domains.
-	for _, group := range g.groups {
+	for name, group := range g.groups {
 		matched, excluded := group.nm.Match(ip)
 		if !matched {
 			continue
 		}
 		if excluded {
-			return false
+			return name, false
 		}
 
 		// ip is matched, now check if domain is not excluded
 		if group.dm.Match(domain) {
-			return false
+			return name, false
 		}
 
 		// in case of success do not break, because the ip/domain
 		// could be on other lists.
-		ok = true
+		ok, groupName = true, name
 	}
 
-	return ok
+	return groupName, ok
 }

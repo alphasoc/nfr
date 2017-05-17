@@ -21,7 +21,7 @@ type Packet struct {
 }
 
 func (p *Packet) String() string {
-	return fmt.Sprintf("(%s) %s %s from %s", p.Timestamp, p.FQDN, p.RecordType, p.SourceIP.String())
+	return fmt.Sprintf("(recived %s) %s %s from %s", p.Timestamp, p.FQDN, p.RecordType, p.SourceIP.String())
 }
 
 // newPackets creates packet from gopacket type.

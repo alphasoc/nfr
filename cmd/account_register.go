@@ -38,10 +38,10 @@ events about possible threats.`,
 func register(cfg *config.Config, c *client.AlphaSOCClient, configPath, key string) error {
 	if key != "" {
 		c.SetKey(key)
-		fmt.Printf("Using key %s for registration\n", key)
+		fmt.Printf("Using key %s for registration\n", utils.ShadowKey(key))
 	} else if cfg.Alphasoc.APIKey != "" {
 		c.SetKey(cfg.Alphasoc.APIKey)
-		fmt.Printf("Using key %s for registration\n", cfg.Alphasoc.APIKey)
+		fmt.Printf("Using key %s for registration\n", utils.ShadowKey(cfg.Alphasoc.APIKey))
 	}
 
 	if status, err := c.AccountStatus(); err == nil && status.Registered {

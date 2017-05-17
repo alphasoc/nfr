@@ -3,6 +3,7 @@ package dns
 import (
 	"fmt"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/alphasoc/namescore/groups"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
@@ -97,7 +98,15 @@ func (s *Sniffer) readPackets() {
 
 // shouldSendPackets test if packet should be send to channel
 func (s *Sniffer) shouldSendPacket(p *Packet) bool {
-	return s.groups.IsDNSQueryWhitelisted(p.FQDN, p.SourceIP)
+	// no whitelist groups configured
+	if s.groups == nil {
+		return true
+	}
+	name, t := s.groups.IsDNSQueryWhitelisted(p.FQDN, p.SourceIP)
+	if !t {
+		log.Debugf("dns query %s excluded by %s group", p, name)
+	}
+	return t
 }
 
 // print pcap format filter based on protocols and port

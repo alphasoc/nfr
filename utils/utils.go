@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/mail"
 	"os"
+	"strings"
 
 	"github.com/alphasoc/namescore/client"
 )
@@ -57,4 +58,20 @@ func getInfo(prompt string, validator func(string) bool) (string, error) {
 		fmt.Printf("%s: ", prompt)
 	}
 	return "", fmt.Errorf("No input for %s", prompt)
+}
+
+// ShadowKey replaces middel of key with dots, so it could be safe
+// printed to the console.
+func ShadowKey(key string) string {
+	l := len(key)
+	switch {
+	case l == 0:
+		return ""
+	case l < 3:
+		return strings.Repeat(".", 5)
+	case l < 10:
+		return string(key[0]) + strings.Repeat(".", 5) + string(key[l-1])
+	default:
+		return key[:3] + strings.Repeat(".", 5) + key[l-3:]
+	}
 }

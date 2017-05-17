@@ -105,7 +105,7 @@ func TestGroups(t *testing.T) {
 			}
 		}
 		for i := range tt.domains {
-			if g.IsDNSQueryWhitelisted(tt.domains[i], tt.ips[i]) != tt.expected[i] {
+			if _, b := g.IsDNSQueryWhitelisted(tt.domains[i], tt.ips[i]); b != tt.expected[i] {
 				t.Fatalf("IsDNSQueryWhitelisted(%s, %s) got %t; expected %t",
 					tt.domains[i], tt.ips[i], !tt.expected[i], tt.expected[i])
 			}
@@ -115,11 +115,11 @@ func TestGroups(t *testing.T) {
 
 func TestEmptyGroup(t *testing.T) {
 	var g *Groups
-	if !g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0)) {
+	if _, b := g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0)); !b {
 		t.Fatalf("nil groups must whitelist domain")
 	}
-
-	if g = New(); !g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0)) {
+	g = New()
+	if _, b := g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0)); !b {
 		t.Fatalf("no groups must whitelist domain")
 	}
 }
