@@ -2,6 +2,8 @@
 package executor
 
 import (
+	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"sync"
@@ -64,6 +66,9 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 
 // Start starts sniffer in online mode, where dns queries are sent to api.
 func (e *Executor) Start() error {
+	if _, err := net.InterfaceByName(e.cfg.Network.Interface); err != nil {
+		return fmt.Errorf("can't open %s interface: %s", e.cfg.Network.Interface, err.(*net.OpError).Err)
+	}
 	log.Infof("creating sniffer for %s interface, port %d, protocols %v",
 		e.cfg.Network.Interface, e.cfg.Network.Port, e.cfg.Network.Protocols)
 	sniffer, err := dns.NewLiveSniffer(e.cfg.Network.Interface, e.cfg.Network.Protocols, e.cfg.Network.Port)
@@ -88,6 +93,9 @@ func (e *Executor) Start() error {
 
 // StartOffline starts sniffer in offline mode, where no dns queries are sent to api.
 func (e *Executor) StartOffline() error {
+	if _, err := net.InterfaceByName(e.cfg.Network.Interface); err != nil {
+		return fmt.Errorf("can't open %s interface: %s", e.cfg.Network.Interface, err.(*net.OpError).Err)
+	}
 	log.Infof("creating offline sniffer for %s interface, port %d, protocols %v",
 		e.cfg.Network.Interface, e.cfg.Network.Port, e.cfg.Network.Protocols)
 	sniffer, err := dns.NewLiveSniffer(e.cfg.Network.Interface, e.cfg.Network.Protocols, e.cfg.Network.Port)

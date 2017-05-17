@@ -139,11 +139,11 @@ func Read(file string) (*Config, error) {
 
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("config: %s", err)
 	}
 
 	if err := yaml.Unmarshal(content, &cfg); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse config: %s", err)
 	}
 
 	if err := cfg.loadWhiteListConfig(); err != nil {
@@ -216,31 +216,31 @@ func (cfg *Config) setDefaults() *Config {
 
 func (cfg *Config) validate() error {
 	if len(cfg.Network.Protocols) == 0 {
-		return fmt.Errorf("empty protocol list")
+		return fmt.Errorf("config: empty protocol list")
 	}
 
 	if len(cfg.Network.Protocols) > 2 {
-		return fmt.Errorf("too many protocols in list (only tcp and udp are available)")
+		return fmt.Errorf("config: too many protocols in list (only tcp and udp are available)")
 	}
 
 	for _, proto := range cfg.Network.Protocols {
 		if proto != "udp" && proto != "tcp" {
-			return fmt.Errorf("invalid protocol %q name (only tcp and udp are available)", proto)
+			return fmt.Errorf("config: invalid protocol %q name (only tcp and udp are available)", proto)
 		}
 	}
 
 	if cfg.Network.Port < 0 || cfg.Network.Port > 65355 {
-		return fmt.Errorf("invalid %d port number", cfg.Network.Port)
+		return fmt.Errorf("config: invalid %d port number", cfg.Network.Port)
 	}
 
 	if err := validateFilename(cfg.Log.File, true); err != nil {
-		return err
+		return fmt.Errorf("config: %s", err)
 	}
 	if cfg.Log.Level != "debug" &&
 		cfg.Log.Level != "info" &&
 		cfg.Log.Level != "warn" &&
 		cfg.Log.Level != "error" {
-		return fmt.Errorf("invalid %s log level", cfg.Log.Level)
+		return fmt.Errorf("config: invalid %s log level", cfg.Log.Level)
 	}
 
 	if err := validateFilename(cfg.Data.File, false); err != nil {
@@ -249,25 +249,25 @@ func (cfg *Config) validate() error {
 
 	if cfg.Events.File != "" {
 		if err := validateFilename(cfg.Events.File, true); err != nil {
-			return err
+			return fmt.Errorf("config: %s", err)
 		}
 	}
 
 	if cfg.Events.PollInterval < 5*time.Second {
-		return fmt.Errorf("events poll interval must be at least 5s")
+		return fmt.Errorf("config: events poll interval must be at least 5s")
 	}
 
 	if cfg.Queries.BufferSize < 64 {
-		return fmt.Errorf("queries buffer size must be at least 64")
+		return fmt.Errorf("config: queries buffer size must be at least 64")
 	}
 
 	if cfg.Queries.FlushInterval < 5*time.Second {
-		return fmt.Errorf("queries flush interval must be at least 5s")
+		return fmt.Errorf("config: queries flush interval must be at least 5s")
 	}
 
 	if cfg.Queries.Failed.File != "" {
 		if err := validateFilename(cfg.Queries.Failed.File, false); err != nil {
-			return err
+			return fmt.Errorf("config: %s", err)
 		}
 	}
 
@@ -305,11 +305,11 @@ func (cfg *Config) loadWhiteListConfig() error {
 
 	content, err := ioutil.ReadFile(cfg.WhiteList.File)
 	if err != nil {
-		return err
+		return fmt.Errorf("whitelist config: %s ", err)
 	}
 
 	if err := yaml.Unmarshal(content, &cfg.WhiteListConfig); err != nil {
-		return err
+		return fmt.Errorf("parse whitelist config: %s ", err)
 	}
 
 	return cfg.validateWhiteListConfig()
@@ -319,7 +319,7 @@ func (cfg *Config) validateWhiteListConfig() error {
 	for _, group := range cfg.WhiteListConfig.Groups {
 		for _, n := range group.Networks {
 			if _, _, err := net.ParseCIDR(n); err != nil {
-				return fmt.Errorf("%s is not cidr", n)
+				return fmt.Errorf("parse whitelist config: %s is not cidr", n)
 			}
 		}
 
@@ -327,7 +327,7 @@ func (cfg *Config) validateWhiteListConfig() error {
 			_, _, err := net.ParseCIDR(n)
 			ip := net.ParseIP(n)
 			if err != nil && ip == nil {
-				return fmt.Errorf("%s is not cidr nor ip", n)
+				return fmt.Errorf("parse whitelist config: %s is not cidr nor ip", n)
 			}
 		}
 
@@ -335,7 +335,7 @@ func (cfg *Config) validateWhiteListConfig() error {
 			// TrimPrefix *. for multimatch domain
 			if !utils.IsDomainName(domain) &&
 				!utils.IsDomainName(strings.TrimPrefix(domain, "*.")) {
-				return fmt.Errorf("%s is not valid domain name", domain)
+				return fmt.Errorf("parse whitelist config: %s is not valid domain name", domain)
 			}
 		}
 	}
