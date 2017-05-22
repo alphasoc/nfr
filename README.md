@@ -96,7 +96,7 @@ groups:
 Use `namescore account status` to return account and AlphaSOC API key details.
 
 ## Running Namescore
-You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stdout` and internal messages to `stderr`. Here is an example showing both, and an alert for a known C2 domain:
+You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stdout` and internal messages to `stderr`. Here is an example showing both, plus an alert for a known C2 domain (microsoft775.com) from 10.0.2.15 within the lab network:
 
 ```
 $ namescore listen 
