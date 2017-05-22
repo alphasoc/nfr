@@ -10,5 +10,6 @@ import (
 func main() {
 	if err := cmd.NewRootCommand().Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
+		os.Exit(1)
 	}
 }
