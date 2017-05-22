@@ -47,11 +47,10 @@ Use "namescore [command] --help" for more information about a given command.
 ```
 
 ## Configuration
-Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example `config.yml` file in the repository's root directory. The file defines the network interface to monitor for DNS traffic, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory. Otherwise, simply run `namescore` which will create the files and prompt you for some details, e.g.
+Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example `config.yml` file in the repository's root directory. The file defines the network interface to monitor for DNS traffic, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory. Otherwise, simply run `namescore account register` which will create the files and generate an API key, e.g.
 
 ```
-# namescore
-No configuration file found at /etc/namescore/config.yml
+# namescore account register
 Please provide your details to generate an API key and set up /etc/namescore/
 A valid email address is required to activate the key. 
 
