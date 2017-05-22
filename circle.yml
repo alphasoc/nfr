@@ -1,7 +1,7 @@
 machine:
   environment:
-    PKG: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
-    BUILD_DIR: "$HOME/build"
+    PKG: github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+    BUILD_DIR: $HOME/build
   post:
     - sudo rm -rf /usr/local/go
     - curl -s -o - https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz | sudo tar -C /usr/local -xzf -
@@ -10,15 +10,11 @@ machine:
 
 compile:
   override:
-    - GOOS=linux GOARCH=amd64 GOBIN="$BUILD_DIR" go install $PKG
+    - GOOS=linux GOARCH=amd64 GOBIN=$BUILD_DIR go install $PKG
 
 deployment:
   release:
     tag: /v[0-9]+\.[0-9]+\.[0-9]+/
     commands:
-      - github-release release \
-          --user alphasoc \
-          --repo namescore \
-          --tag $CIRCLE_TAG
-          --name "namescoure $CIRCLE_TAG"
-          --file "$BUILD_DIR/namescore.linux-amd64"
+      - github-release release --user alphasoc --repo namescore --tag $CIRCLE_TAG
+      - github-release upload  --user alphasoc --repo namescore --tag $CIRCLE_TAG --name namescore.linux-amd64 --file $BUILD_DIR/namescore
