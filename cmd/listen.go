@@ -13,7 +13,7 @@ func newListenCommand() *cobra.Command {
 	)
 	var cmd = &cobra.Command{
 		Use:   "listen",
-		Short: "Start the DNS sniffer sniffer and score live events",
+		Short: "Start the DNS sniffer and score live events",
 		Long: `Captures DNS traffic and provides analysis of them.
 API key must be set before calling this mode.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
