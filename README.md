@@ -51,7 +51,8 @@ Namescore expects to find its configuration file in `/etc/namescore/config.yml`.
 
 ```
 # namescore
-Provide your details to generate an API key and complete setup.
+No configuration file found at /etc/namescore/config.yml
+Please provide your details to generate an API key and set up /etc/namescore/
 A valid email address is required to activate the key. 
 
 By performing this request you agree to our Terms of Service and Privacy Policy
