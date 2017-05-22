@@ -94,7 +94,7 @@ groups:
 ```
 
 ## Running Namescore
-You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stdout`. Below an example in which raw the JSON is both stored on disk at `/tmp/alerts.json` and rendered via `jq` to make it human-readable in the terminal.
+You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stderr`. Below an example in which raw the JSON is both stored on disk at `/tmp/alerts.json` and rendered via `jq` to make it human-readable in the terminal.
 
 ```
 $ namescore listen 2>&1 >/dev/null | tee /tmp/alerts.json | jq .
