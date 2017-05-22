@@ -95,4 +95,4 @@ groups:
 Use `namescore account status` to return account parameters and API key details (e.g. expiry date).
 
 ## Running Namescore
-You may run `namescore start` in tmux or screen, or provide a startup script to start namescore at system startup.
+You may run `namescore listen` in tmux or screen, or provide a startup script to start namescore at system startup.
