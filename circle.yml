@@ -1,0 +1,12 @@
+machine:
+  environment:
+    PKG: github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+    BUILD_DIR: $HOME/build
+  post:
+    - sudo rm -rf /usr/local/go
+    - curl -s -o - https://storage.googleapis.com/golang/go1.8.3.linux-amd64.tar.gz | sudo tar -C /usr/local -xzf -
+    - sudo apt-get install --quiet --yes libpcap-dev
+
+compile:
+  override:
+    - GOOS=linux GOARCH=amd64 GOBIN=$BUILD_DIR go install $PKG

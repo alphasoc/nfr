@@ -1,0 +1,34 @@
+# This configuration file sets the Namescore monitoring scope
+# Groups can be used to assign labels to different networks (e.g. default, pci_zone, etc.)
+#
+# Within each group, you can define:
+# - IP address space to monitor DNS traffic from
+# - IP address space to exclude (e.g. mail servers and systems repeating requests)
+# - Whitelisted domains (e.g. internal trusted domains that don't need to be scored)
+#
+# DNS traffic from addresses within scope and for non-whitelisted domains will be sent to
+# the AlphaSOC DNS Analytics API for scoring. You can use this configuration file to limit
+# and control data sent to the API.
+#
+# If you have any questions, please contact support@alphasoc.com for assistance.
+
+groups:
+  # name of group
+  default:
+    # networks to monitor, only CIDR format is allowed
+    networks:
+    - 10.0.0.0/8
+    - 192.168.0.0/16
+    - 172.16.0.0/12
+    - fc00::/7
+    # excluded (whitelisted) domains and networks
+    exclude:
+      # excluded domains, supporting both wilcards (starting with '*') and strict domains
+      domains:
+       - "*.arpa"
+       - "*.lan"
+       - "*.local"
+       - "*.internal"
+      # excluded networks, used to drop data from noisy sources (e.g. mail servers)
+      # CIDR and single IP address formats are supported
+      networks:

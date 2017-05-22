@@ -1,0 +1,79 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "qk6ae8jJ9YkwdiOxZ/YeywKmy+A=",
+			"path": "github.com/Sirupsen/logrus",
+			"revision": "62f94013e5862ca79b0622b72f2442457ed1de31",
+			"revisionTime": "2017-05-12T10:11:14Z"
+		},
+		{
+			"checksumSHA1": "5HgC7V5oFyE4xPKkx44bgqpo7ps=",
+			"path": "github.com/google/gopacket",
+			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
+			"revisionTime": "2017-05-03T21:52:36Z"
+		},
+		{
+			"checksumSHA1": "5WFP+sXGbrIz9aK+fFL5YYD0Dro=",
+			"path": "github.com/google/gopacket/layers",
+			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
+			"revisionTime": "2017-05-03T21:52:36Z"
+		},
+		{
+			"checksumSHA1": "gBH+9p7pMzemAVn5WQ6mGtkDg+s=",
+			"path": "github.com/google/gopacket/pcap",
+			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
+			"revisionTime": "2017-05-03T21:52:36Z"
+		},
+		{
+			"checksumSHA1": "3s4xVMFdqU6YDaNJI7pJiU+o4Lw=",
+			"path": "github.com/google/gopacket/pcapgo",
+			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
+			"revisionTime": "2017-05-03T21:52:36Z"
+		},
+		{
+			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
+			"path": "github.com/inconshreveable/mousetrap",
+			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
+			"revisionTime": "2014-10-17T20:07:13Z"
+		},
+		{
+			"checksumSHA1": "lU+gVOtSFnBKx11uhPL8b9v0uTE=",
+			"path": "github.com/spf13/cobra",
+			"revision": "7be4beda01ec05d0b93d80b3facd2b6f44080d94",
+			"revisionTime": "2017-03-14T17:12:53Z"
+		},
+		{
+			"checksumSHA1": "WZHF26m8UJ3WU5//TIDeUC3xs4o=",
+			"path": "github.com/spf13/pflag",
+			"revision": "d16db1e50e33dff1b6cdf37596cef36742128670",
+			"revisionTime": "2017-03-27T14:13:44Z"
+		},
+		{
+			"checksumSHA1": "Y+HGqEkYM15ir+J93MEaHdyFy0c=",
+			"path": "golang.org/x/net/context",
+			"revision": "c9b681d35165f1995d6f3034e61f8761d4b90c99",
+			"revisionTime": "2017-05-10T00:04:54Z"
+		},
+		{
+			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
+			"path": "golang.org/x/net/context/ctxhttp",
+			"revision": "c9b681d35165f1995d6f3034e61f8761d4b90c99",
+			"revisionTime": "2017-05-10T00:04:54Z"
+		},
+		{
+			"checksumSHA1": "Dbw6GrXllNPecT0AnoOyAiv66EI=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "9c9d83fe39ed3fd2d9249fcf6b755891fff54b03",
+			"revisionTime": "2017-05-06T01:47:39Z"
+		},
+		{
+			"checksumSHA1": "QpWY2ygzClg3Bw+GHjD7yXlcTxw=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "4c78c975fe7c825c6d1466c42be594d1d6f3aba6",
+			"revisionTime": "2017-01-25T14:37:19Z"
+		}
+	],
+	"rootPath": "github.com/alphasoc/namescore"
+}

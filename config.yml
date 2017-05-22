@@ -1,0 +1,105 @@
+# This is the Namescore configuration file. Here you define the location of the
+# DNS Analytics API and key, and the way in which the Namescore application will
+# monitor network traffic, store data, and submit events to the API for scoring.
+# Please contact support@alphasoc.com if you have any questions.
+
+################################################################################
+# AlphaSOC DNS Analytics server location and API key
+################################################################################
+
+alphasoc:
+
+  # Location of the server (e.g. cloud or on-premise operation)
+  # Default: https://api.alphasoc.net
+  host: https://api.alphasoc.net
+ 
+  # Your AlphaSOC API key (required to use the service)
+  # Use "namescore account register" to generate one
+  api_key: test-api-key
+
+################################################################################
+# Define the network interface and protocol(s) to monitor
+################################################################################
+
+network:
+
+  # Interface to listen for DNS events on (e.g. eth0)
+  interface: <interface-name>
+
+  # Protocols to process (possible values are udp and tcp)
+  protocols:
+  - udp
+ 
+  # Port to monitor for DNS traffic on
+  port: 53
+
+################################################################################
+# Logging configuration
+################################################################################
+
+log:
+
+  # File to which namescore should log
+  # To print log to console use two special outputs: stderr or stdout
+  # Default: stdout
+  file: stdout
+  
+  # Logging level. Possibles values are: debug, info, warn, error
+  # Default: info
+  level: info
+
+################################################################################
+# Internal Namescore data location
+################################################################################
+
+data:
+
+  # Define the file for internal data and caching
+  # Default (Linux): /run/namescore.data
+  file: /run/namescore.data
+
+################################################################################
+# Monitoring scope file location
+################################################################################
+
+scope:
+
+   # Monitoring scope file to load
+   # Default: (none)
+  file:
+
+################################################################################
+# AlphaSOC events configuration
+################################################################################
+
+events:
+
+  # Location to which events should be written. This can be a file, or a special
+  # ouput (stderr or stdout) to print events to the terminal
+  # Default: stdout
+  file: stdout
+
+  # Interval for polling events from the DNS Analytics API
+  # Default: 5m
+  poll_interval: 5m
+
+################################################################################
+# DNS queries (data queuing and processing) configuration
+################################################################################
+
+queries:
+
+  # Namescore buffer size for the DNS event queue
+  # Default: 65535
+  buffer_size: 65535
+
+  # Interval for flushing data to DNS Analytics API for scoring
+  # Default: 30s
+  flush_interval: 30s
+
+  # If Namescore is unable to send DNS events to the API for processing, it can
+  # write the events to disk (in PCAP format) and attempt to send them again
+  failed:
+    # File in which to store unprocessed DNS events on disk
+    # Default: (none)
+    file:
