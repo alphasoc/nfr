@@ -35,12 +35,13 @@ Usage:
   namescore [command] [argument]
 
 Available Commands:
-  account register   Generate an API key via the licensing server
-  account status     Show the status of your AlphaSOC API key and license
-  listen             Start the DNS sniffer and score live events
-  read [file]        Process DNS events stored on disk in PCAP format
-  version            Show the Namescore binary version
-  help               Provides help and usage instructions
+  account register       Generate an API key via the licensing server
+  account reset [email]  Reset the API key associated with a given email address
+  account status         Show the status of your AlphaSOC API key and license
+  listen                 Start the DNS sniffer and score live events
+  read [file]            Process DNS events stored on disk in PCAP format
+  version                Show the Namescore binary version
+  help                   Provides help and usage instructions
 
 Use "namescore [command] --help" for more information about a given command.
 ```
