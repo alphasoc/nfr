@@ -17,7 +17,7 @@ Namescore requires the development library for `libpcap`. Installation steps are
 ```
 
 ## Namescore installation
-Follow these steps to install Namescore:
+Use the following command to install Namescore:
 ```
 # go get github.com/alphasoc/namescore.git
 ```
