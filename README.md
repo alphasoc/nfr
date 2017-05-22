@@ -96,7 +96,7 @@ groups:
 Use `namescore account status` to return account and AlphaSOC API key details.
 
 ## Running Namescore
-You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stdout`, and internal messages to `stderr`. Below an example in which Namescore is run to store JSON on disk at `/tmp/alerts.json` and render via `stdout` which is then made human-readable via `jq`.
+You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stdout`, and internal messages to `stderr`. Below an example in which raw JSON is both stored on disk at `/tmp/alerts.json` and rendered via `stdout` using `jq` to make it human-readable.
 
 ```
 $ namescore listen 2>&1 >/dev/null | tee /tmp/alerts.json | jq .
