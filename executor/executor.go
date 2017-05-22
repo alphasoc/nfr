@@ -91,31 +91,6 @@ func (e *Executor) Start() error {
 	return e.do()
 }
 
-// StartOffline starts sniffer in offline mode, where no dns queries are sent to api.
-func (e *Executor) StartOffline() error {
-	if _, err := net.InterfaceByName(e.cfg.Network.Interface); err != nil {
-		return fmt.Errorf("can't open %s interface: %s", e.cfg.Network.Interface, err.(*net.OpError).Err)
-	}
-	log.Infof("creating offline sniffer for %s interface, port %d, protocols %v",
-		e.cfg.Network.Interface, e.cfg.Network.Port, e.cfg.Network.Protocols)
-	sniffer, err := dns.NewLiveSniffer(e.cfg.Network.Interface, e.cfg.Network.Protocols, e.cfg.Network.Port)
-	if err != nil {
-		return err
-	}
-	e.sniffer = sniffer
-	e.sniffer.SetGroups(e.groups)
-
-	if e.cfg.Queries.Failed.File != "" {
-		if e.dnsWriter, err = dns.NewWriter(e.cfg.Queries.Failed.File); err != nil {
-			return err
-		}
-	}
-
-	go e.startPacketWriter(e.cfg.Queries.FlushInterval)
-
-	return e.do()
-}
-
 // Send sends dns queries from file in pcap format to api.
 func (e *Executor) Send(file string) error {
 	log.Infof("creating sniffer for %s file", file)
@@ -146,24 +121,6 @@ func (e *Executor) startPacketSender(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	for range ticker.C {
 		e.sendPackets()
-	}
-}
-
-// startPacketWriter for offline mode, which writes packets or drop them.
-func (e *Executor) startPacketWriter(interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	for range ticker.C {
-		packets := e.buf.Packets()
-		if len(packets) == 0 {
-			continue
-		} else if e.dnsWriter == nil {
-			log.Infof("no queries failed file set, %d queries will be discarded", len(packets))
-		} else if err := e.dnsWriter.Write(packets); err != nil {
-			log.Warnln(err)
-			continue
-		} else {
-			log.Infof("%d queries wrote to file", len(packets))
-		}
 	}
 }
 

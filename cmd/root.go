@@ -11,17 +11,17 @@ import (
 func NewRootCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "namescore account|send|start",
-		Short: "namescore is main command used to send dns queries to AlphaSOC API.",
-		Long: `namescore is application which captures DNS requests and provides
-deep analysis and alerting of suspicious events,
-identifying gaps in your security controls and highlighting targeted attacks.`,
+		Short: "namescore is main command used to send dns queries to AlphaSOC API",
+		Long: `namescore is application which captures DNS requests and provides deep analysis
+and alerting of suspicious events, identifying gaps in your security controls and
+highlighting targeted attacks.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
 	cmd.AddCommand(newVersionCommand())
 	cmd.AddCommand(newAccountCommand())
-	cmd.AddCommand(newStartCommand())
-	cmd.AddCommand(newSendCommand())
+	cmd.AddCommand(newListenCommand())
+	cmd.AddCommand(newReadCommand())
 	return cmd
 }
 

@@ -18,8 +18,8 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Network.Port != 53 {
 		t.Fatalf("invalid network port - got %d; expected %d", cfg.Network.Port, 53)
 	}
-	if cfg.Events.File != "stdout" {
-		t.Fatalf("invalid events file - got %s; expected %s", cfg.Events.File, "stdout")
+	if cfg.Events.File != "stderr" {
+		t.Fatalf("invalid events file - got %s; expected %s", cfg.Events.File, "stderr")
 	}
 	if cfg.Log.File != "stdout" {
 		t.Fatalf("invalid log file - got %s; expected %s", cfg.Log.File, "stdout")
@@ -33,8 +33,8 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Events.PollInterval != 5*time.Minute {
 		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Events.PollInterval, 5*time.Minute)
 	}
-	if cfg.Queries.BufferSize != 65355 {
-		t.Fatalf("invalid queries buffer size - got %d; expected %d", cfg.Queries.BufferSize, 65355)
+	if cfg.Queries.BufferSize != 65535 {
+		t.Fatalf("invalid queries buffer size - got %d; expected %d", cfg.Queries.BufferSize, 65535)
 	}
 	if cfg.Queries.FlushInterval != 30*time.Second {
 		t.Fatalf("invalid queries flush interval - got %s; expected %s", cfg.Queries.FlushInterval, 30*time.Second)
@@ -65,10 +65,10 @@ log:
 data:
   file: /run/namescore.data
 events:
-  file: stdout
-  poll_interval: 30s
+  file: stderr
+  poll_interval: 5m
 queries:
-  buffer_size: 2048
+  buffer_size: 65535
   flush_interval: 30s
   failed:
     file: /run/namescore.pcap`)
@@ -153,10 +153,4 @@ groups:
 	if len(public.Networks) != 1 || len(public.Exclude.Networks) != 2 || len(public.Exclude.Domains) != 1 {
 		t.Fatal("invalid public groups data")
 	}
-}
-
-func TestConfigValidation(t *testing.T) {
-}
-
-func TestWhitelistValidation(t *testing.T) {
 }

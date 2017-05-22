@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -15,7 +16,7 @@ import (
 )
 
 // DefaultLocation for config file.
-const DefaultLocation = "/etc/namescore.yml"
+const DefaultLocation = "/etc/namescore/config.yml"
 
 // Config for namescore
 type Config struct {
@@ -92,7 +93,7 @@ type Config struct {
 	Events struct {
 		// File where to store events. If not set then none events will be retrieved.
 		// To print events to console use two special outputs: stderr or stdout
-		// Default: "stdout"
+		// Default: "stderr"
 		File string `yaml:"file,omitempty"`
 		// Interval for polling events from AlphaSOC api. Default: 5m
 		PollInterval time.Duration `yaml:"poll_interval,omitempty"`
@@ -101,7 +102,7 @@ type Config struct {
 	// DNS queries configuration.
 	Queries struct {
 		// Buffer size for dns queries queue. If the size will be exceded then
-		// namescore send quries to AlphaSOC api. Default: 65355
+		// namescore send quries to AlphaSOC api. Default: 65535
 		BufferSize int `yaml:"buffer_size,omitempty"`
 		// Interval for flushing queries to AlphaSOC api. Default: 30s
 		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
@@ -165,6 +166,10 @@ func (cfg *Config) Save(file string) error {
 
 // SaveDefault saves config to default file.
 func (cfg *Config) SaveDefault() error {
+	// create default directory if not exists.
+	if err := os.MkdirAll(filepath.Dir(DefaultLocation), os.ModeDir); err != nil {
+		return err
+	}
 	return cfg.Save(DefaultLocation)
 }
 
@@ -182,7 +187,7 @@ func (cfg *Config) setDefaults() *Config {
 	}
 
 	if cfg.Events.File == "" {
-		cfg.Events.File = "stdout"
+		cfg.Events.File = "stderr"
 	}
 
 	if cfg.Log.File == "" {
@@ -205,7 +210,7 @@ func (cfg *Config) setDefaults() *Config {
 	}
 
 	if cfg.Queries.BufferSize == 0 {
-		cfg.Queries.BufferSize = 65355
+		cfg.Queries.BufferSize = 65535
 	}
 	if cfg.Queries.FlushInterval == 0 {
 		cfg.Queries.FlushInterval = 30 * time.Second
@@ -229,7 +234,7 @@ func (cfg *Config) validate() error {
 		}
 	}
 
-	if cfg.Network.Port < 0 || cfg.Network.Port > 65355 {
+	if cfg.Network.Port < 0 || cfg.Network.Port > 65535 {
 		return fmt.Errorf("config: invalid %d port number", cfg.Network.Port)
 	}
 
@@ -274,6 +279,7 @@ func (cfg *Config) validate() error {
 	return nil
 }
 
+// validateFilename checks if file can be created.
 func validateFilename(file string, noFileOutput bool) error {
 	if noFileOutput && (file == "stdout" || file == "stderr") {
 		return nil
@@ -298,6 +304,7 @@ func validateFilename(file string, noFileOutput bool) error {
 	return nil
 }
 
+// load whitelist config from yaml file.
 func (cfg *Config) loadWhiteListConfig() error {
 	if cfg.WhiteList.File == "" {
 		return nil

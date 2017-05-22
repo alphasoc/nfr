@@ -1,12 +1,14 @@
 package main
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"fmt"
+	"os"
+
 	"github.com/alphasoc/namescore/cmd"
 )
 
 func main() {
 	if err := cmd.NewRootCommand().Execute(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintf(os.Stderr, "%s\n", err)
 	}
 }

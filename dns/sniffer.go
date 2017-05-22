@@ -33,7 +33,6 @@ func NewOfflineSniffer(file string, protocols []string, port int) (*Sniffer, err
 		return nil, err
 	}
 	return newsniffer(handle, protocols, port)
-
 }
 
 // newsniffer creates new sniffer and sets pcap filter for it.
