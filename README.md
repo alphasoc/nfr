@@ -38,7 +38,7 @@ Available Commands:
   account register       Generate an API key via the licensing server
   account reset [email]  Reset the API key associated with a given email address
   account status         Show the status of your AlphaSOC API key and license
-  listen                 Start the DNS sniffer and score live events
+  listen                 Start the sniffer and score live DNS events
   read [file]            Process DNS events stored on disk in PCAP format
   version                Show the Namescore binary version
   help                   Provides help and usage instructions
