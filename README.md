@@ -96,12 +96,38 @@ groups:
 Use `namescore account status` to return account and AlphaSOC API key details.
 
 ## Running Namescore
-You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stdout`, and internal messages to `stderr`. Below an example showing Namescore initialization and an alert for a known C2 domain (microsoft775.com) from 10.0.2.15.
+You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stdout`, and internal messages to `stderr`. Below an example in which Namescore is run to store JSON on disk at `/tmp/alerts.json` and render via `stdout` which is then made human-readable via `jq`.
 
 ```
-$ namescore listen 
-INFO[2017-05-22T16:11:49+02:00] found 3 whiltelist groups                    
-INFO[2017-05-22T16:11:49+02:00] creating sniffer for enp0s3 interface, port 53, protocols [udp] 
-INFO[2017-05-22T16:11:54+02:00] sending 1 dns queries to analyze             
-{"follow":"4.9b31d","more":false,"events":[{"type":"alert","ts":["2017-05-22T16:11:01+02:00"],"ip":"10.0.2.15","record_type":"A","fqdn":"microsoft775.com","risk":5,"flags":["c2"],"threats":["c2_communication"]}],"threats":{"c2_communication":{"title":"C2 communication attempt indicating infection","severity":5,"policy":false,"deprecated":false}}}
+$ namescore listen 2>&1 >/dev/null | tee /tmp/alerts.json | jq .
+{
+  "follow": "4.9b3db",
+  "more": false,
+  "events": [
+    {
+      "type": "alert",
+      "ts": [
+        "2017-05-22T16:16:56+02:00"
+      ],
+      "ip": "10.0.2.15",
+      "record_type": "A",
+      "fqdn": "microsoft775.com",
+      "risk": 5,
+      "flags": [
+        "c2"
+      ],
+      "threats": [
+        "c2_communication"
+      ]
+    }
+  ],
+  "threats": {
+    "c2_communication": {
+      "title": "C2 communication attempt indicating infection",
+      "severity": 5,
+      "policy": false,
+      "deprecated": false
+    }
+  }
+}
 ```
