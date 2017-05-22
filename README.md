@@ -44,7 +44,7 @@ Use "namescore [command] --help" for more information about a given command.
 ```
 
 ## Configuration
-Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example configuration file `config.yml` in the repository's root directory. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory. Otherwise, simply run `namescore` which will create the files and prompt you for some details, e.g.
+Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example `config.yml` file in the repository's root directory. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory. Otherwise, simply run `namescore` which will create the files and prompt you for some details, e.g.
 
 ```
 # namescore
