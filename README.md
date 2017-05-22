@@ -1,7 +1,7 @@
 # Namescore
 **Namescore** is a lightweight Linux client used to capture DNS query events from a network and submit them to _api.alphasoc.net_ for processing. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use).
 
-Upon processing, alert data is returned by Namescore in JSON format, describing the threats and policy violatinons.
+Upon processing, alert data is returned in JSON format to `stdout`, describing the threats and policy violatinons.
 
 ## Prerequisites
 Namescore requires the development library for `libpcap`. Installation steps are as follows (as _root_).
@@ -96,4 +96,13 @@ groups:
 Use `namescore account status` to return account and AlphaSOC API key details.
 
 ## Running Namescore
-You may run `namescore listen` in tmux or screen, or provide a startup script to run Namescore on boot.
+You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stdout` and internal messages to `stderr`. Here is an example showing both, and an alert for a known C2 domain:
+
+```
+$ namescore listen 
+INFO[2017-05-22T16:11:49+02:00] found 3 whiltelist groups                    
+INFO[2017-05-22T16:11:49+02:00] creating sniffer for enp0s3 interface, port 53, protocols [udp] 
+INFO[2017-05-22T16:11:54+02:00] sending 1 dns queries to analyze             
+{"follow":"4.9b31d","more":false,"events":[{"type":"alert","ts":["2017-05-22T16:11:01+02:00"],"ip":"10.0.2.15","record_type":"A","fqdn":"microsoft775.com","risk":5,"flags":["c2"],"threats":["c2_communication"]}],"threats":{"c2_communication":{"title":"C2 communication attempt indicating infection","severity":5,"policy":false,"deprecated":false}}}
+```
+
