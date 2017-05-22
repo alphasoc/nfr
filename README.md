@@ -32,21 +32,21 @@ and alerting of suspicious events, identifying gaps in your security controls an
 highlighting targeted attacks and policy violations.
 
 Usage:
-  namescore [command] [arguments]
+  namescore [command] [argument]
 
 Available Commands:
-  account register    Generate an API key via the licensing server
-  account status      Show the status of your AlphaSOC API key and license
-  listen [interface]  Start the DNS sniffer and score live events
-  read [file]         Process DNS events stored on disk in PCAP format
-  version             Show the Namescore binary version
-  help                Provides help and usage instructions
+  account register   Generate an API key via the licensing server
+  account status     Show the status of your AlphaSOC API key and license
+  listen             Start the DNS sniffer and score live events
+  read [file]        Process DNS events stored on disk in PCAP format
+  version            Show the Namescore binary version
+  help               Provides help and usage instructions
 
 Use "namescore [command] --help" for more information about a given command.
 ```
 
 ## Configuration
-Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example `config.yml` file in the repository's root directory. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory. Otherwise, simply run `namescore` which will create the files and prompt you for some details, e.g.
+Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example `config.yml` file in the repository's root directory. The file defines the network interface to monitor for DNS traffic, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory. Otherwise, simply run `namescore` which will create the files and prompt you for some details, e.g.
 
 ```
 # namescore
