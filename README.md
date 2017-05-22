@@ -2,7 +2,7 @@
 **Namescore** is a lightweight Linux client used to capture DNS query events from a network and submit them to _api.alphasoc.net_ for processing. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use).
 
 ## Prerequisites
-Namescore requires the development library for libpcap. Installation steps are as follows (as _root_).
+Namescore requires the development library for `libpcap`. Installation steps are as follows (as _root_).
 
 ### Under Debian and Ubuntu
 ```
@@ -16,7 +16,7 @@ Namescore requires the development library for libpcap. Installation steps are a
 # yum-config-manager --disable rhel-7-server-optional-rpms
 ```
 
-## Installation
+## Namescore installation
 Follow these steps to install Namescore:
 ```
 # go get github.com/alphasoc/namescore.git
@@ -25,9 +25,9 @@ Follow these steps to install Namescore:
 Upon installation, test Namescore as follows:
 ```
 # namescore --help
-Namescore is application which captures DNS requests and provides
-deep analysis and alerting of suspicious events, identifying gaps
-in your security controls and highlighting targeted attacks.
+Namescore is an application which captures DNS requests and provides deep analysis
+and alerting of suspicious events, identifying gaps in your security controls and
+highlighting targeted attacks and policy violations.
 
 Usage:
   namescore [command] [arguments]
@@ -60,7 +60,7 @@ Email: joey@example.org
 Success! Check your email and click the verification link to activate your API key.
 ```
 
-## Monitoring Scope
+## Monitoring scope
 Use directives within `/etc/namescore/scope.yml` to define the monitoring scope. DNS requests from the IP ranges within scope will be processed by the AlphaSOC DNS Analytics API, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Use the `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
 
 ```
@@ -89,7 +89,7 @@ groups:
         - "*.internal.company.org"
 ```
 
-## Retrieve account status
+## Retrieving account status
 Use `namescore account status` to return account parameters and API key details (e.g. expiry date).
 
 ## Running Namescore
