@@ -1,5 +1,7 @@
 # Namescore
-**Namescore** is a lightweight Linux client used to capture DNS query events from a network and submit them to _api.alphasoc.net_ for processing. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use). By default, the scoring engine runs in the cloud, however we also provide and support on-premise Linux packages. Please contact support@alphasoc.com to discuss your requirements.
+**Namescore** is a lightweight Linux client used to capture DNS query events from a network and submit them to _api.alphasoc.net_ for processing. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use).
+
+By default, the scoring engine runs in the cloud, however we also provide and support on-premise Linux packages. Please contact support@alphasoc.com to discuss your requirements.
 
 ## Prerequisites
 Namescore requires the development library for libpcap. Installation steps are as follows (as _root_).
