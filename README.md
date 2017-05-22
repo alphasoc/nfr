@@ -30,15 +30,15 @@ deep analysis and alerting of suspicious events, identifying gaps
 in your security controls and highlighting targeted attacks.
 
 Usage:
-  namescore [command] [flags]
+  namescore [command] [arguments]
 
 Available Commands:
-  register    Generate an API key via the licensing server
-  listen      Start the DNS sniffer and score live events
-  read        Process collected DNS queries stored on disk (in PCAP format)
-  account     Manage your AlphaSOC account
-  version     Show the Namescore binary version
-  help        Provides help and usage instructions
+  account register    Generate an API key via the licensing server
+  account status      Show the status of your AlphaSOC API key and license
+  listen [interface]  Start the DNS sniffer and score live events
+  read [file]         Process collected DNS queries stored on disk in PCAP format
+  version             Show the Namescore binary version
+  help                Provides help and usage instructions
 
 Use "namescore [command] --help" for more information about a given command.
 ```
