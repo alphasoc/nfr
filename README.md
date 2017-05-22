@@ -92,7 +92,7 @@ groups:
 ```
 
 ## Retrieving account status
-Use `namescore account status` to return account parameters and API key details (e.g. expiry date).
+Use `namescore account status` to return account and AlphaSOC API key details.
 
 ## Running Namescore
 You may run `namescore listen` in tmux or screen, or provide a startup script to run Namescore on boot.
