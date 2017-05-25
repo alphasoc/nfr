@@ -1,7 +1,7 @@
 # Namescore
-**Namescore** is a lightweight Linux client used to submit DNS events to _api.alphasoc.net_ for processing. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use). Namescore can be run as a sniffer, or can read PCAP data from file to score.
+**Namescore** is a lightweight Linux client used to submit DNS events to _api.alphasoc.net_ for processing and retrieve alerts. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use). Namescore can be run as a sniffer, or can read PCAP data from disk.
 
-Upon processing, alert data is returned in JSON format to `stdout`, describing the threats and policy violatinons.
+Alert data is returned in JSON format upon processing, describing the threats and policy violations.
 
 ## Prerequisites
 Namescore requires the development library for `libpcap`. Installation steps are as follows (as _root_).
@@ -47,14 +47,14 @@ Use "namescore [command] --help" for more information about a given command.
 ```
 
 ## Configuration
-Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example [`config.yml`](https://github.com/alphasoc/namescore/blob/master/config.yml) file in the repository's root directory. The file defines the network interface to monitor for DNS traffic, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory.
+Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example [`config.yml`](https://github.com/alphasoc/namescore/blob/master/config.yml) file in the repository's root directory. The file defines the network interface to monitor for DNS traffic, output preferences, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory.
 
 If you are a new user, simply run `namescore account register` to create the file and generate an API key, e.g.
 
 ```
 # namescore account register
-Please provide your details to generate an API key and set up /etc/namescore/
-A valid email address is required to activate the key. 
+Please provide your details to generate an AlphaSOC API key.
+A valid email address is required for activation purposes.
 
 By performing this request you agree to our Terms of Service and Privacy Policy
 (https://www.alphasoc.com/terms-of-service)
@@ -67,7 +67,7 @@ Next, check your email and click the verification link to activate your API key.
 ```
 
 ## Monitoring scope
-Use directives within `/etc/namescore/scope.yml` to define the monitoring scope. DNS requests from the IP ranges within scope will be processed by the AlphaSOC DNS Analytics API, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Use the `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
+Use directives within `/etc/namescore/scope.yml` to define the monitoring scope. You can find an example [`scope.yml`](https://github.com/alphasoc/namescore/blob/master/scope.yml) file in the repository's root directory. DNS requests from the IP ranges within scope will be processed by the AlphaSOC DNS Analytics API, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
 
 ```
 groups:
