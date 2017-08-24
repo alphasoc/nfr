@@ -4,18 +4,18 @@
 Alert data is returned in JSON format upon processing, describing the threats and policy violations.
 
 ## Prerequisites
-NFR requires the development library for `libpcap`. Installation steps are as follows (as _root_).
+NFR requires the `libpcap` development library. Installation steps are as follows.
 
 ### Under Debian and Ubuntu
 ```
-# apt-get install libpcap-dev
+# sudo apt-get install libpcap-dev
 ```
 
 ### Under RHEL7
 ```
-# yum-config-manager --enable rhel-7-server-optional-rpms
-# yum install libpcap-devel
-# yum-config-manager --disable rhel-7-server-optional-rpms
+# sudo yum-config-manager --enable rhel-7-server-optional-rpms
+# sudo yum install libpcap-devel
+# sudo yum-config-manager --disable rhel-7-server-optional-rpms
 ```
 
 ## NFR installation
