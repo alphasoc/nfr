@@ -51,7 +51,7 @@ func (g *Groups) Add(group *Group) error {
 func (g *Groups) IsDNSQueryWhitelisted(domain string, ip net.IP) (string, bool) {
 	// if there is no groups, then every query is whitelisted
 	if g == nil || len(g.groups) == 0 {
-		return "<no-whitelsit>", true
+		return "<no-whitelist>", true
 	}
 
 	if domain == "" || ip == nil {
