@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/alphasoc/namescore/groups"
+	"github.com/alphasoc/nfr/groups"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
 )

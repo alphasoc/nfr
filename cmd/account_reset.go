@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/mail"
 
-	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
+	"github.com/alphasoc/nfr/client"
+	"github.com/alphasoc/nfr/config"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +33,7 @@ func newAccountKeyResetCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for namescore")
+	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for nfr")
 	return cmd
 }
 

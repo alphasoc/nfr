@@ -6,9 +6,9 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/executor"
+	"github.com/alphasoc/nfr/client"
+	"github.com/alphasoc/nfr/config"
+	"github.com/alphasoc/nfr/executor"
 
 	"github.com/spf13/cobra"
 )
@@ -20,7 +20,7 @@ func newReadCommand() *cobra.Command {
 		Short: "Process DNS events stored on disk in PCAP format",
 		Long: `Read file in pcap fromat and send DNS queries to AlphaSOC for analyze
 The queries could be save to file via tools like tcpdump.
-See namescore start --help for more informations.`,
+See nfr start --help for more informations.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return errors.New("at least 1 file required")
@@ -33,7 +33,7 @@ See namescore start --help for more informations.`,
 			return send(cfg, c, args)
 		},
 	}
-	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for namescore")
+	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for nfr")
 	return cmd
 }
 

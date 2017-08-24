@@ -27,8 +27,8 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Log.Level != "info" {
 		t.Fatalf("invalid log level - got %s; expected %s", cfg.Log.Level, "info")
 	}
-	if cfg.Data.File != "/run/namescore.data" {
-		t.Fatalf("invalid data file - got %s; expected %s", cfg.Data.File, "/run/namescore.data")
+	if cfg.Data.File != "/run/nfr.data" {
+		t.Fatalf("invalid data file - got %s; expected %s", cfg.Data.File, "/run/nfr.data")
 	}
 	if cfg.Events.PollInterval != 5*time.Minute {
 		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Events.PollInterval, 5*time.Minute)
@@ -76,7 +76,7 @@ log:
   file: stdout
   level: info
 data:
-  file: /run/namescore.data
+  file: /run/nfr.data
 events:
   file: stderr
   poll_interval: 5m
@@ -84,8 +84,8 @@ queries:
   buffer_size: 65535
   flush_interval: 30s
   failed:
-    file: /run/namescore.pcap`)
-	f, err := ioutil.TempFile("", "namescore-config")
+    file: /run/nfr.pcap`)
+	f, err := ioutil.TempFile("", "nfr-config")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -129,7 +129,7 @@ groups:
        - 8.8.8.8
       domains:
        - "*.io"`)
-	f, err := ioutil.TempFile("", "namescore-scope")
+	f, err := ioutil.TempFile("", "nfr-scope")
 	if err != nil {
 		log.Fatal(err)
 	}

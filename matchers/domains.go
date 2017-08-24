@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/alphasoc/namescore/utils"
+	"github.com/alphasoc/nfr/utils"
 )
 
 // Domain matches domain on blacklist.

@@ -1,4 +1,4 @@
-# This configuration file sets the Namescore monitoring scope
+# This configuration file sets the NFR monitoring scope
 # Groups can be used to assign labels to different networks (e.g. default, pci_zone, etc.)
 #
 # Within each group, you can define:

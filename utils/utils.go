@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alphasoc/namescore/client"
+	"github.com/alphasoc/nfr/client"
 )
 
 func emailValidator(email string) bool {

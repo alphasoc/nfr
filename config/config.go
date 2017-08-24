@@ -11,14 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alphasoc/namescore/utils"
+	"github.com/alphasoc/nfr/utils"
 	yaml "gopkg.in/yaml.v2"
 )
 
 // DefaultLocation for config file.
-const DefaultLocation = "/etc/namescore/config.yml"
+const DefaultLocation = "/etc/nfr/config.yml"
 
-// Config for namescore
+// Config for nfr
 type Config struct {
 	// AlphaSOC server configuration
 	Alphasoc struct {
@@ -30,19 +30,19 @@ type Config struct {
 
 	// Network interface configuration.
 	Network struct {
-		// Interface on which namescore should listen. Default: (none)
+		// Interface on which nfr should listen. Default: (none)
 		Interface string `yaml:"interface,omitempty"`
-		// Protocols on which namescore should listen.
+		// Protocols on which nfr should listen.
 		// Possible values are udp and tcp.
 		// Default: [udp]
 		Protocols []string `yaml:"protocols,omitempty"`
-		// Port on which namescore should listen. Default: 53
+		// Port on which nfr should listen. Default: 53
 		Port int `yaml:"port,omitempty"`
 	} `yaml:"network,omitempty"`
 
 	// Log configuration.
 	Log struct {
-		// File to which namescore should log.
+		// File to which nfr should log.
 		// To print log to console use two special outputs: stderr or stdout
 		// Default: stdout
 		File string `yaml:"file,omitempty"`
@@ -52,12 +52,12 @@ type Config struct {
 		Level string `yaml:"level,omitempty"`
 	} `yaml:"log,omitempty"`
 
-	// Internal namescore data.
+	// Internal nfr data.
 	Data struct {
 		// File for internal data.
 		// Default:
-		// - linux /run/namescore.data
-		// - win %AppData%/namescore.data
+		// - linux /run/nfr.data
+		// - win %AppData%/nfr.data
 		File string `yaml:"file,omitempty"`
 	} `yaml:"data,omitempty"`
 
@@ -114,7 +114,7 @@ type Config struct {
 	// DNS queries configuration.
 	Queries struct {
 		// Buffer size for dns queries queue. If the size will be exceded then
-		// namescore send quries to AlphaSOC api. Default: 65535
+		// nfr send quries to AlphaSOC api. Default: 65535
 		BufferSize int `yaml:"buffer_size,omitempty"`
 		// Interval for flushing queries to AlphaSOC api. Default: 30s
 		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
@@ -211,9 +211,9 @@ func (cfg *Config) setDefaults() *Config {
 
 	if cfg.Data.File == "" {
 		if runtime.GOOS == "windows" {
-			cfg.Data.File = path.Join(os.Getenv("APPDATA"), "namescore.data")
+			cfg.Data.File = path.Join(os.Getenv("APPDATA"), "nfr.data")
 		} else {
-			cfg.Data.File = path.Join("/run", "namescore.data")
+			cfg.Data.File = path.Join("/run", "nfr.data")
 		}
 	}
 

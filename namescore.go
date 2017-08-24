@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alphasoc/namescore/cmd"
+	"github.com/alphasoc/nfr/cmd"
 )
 
 func main() {

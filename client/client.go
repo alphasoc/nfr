@@ -12,7 +12,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/alphasoc/namescore/version"
+	"github.com/alphasoc/nfr/version"
 	"golang.org/x/net/context/ctxhttp"
 )
 
@@ -38,8 +38,8 @@ var ErrNoAPIKey = errors.New("no api key")
 // DefaultVersion for AlphaSOC API.
 const DefaultVersion = "v1"
 
-// default user agent for namescore.
-const defaultUserAgent = "AlphaSOC namescore/" + version.Version
+// default user agent for nfr.
+const defaultUserAgent = "AlphaSOC NFR/" + version.Version
 
 // AlphaSOCClient handles connection to AlphaSOC server.
 type AlphaSOCClient struct {

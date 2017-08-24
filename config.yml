@@ -1,5 +1,5 @@
-# This is the Namescore configuration file. Here you define the location of the
-# DNS Analytics API and key, and the way in which the Namescore application will
+# This is the Network Flight Recorder (NFR) configuration file. Here you define the location of the
+# DNS Analytics API and key, and the way in which the NFR application will
 # monitor network traffic, store data, and submit events to the API for scoring.
 # Please contact support@alphasoc.com if you have any questions.
 
@@ -14,7 +14,7 @@ alphasoc:
   host: https://api.alphasoc.net
  
   # Your AlphaSOC API key (required to use the service)
-  # Use "namescore account register" to generate one
+  # Use "nfr account register" to generate one
   api_key: test-api-key
 
 ################################################################################
@@ -39,7 +39,7 @@ network:
 
 log:
 
-  # File to which namescore should log
+  # File to which nfr should log
   # To print log to console use two special outputs: stderr or stdout
   # Default: stdout
   file: stdout
@@ -49,14 +49,14 @@ log:
   level: info
 
 ################################################################################
-# Internal Namescore data location
+# Internal NFR data location
 ################################################################################
 
 data:
 
   # Define the file for internal data and caching
-  # Default (Linux): /run/namescore.data
-  file: /run/namescore.data
+  # Default (Linux): /run/nfr.data
+  file: /run/nfr.data
 
 ################################################################################
 # Monitoring scope file location
@@ -89,7 +89,7 @@ events:
 
 queries:
 
-  # Namescore buffer size for the DNS event queue
+  # NFR buffer size for the DNS event queue
   # Default: 65535
   buffer_size: 65535
 
@@ -97,7 +97,7 @@ queries:
   # Default: 30s
   flush_interval: 30s
 
-  # If Namescore is unable to send DNS events to the API for processing, it can
+  # If NFR is unable to send DNS events to the API for processing, it can
   # write the events to disk (in PCAP format) and attempt to send them again
   failed:
     # File in which to store unprocessed DNS events on disk

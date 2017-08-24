@@ -1,4 +1,4 @@
-// Package executor execs main loop in namescore
+// Package executor execs main loop in nfr
 package executor
 
 import (
@@ -10,14 +10,14 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/dns"
-	"github.com/alphasoc/namescore/events"
-	"github.com/alphasoc/namescore/groups"
+	"github.com/alphasoc/nfr/client"
+	"github.com/alphasoc/nfr/config"
+	"github.com/alphasoc/nfr/dns"
+	"github.com/alphasoc/nfr/events"
+	"github.com/alphasoc/nfr/groups"
 )
 
-// Executor executes the main namescore lop.
+// Executor executes the main nfr lop.
 // It's respnsible for start the sniffer, send dns queries to server
 // and poll events from server.
 type Executor struct {

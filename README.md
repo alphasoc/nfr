@@ -1,10 +1,10 @@
-# Namescore
-**Namescore** is a lightweight Linux client used to submit DNS events to _api.alphasoc.net_ for processing and retrieve alerts. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use). Namescore can be run as a sniffer, or can read PCAP data from disk.
+# Network Flight Recorder
+**NFR** is a lightweight Linux client used to submit DNS events to _api.alphasoc.net_ for processing and retrieve alerts. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use). NFR can be run as a sniffer, or can read PCAP data from disk.
 
 Alert data is returned in JSON format upon processing, describing the threats and policy violations.
 
 ## Prerequisites
-Namescore requires the development library for `libpcap`. Installation steps are as follows (as _root_).
+NFR requires the development library for `libpcap`. Installation steps are as follows (as _root_).
 
 ### Under Debian and Ubuntu
 ```
@@ -18,21 +18,21 @@ Namescore requires the development library for `libpcap`. Installation steps are
 # yum-config-manager --disable rhel-7-server-optional-rpms
 ```
 
-## Namescore installation
-Use the following command to install Namescore:
+## NFR installation
+Use the following command to install NFR:
 ```
-# go get github.com/alphasoc/namescore
+# go get github.com/alphasoc/nfr
 ```
 
-Upon installation, test Namescore as follows:
+Upon installation, test NFR as follows:
 ```
-# namescore --help
-Namescore is an application which captures DNS requests and provides deep analysis
-and alerting of suspicious events, identifying gaps in your security controls and
-highlighting targeted attacks and policy violations.
+# nfr --help
+Network Flight Recorder (NFR) is an application which captures DNS requests and
+provides deep analysis and alerting of suspicious events, identifying gaps in
+your security controls and highlighting targeted attacks and policy violations.
 
 Usage:
-  namescore [command] [argument]
+  nfr [command] [argument]
 
 Available Commands:
   account register       Generate an API key via the licensing server
@@ -40,19 +40,19 @@ Available Commands:
   account status         Show the status of your AlphaSOC API key and license
   listen                 Start the sniffer and score live DNS events
   read [file]            Process DNS events stored on disk in PCAP format
-  version                Show the Namescore binary version
+  version                Show the NFR binary version
   help                   Provides help and usage instructions
 
-Use "namescore [command] --help" for more information about a given command.
+Use "nfr [command] --help" for more information about a given command.
 ```
 
 ## Configuration
-Namescore expects to find its configuration file in `/etc/namescore/config.yml`. You can find an example [`config.yml`](https://github.com/alphasoc/namescore/blob/master/config.yml) file in the repository's root directory. The file defines the network interface to monitor for DNS traffic, output preferences, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/namescore/` directory.
+NFR expects to find its configuration file in `/etc/nfr/config.yml`. You can find an example [`config.yml`](https://github.com/alphasoc/nfr/blob/master/config.yml) file in the repository's root directory. The file defines the network interface to monitor for DNS traffic, output preferences, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/nfr/` directory.
 
-If you are a new user, simply run `namescore account register` to create the file and generate an API key, e.g.
+If you are a new user, simply run `nfr account register` to create the file and generate an API key, e.g.
 
 ```
-# namescore account register
+# nfr account register
 Please provide your details to generate an AlphaSOC API key.
 A valid email address is required for activation purposes.
 
@@ -62,12 +62,12 @@ By performing this request you agree to our Terms of Service and Privacy Policy
 Full Name: Joey Bag O'Donuts
 Email: joey@example.org
 
-Success! The configuration has been written to /etc/namescore/config.yml
+Success! The configuration has been written to /etc/nfr/config.yml
 Next, check your email and click the verification link to activate your API key.
 ```
 
 ## Monitoring scope
-Use directives within `/etc/namescore/scope.yml` to define the monitoring scope. You can find an example [`scope.yml`](https://github.com/alphasoc/namescore/blob/master/scope.yml) file in the repository's root directory. DNS requests from the IP ranges within scope will be processed by the AlphaSOC DNS Analytics API, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
+Use directives within `/etc/nfr/scope.yml` to define the monitoring scope. You can find an example [`scope.yml`](https://github.com/alphasoc/nfr/blob/master/scope.yml) file in the repository's root directory. DNS requests from the IP ranges within scope will be processed by the AlphaSOC DNS Analytics API, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
 
 ```
 groups:
@@ -95,11 +95,11 @@ groups:
         - "*.internal.company.org"
 ```
 
-## Running Namescore
-You may run `namescore listen` in tmux or screen, or provide a startup script to run on boot. Namescore returns alert data in JSON format to `stderr`. Below an example in which raw the JSON is both stored on disk at `/tmp/alerts.json` and rendered via `jq` to make it human-readable in the terminal.
+## Running NFR
+You may run `nfr listen` in tmux or screen, or provide a startup script to run on boot. NFR returns alert data in JSON format to `stderr`. Below an example in which raw the JSON is both stored on disk at `/tmp/alerts.json` and rendered via `jq` to make it human-readable in the terminal.
 
 ```
-# namescore listen 2>&1 >/dev/null | tee /tmp/alerts.json | jq .
+# nfr listen 2>&1 >/dev/null | tee /tmp/alerts.json | jq .
 {
   "follow": "4.9b3db",
   "more": false,

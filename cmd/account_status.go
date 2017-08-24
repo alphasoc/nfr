@@ -5,7 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/alphasoc/namescore/client"
+	"github.com/alphasoc/nfr/client"
 )
 
 func newAccountStatusCommand() *cobra.Command {
@@ -21,7 +21,7 @@ func newAccountStatusCommand() *cobra.Command {
 			return accountStatus(c)
 		},
 	}
-	cmd.Flags().StringVarP(&configPath, "config", "c", "", "Config path for namescore")
+	cmd.Flags().StringVarP(&configPath, "config", "c", "", "Config path for nfr")
 	return cmd
 }
 

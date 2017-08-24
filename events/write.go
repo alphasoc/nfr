@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/alphasoc/namescore/client"
+	"github.com/alphasoc/nfr/client"
 )
 
 // Writer interface for log api events response.

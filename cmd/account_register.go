@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/utils"
+	"github.com/alphasoc/nfr/client"
+	"github.com/alphasoc/nfr/config"
+	"github.com/alphasoc/nfr/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ func newAccountRegisterCommand() *cobra.Command {
 			},
 		}
 	)
-	cmd.Flags().StringVarP(&configPath, "config", "c", "", "Config path for namescore")
+	cmd.Flags().StringVarP(&configPath, "config", "c", "", "Config path for nfr")
 	cmd.Flags().StringVar(&key, "key", "", "AlphaSOC API key")
 	return cmd
 }
@@ -79,28 +79,28 @@ By performing this request you agree to our Terms of Service and Privacy Policy
 	}
 	if errSave != nil {
 		fmt.Fprintf(os.Stderr, `
-Unable to create /etc/namescore/config.yml. Please manually set up the directory and configuration file.
+Unable to create /etc/nfr/config.yml. Please manually set up the directory and configuration file.
 
 alphasoc:
   api_key: %s
 
 `, cfg.Alphasoc.APIKey)
 	} else {
-		fmt.Println("\nSuccess! The configuration has been written to /etc/namescore/config.yml")
+		fmt.Println("\nSuccess! The configuration has been written to /etc/nfr/config.yml")
 	}
 
 	if err := c.AccountRegister(req); err != nil {
 		if errSave != nil {
-			fmt.Fprintf(os.Stderr, `We were unable to register your account. Please run namescore again with following command:
+			fmt.Fprintf(os.Stderr, `We were unable to register your account. Please run nfr again with following command:
 
-$ namescore account register --key %s
+$ nfr account register --key %s
 `, cfg.Alphasoc.APIKey)
 			return err
 		}
 
-		fmt.Fprintf(os.Stderr, `We were unable to register your account. Please run namescore again with following command:
+		fmt.Fprintf(os.Stderr, `We were unable to register your account. Please run nfr again with following command:
 
-$ namescore account register
+$ nfr account register
 `)
 		return err
 	}

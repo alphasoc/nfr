@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/executor"
+	"github.com/alphasoc/nfr/client"
+	"github.com/alphasoc/nfr/config"
+	"github.com/alphasoc/nfr/executor"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ API key must be set before calling this mode.`,
 			return listen(c, cfg)
 		},
 	}
-	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for namescore")
+	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for nfr")
 	return cmd
 }
 

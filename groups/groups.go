@@ -3,7 +3,7 @@ package groups
 import (
 	"net"
 
-	"github.com/alphasoc/namescore/matchers"
+	"github.com/alphasoc/nfr/matchers"
 )
 
 // Group represents single group used for

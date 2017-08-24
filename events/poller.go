@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/alphasoc/namescore/client"
+	"github.com/alphasoc/nfr/client"
 )
 
 // Poller polls events from AlphaSOC api and user logger

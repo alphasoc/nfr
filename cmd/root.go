@@ -1,18 +1,18 @@
 package cmd
 
 import (
-	"github.com/alphasoc/namescore/client"
-	"github.com/alphasoc/namescore/config"
-	"github.com/alphasoc/namescore/logger"
+	"github.com/alphasoc/nfr/client"
+	"github.com/alphasoc/nfr/config"
+	"github.com/alphasoc/nfr/logger"
 	"github.com/spf13/cobra"
 )
 
 // NewRootCommand represents the base command when called without any subcommands
 func NewRootCommand() *cobra.Command {
 	var cmd = &cobra.Command{
-		Use:   "namescore account|listen|read|version",
-		Short: "Namescore is main command used to send dns queries to AlphaSOC API",
-		Long: `namescore is an application which captures DNS requests and provides deep analysis
+		Use:   "nfr account|listen|read|version",
+		Short: "nfr is main command used to send dns queries to AlphaSOC API",
+		Long: `nfr is an application which captures DNS requests and provides deep analysis
 and alerting of suspicious events, identifying gaps in your security controls and
 highlighting targeted attacks.`,
 		SilenceErrors: true,
