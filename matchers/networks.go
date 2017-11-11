@@ -19,7 +19,7 @@ type Network struct {
 // The excludes network acceptable format is cidr and ip.
 func NewNetwork(includes []string, excludes []string) (*Network, error) {
 	if len(includes) == 0 {
-		return nil, errors.New("no includes network")
+		return nil, errors.New("no network includes")
 	}
 
 	m := &Network{ips: make(map[string]bool)}
