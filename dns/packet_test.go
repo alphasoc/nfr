@@ -31,13 +31,22 @@ func TestNewPacket(t *testing.T) {
 	checkDNSPacket(t, rawPacket)
 }
 
+func TestPacketEqual(t *testing.T) {
+	packet := newPacket(gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default))
+	if packet.Equal(nil) {
+		t.Fatalf("equal with nil must return false")
+	}
+
+	if !packet.Equal(packet) {
+		t.Fatalf("packet not equal to itself")
+	}
+}
+
 func TestToRequestQuery(t *testing.T) {
 	packet := newPacket(gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default))
-
 	if s := packet.ToRequestQuery(); s[1] != "10.0.2.15" || s[2] != "A" || s[3] != "api.alphasoc.net" {
 		t.Fatalf("invalid request query %v", s)
 	}
-
 }
 
 func checkDNSPacket(t *testing.T, rawPacket gopacket.Packet) {

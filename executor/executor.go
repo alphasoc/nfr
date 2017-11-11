@@ -17,9 +17,9 @@ import (
 	"github.com/alphasoc/nfr/groups"
 )
 
-// Executor executes the main nfr lop.
-// It's respnsible for start the sniffer, send dns queries to server
-// and poll events from server.
+// Executor executes main nfr loop.
+// It's respnsible for start the sniffer, send dns queries to the server
+// and poll events from the server.
 type Executor struct {
 	c   client.Client
 	cfg *config.Config

@@ -2,6 +2,7 @@ package events
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 
 	"github.com/alphasoc/nfr/client"
@@ -45,6 +46,8 @@ func (l *JSONFileWriter) Write(e *client.EventsResponse) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("un", string(b))
 
 	if _, err = l.f.Write(b); err != nil {
 		return err

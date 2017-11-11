@@ -46,9 +46,15 @@ func (p *Poller) SetFollowDataFile(file string) error {
 // The events are writtne to writer used to create new poller.
 // If the error occurrs Do method should be call again.
 func (p *Poller) Do(interval time.Duration) error {
+	return p.do(interval, 0)
+}
+
+// do pools maxiumum "count" events. If count <=0 then it pulls forever.
+func (p *Poller) do(interval time.Duration, count int) error {
 	p.ticker = time.NewTicker(interval)
 	defer p.stop()
 
+	var c = 0
 	for range p.ticker.C {
 		events, err := p.c.Events(p.follow)
 		if err != nil {
@@ -69,8 +75,13 @@ func (p *Poller) Do(interval time.Duration) error {
 				return err
 			}
 		}
+
+		c++
+		if count > 0 && c >= count {
+			break
+		}
 	}
-	panic("not reached")
+	return nil
 }
 
 // stop stops poller do, by stoping ticker.
