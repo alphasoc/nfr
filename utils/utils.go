@@ -49,7 +49,7 @@ func getInfo(prompt string, validator func(string) bool) (string, error) {
 	for i := maxTries; scanner.Scan() && i > 0; i-- {
 		text := scanner.Text()
 		if text == "" {
-			fmt.Printf("%s can't be black, try again (%d tries left)\n", prompt, i)
+			fmt.Printf("%s can't be blank, try again (%d tries left)\n", prompt, i)
 		} else if validator != nil && !validator(text) {
 			fmt.Printf("invalid format, try again (%d tries left)\n", i)
 		} else {
