@@ -1,5 +1,5 @@
 # Network Flight Recorder
-**NFR** is a lightweight Linux client used to submit DNS events to _api.alphasoc.net_ for processing and retrieve alerts. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use). NFR can be run as a sniffer, or can read PCAP data from disk.
+**NFR** is a lightweight Linux client used to submit DNS events to _api.alphasoc.net_ for processing and retrieve alerts. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use). NFR can be run as a sniffer, or can read pcap, bro and Suricata logs from disk.
 
 Alert data is returned in JSON format upon processing, describing the threats and policy violations.
 
@@ -39,7 +39,7 @@ Available Commands:
   account reset [email]  Reset the API key associated with a given email address
   account status         Show the status of your AlphaSOC API key and license
   listen                 Start the sniffer and score live DNS events
-  read [file]            Process DNS events stored on disk in PCAP format
+  read [file]            Process DNS events stored on disk in known formats
   version                Show the NFR binary version
   help                   Provides help and usage instructions
 

@@ -9,8 +9,8 @@ import (
 	"github.com/google/gopacket/pcap"
 )
 
-func TestSnifferPackets(t *testing.T) {
-	s, err := NewOfflineSniffer("sniffer_test.data", []string{"udp"}, 53)
+func TestPcapSnifferPackets(t *testing.T) {
+	s, err := NewOfflinePcapSniffer("sniffer_test.data", []string{"udp"}, 53)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"time"
 
@@ -163,6 +164,10 @@ func Read(file string) (*Config, error) {
 		return nil, err
 	}
 	cfg.setDefaults()
+
+	// some packages search protocols in slice. Guaratee the slice will be sorted.
+	sort.Strings(cfg.Network.Protocols)
+
 	return &cfg, cfg.validate()
 }
 

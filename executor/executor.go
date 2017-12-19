@@ -13,6 +13,8 @@ import (
 	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/config"
 	"github.com/alphasoc/nfr/dns"
+	"github.com/alphasoc/nfr/dns/logformat/bro"
+	"github.com/alphasoc/nfr/dns/logformat/suricata"
 	"github.com/alphasoc/nfr/events"
 	"github.com/alphasoc/nfr/groups"
 )
@@ -29,9 +31,9 @@ type Executor struct {
 
 	groups *groups.Groups
 
-	dnsWriter *dns.Writer
-	sniffer   *dns.Sniffer
 	buf       *dns.PacketBuffer
+	dnsWriter *dns.Writer
+	sniffer   dns.Sniffer
 
 	// mutex for synchronize sending packets.
 	mx sync.Mutex
@@ -71,12 +73,11 @@ func (e *Executor) Start() error {
 	}
 	log.Infof("creating sniffer for %s interface, port %d, protocols %v",
 		e.cfg.Network.Interface, e.cfg.Network.Port, e.cfg.Network.Protocols)
-	sniffer, err := dns.NewLiveSniffer(e.cfg.Network.Interface, e.cfg.Network.Protocols, e.cfg.Network.Port)
+	sniffer, err := dns.NewLivePcapSniffer(e.cfg.Network.Interface, e.cfg.Network.Protocols, e.cfg.Network.Port)
 	if err != nil {
 		return err
 	}
 	e.sniffer = sniffer
-	e.sniffer.SetGroups(e.groups)
 
 	if e.cfg.Queries.Failed.File != "" {
 		if e.dnsWriter, err = dns.NewWriter(e.cfg.Queries.Failed.File); err != nil {
@@ -91,15 +92,23 @@ func (e *Executor) Start() error {
 	return e.do()
 }
 
-// Send sends dns queries from file in pcap format to api.
-func (e *Executor) Send(file string) error {
-	log.Infof("creating sniffer for %s file", file)
-	sniffer, err := dns.NewOfflineSniffer(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
+// Send sends dns queries from given format file to api.
+func (e *Executor) Send(file string, fileFomrat string) error {
+	var err error
+
+	log.Infof("creating sniffer for %s %s file", fileFomrat, file)
+
+	switch fileFomrat {
+	case "bro":
+		e.sniffer, err = bro.NewReader(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
+	case "pcap":
+		e.sniffer, err = dns.NewOfflinePcapSniffer(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
+	case "suricata":
+		e.sniffer, err = suricata.NewReader(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
+	}
 	if err != nil {
 		return err
 	}
-	e.sniffer = sniffer
-	e.sniffer.SetGroups(e.groups)
 
 	return e.do()
 }
@@ -167,9 +176,26 @@ func (e *Executor) sendPackets() {
 	}
 }
 
-// do retrives packets from sniffer and send it to api.
+// shouldSendPackets test if packet should be send to channel
+func (e *Executor) shouldSendPacket(p *dns.Packet) bool {
+	// no scope groups configured
+	if e.groups == nil {
+		return true
+	}
+	name, t := e.groups.IsDNSQueryWhitelisted(p.FQDN, p.SourceIP)
+	if !t {
+		log.Debugf("dns query %s excluded by %s group", p, name)
+	}
+	return t
+}
+
+// do retrives packets from sniffer, filter it and send to api.
 func (e *Executor) do() error {
 	for packet := range e.sniffer.Packets() {
+		if !e.shouldSendPacket(packet) {
+			continue
+		}
+
 		e.mx.Lock()
 		added, l := e.buf.Write(packet)
 		e.mx.Unlock()
