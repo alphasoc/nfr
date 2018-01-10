@@ -21,7 +21,7 @@ NFR requires the `libpcap` development library. Installation steps are as follow
 ## NFR installation
 Use the following command to install NFR:
 ```
-# go get github.com/alphasoc/nfr
+# go get -u github.com/alphasoc/nfr/...
 ```
 
 Upon installation, test NFR as follows:
