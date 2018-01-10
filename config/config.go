@@ -238,6 +238,14 @@ func (cfg *Config) setDefaults() *Config {
 }
 
 func (cfg *Config) validate() error {
+	if cfg.Network.Interface == "" {
+		return fmt.Errorf("config: empty network.interface")
+	}
+
+	if _, err := net.InterfaceByName(cfg.Network.Interface); err != nil {
+		return fmt.Errorf("config: can't open interface %s: %s", cfg.Network.Interface, err)
+	}
+
 	if len(cfg.Network.Protocols) == 0 {
 		return fmt.Errorf("config: empty protocol list")
 	}
