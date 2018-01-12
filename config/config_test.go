@@ -68,7 +68,7 @@ alphasoc:
   host: https://api.alphasoc.net
   api_key: test-api-key
 network:
-  interface: eth0
+  interface: lo
   protocols:
   - udp
   port: 53
@@ -104,8 +104,8 @@ queries:
 	if cfg.Alphasoc.APIKey != "test-api-key" {
 		t.Fatalf("invalid alphasoc api key - got %s; expected %s", cfg.Alphasoc.APIKey, "test-api-key")
 	}
-	if cfg.Network.Interface != "eth0" {
-		t.Fatalf("invalid network interface name - got %s; expected %s", cfg.Network.Interface, "eth0")
+	if cfg.Network.Interface != "lo" {
+		t.Fatalf("invalid network interface name - got %s; expected %s", cfg.Network.Interface, "lo")
 	}
 }
 
