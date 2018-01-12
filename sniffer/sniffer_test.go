@@ -2,7 +2,6 @@ package sniffer
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 
@@ -11,6 +10,10 @@ import (
 )
 
 func TestPcapSnifferPackets(t *testing.T) {
+	if _, err := NewOfflinePcapSniffer("no.data", []string{"udp"}, 53); err == nil {
+		t.Fatal("sniffer create without error for non existing file")
+	}
+
 	s, err := NewOfflinePcapSniffer("sniffer_test.data", []string{"udp"}, 53)
 	if err != nil {
 		t.Fatal(err)
@@ -27,11 +30,32 @@ func TestPcapSnifferPackets(t *testing.T) {
 	}
 }
 
+func TestNewSniffer(t *testing.T) {
+	handle, err := pcap.OpenLive("lo", 1600, false, pcap.BlockForever)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := newsniffer(handle, []string{"icmp"}, 53); err == nil {
+		t.Fatal("sniffer create with invalid protocol")
+	}
+}
+
+func TestNewLivePcapSniffer(t *testing.T) {
+	if _, err := NewLivePcapSniffer("__none", []string{"udp"}, 53); err == nil {
+		t.Fatal("sniffer create without error for non existing interface")
+	}
+	s, err := NewLivePcapSniffer("lo", []string{"udp"}, 53)
+	if err != nil {
+		t.Fatalf("sniffer create for lo fail: %s", err)
+	}
+	s.Close()
+}
+
 func TestSprintBPFFilter(t *testing.T) {
 	// craete pcap handler for calling SetBPFFilter
 	f, err := ioutil.TempFile("", "pcap.out")
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	defer os.Remove(f.Name())
 	// write header to file
