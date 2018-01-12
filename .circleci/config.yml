@@ -26,6 +26,9 @@ jobs:
     working_directory: /go/src/github.com/alphasoc/nfr
     steps:
       - checkout
+      - run:
+          name: install libpcap-dev
+          command: sudo apt-get install --quiet --yes libpcap-dev
       - restore_cache:
           key: gometalinter-tools-{{ checksum "/go/bin/gometalinter" }}
       - run: go get github.com/alecthomas/gometalinter
