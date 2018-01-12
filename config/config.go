@@ -156,7 +156,7 @@ func New(file ...string) (*Config, error) {
 		panic("config: too many files")
 	}
 
-	if _, err := os.Stat(DefaultLocation); len(file) == 0 && err == nil {
+	if _, err = os.Stat(DefaultLocation); len(file) == 0 && err == nil {
 		file = append(file, DefaultLocation)
 	}
 
