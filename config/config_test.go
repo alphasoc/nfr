@@ -12,6 +12,12 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Alphasoc.Host != "https://api.alphasoc.net" {
 		t.Fatalf("invalid alphasoc host - got %v; expected %v", cfg.Alphasoc.Host, "https://api.alphasoc.net")
 	}
+	if !cfg.Alphasoc.Analyze.DNS {
+		t.Fatalf("analyze dns set to false")
+	}
+	if !cfg.Alphasoc.Analyze.IP {
+		t.Fatalf("analyze ip set to false")
+	}
 	if len(cfg.Network.Protocols) != 1 && cfg.Network.Protocols[0] != "udp" {
 		t.Fatalf("invalid network protocols - got %v; expected %v", cfg.Network.Protocols, []string{"udp"})
 	}
@@ -55,10 +61,8 @@ func checkDefaults(t *testing.T, cfg *Config) {
 }
 
 func TestDefaultConfig(t *testing.T) {
-	cfg, err := New("")
-	if err != nil {
-		t.Fatal(err)
-	}
+	cfg := newDefaultConfig()
+	cfg.loadScopeConfig()
 	checkDefaults(t, cfg)
 }
 

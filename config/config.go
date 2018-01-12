@@ -27,6 +27,16 @@ type Config struct {
 		Host string `yaml:"host,omitempty"`
 		// AlphaSOC api key. Required for start sending dns queries.
 		APIKey string `yaml:"api_key,omitempty"`
+
+		// events to analize by AlphaSOC api.
+		Analyze struct {
+			// Enable (true) or disable (false) DNS event processing
+			// Default: true
+			DNS bool `yaml:"dns"`
+			// Enable (true) or disable (false) IP event processing
+			// Default: true
+			IP bool `yaml:"ip"`
+		} `yaml:"analyze"`
 	} `yaml:"alphasoc,omitempty"`
 
 	// Network interface configuration.
@@ -135,40 +145,44 @@ type Config struct {
 // New reads the config from file location. If file is not set
 // then it tries to read from default location, if this fails, then
 // default config is returned.
-func New(file string) (*Config, error) {
-	cfg := Config{}
+func New(file ...string) (*Config, error) {
+	var (
+		cfg     = newDefaultConfig()
+		content []byte
+		err     error
+	)
 
-	if file != "" {
-		return Read(file)
-	}
-	if _, err := os.Stat(DefaultLocation); err == nil {
-		return Read(DefaultLocation)
-	}
-	return cfg.setDefaults(), nil
-}
-
-// Read reads config from the given file.
-func Read(file string) (*Config, error) {
-	cfg := Config{}
-
-	content, err := ioutil.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("config: %s", err)
+	if len(file) > 1 {
+		panic("config: too many files")
 	}
 
-	if err := yaml.Unmarshal(content, &cfg); err != nil {
-		return nil, fmt.Errorf("parse config: %s", err)
+	if _, err := os.Stat(DefaultLocation); len(file) == 0 && err == nil {
+		file = append(file, DefaultLocation)
+	}
+
+	if len(file) == 1 && file[0] != "" {
+		content, err = ioutil.ReadFile(file[0])
+		if err != nil {
+			return nil, fmt.Errorf("config: can't read file %s", err)
+		}
+	}
+
+	if err := cfg.load(content); err != nil {
+		return nil, fmt.Errorf("config: can't load file %s", err)
 	}
 
 	if err := cfg.loadScopeConfig(); err != nil {
 		return nil, err
 	}
-	cfg.setDefaults()
 
-	// some packages search protocols in slice. Guaratee the slice will be sorted.
+	// HACK: some packages need the slice sorted.
 	sort.Strings(cfg.Network.Protocols)
+	return cfg, cfg.validate()
+}
 
-	return &cfg, cfg.validate()
+// load config from content.
+func (cfg *Config) load(content []byte) error {
+	return yaml.UnmarshalStrict(content, cfg)
 }
 
 // Save saves config to file.
@@ -190,50 +204,25 @@ func (cfg *Config) SaveDefault() error {
 	return cfg.Save(DefaultLocation)
 }
 
-func (cfg *Config) setDefaults() *Config {
-	if cfg.Alphasoc.Host == "" {
-		cfg.Alphasoc.Host = "https://api.alphasoc.net"
+// newDefaultConfig returns config with set defaults.
+func newDefaultConfig() *Config {
+	cfg := &Config{}
+	cfg.Alphasoc.Host = "https://api.alphasoc.net"
+	cfg.Alphasoc.Analyze.DNS = true
+	cfg.Alphasoc.Analyze.IP = true
+	cfg.Network.Protocols = []string{"udp"}
+	cfg.Network.Port = 53
+	cfg.Events.File = "stderr"
+	cfg.Log.File = "stdout"
+	cfg.Log.Level = "info"
+	if runtime.GOOS == "windows" {
+		cfg.Data.File = path.Join(os.Getenv("APPDATA"), "nfr.data")
+	} else {
+		cfg.Data.File = path.Join("/run", "nfr.data")
 	}
-
-	if len(cfg.Network.Protocols) == 0 {
-		cfg.Network.Protocols = []string{"udp"}
-	}
-
-	if cfg.Network.Port == 0 {
-		cfg.Network.Port = 53
-	}
-
-	if cfg.Events.File == "" {
-		cfg.Events.File = "stderr"
-	}
-
-	if cfg.Log.File == "" {
-		cfg.Log.File = "stdout"
-	}
-	if cfg.Log.Level == "" {
-		cfg.Log.Level = "info"
-	}
-
-	if cfg.Data.File == "" {
-		if runtime.GOOS == "windows" {
-			cfg.Data.File = path.Join(os.Getenv("APPDATA"), "nfr.data")
-		} else {
-			cfg.Data.File = path.Join("/run", "nfr.data")
-		}
-	}
-
-	if cfg.Events.PollInterval == 0 {
-		cfg.Events.PollInterval = 5 * time.Minute
-	}
-
-	if cfg.Queries.BufferSize == 0 {
-		cfg.Queries.BufferSize = 65535
-	}
-	if cfg.Queries.FlushInterval == 0 {
-		cfg.Queries.FlushInterval = 30 * time.Second
-	}
-
-	cfg.loadScopeConfig()
+	cfg.Events.PollInterval = 5 * time.Minute
+	cfg.Queries.BufferSize = 65535
+	cfg.Queries.FlushInterval = 30 * time.Second
 	return cfg
 }
 

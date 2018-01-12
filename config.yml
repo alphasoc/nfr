@@ -17,6 +17,14 @@ alphasoc:
   # Use "nfr account register" to generate one
   api_key: test-api-key
 
+  analyze:
+    # Enable (true) or disable (false) DNS event processing
+    # Default: true
+    dns: true
+    # Enable (true) or disable (false) IP event processing
+    # Default: true
+    ip: true
+
 ################################################################################
 # Define the network interface and protocol(s) to monitor
 ################################################################################
