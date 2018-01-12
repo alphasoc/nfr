@@ -1,22 +1,23 @@
-package dns
+package sniffer
 
 import (
 	"fmt"
 
+	"github.com/alphasoc/nfr/dns"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
 )
 
 // Sniffer is an interface for iterate over captured packets.
 type Sniffer interface {
-	Packets() chan *Packet // channel with captured packets
+	Packets() chan *dns.Packet // channel with captured packets
 }
 
 // PcapSniffer sniffs dns packets.
 type PcapSniffer struct {
 	handle *pcap.Handle
 	source *gopacket.PacketSource
-	c      chan *Packet
+	c      chan *dns.Packet
 }
 
 // NewLivePcapSniffer creates sniffer that capture packets from interface.
@@ -57,9 +58,9 @@ func newsniffer(handle *pcap.Handle, protocols []string, port int) (*PcapSniffer
 }
 
 // Packets returns a channel of captured packets, allowing easy iterating over packets.
-func (s *PcapSniffer) Packets() chan *Packet {
+func (s *PcapSniffer) Packets() chan *dns.Packet {
 	if s.c == nil {
-		s.c = make(chan *Packet, 2048)
+		s.c = make(chan *dns.Packet, 2048)
 		go s.readPackets()
 	}
 	return s.c
@@ -75,7 +76,7 @@ func (s *PcapSniffer) Close() {
 func (s *PcapSniffer) readPackets() {
 	defer close(s.c)
 	for packet := range s.source.Packets() {
-		if p := newPacket(packet); p != nil {
+		if p := dns.NewPacket(packet); p != nil {
 			s.c <- p
 		}
 	}

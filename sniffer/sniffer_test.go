@@ -1,4 +1,4 @@
-package dns
+package sniffer
 
 import (
 	"io/ioutil"
@@ -6,6 +6,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/alphasoc/nfr/dns"
 	"github.com/google/gopacket/pcap"
 )
 
@@ -34,7 +35,7 @@ func TestSprintBPFFilter(t *testing.T) {
 	}
 	defer os.Remove(f.Name())
 	// write header to file
-	w, err := NewWriter(f.Name())
+	w, err := dns.NewWriter(f.Name())
 	if err != nil {
 		t.Fatal(err)
 	}

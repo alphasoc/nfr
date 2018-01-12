@@ -74,7 +74,7 @@ func TestWrite(t *testing.T) {
 	// set proper packet length
 	md := rawPacket.Metadata()
 	md.CaptureLength, md.Length = testPacketDNSQueryLenght, testPacketDNSQueryLenght
-	if err = w.Write([]*Packet{newPacket(rawPacket)}); err != nil {
+	if err = w.Write([]*Packet{NewPacket(rawPacket)}); err != nil {
 		t.Fatal(err)
 	}
 

@@ -34,10 +34,10 @@ func (p *Packet) Equal(p1 *Packet) bool {
 		p.FQDN == p1.FQDN
 }
 
-// newPackets creates packet from gopacket type.
+// NewPacket creates packet from gopacket type.
 // It returns nil if packet is not dns quesiton packet
 // or metadata is missing.
-func newPacket(packet gopacket.Packet) *Packet {
+func NewPacket(packet gopacket.Packet) *Packet {
 	var (
 		l  *layers.DNS
 		ok bool

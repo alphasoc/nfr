@@ -17,6 +17,7 @@ import (
 	"github.com/alphasoc/nfr/dns/logformat/suricata"
 	"github.com/alphasoc/nfr/events"
 	"github.com/alphasoc/nfr/groups"
+	"github.com/alphasoc/nfr/sniffer"
 )
 
 // Executor executes main nfr loop.
@@ -33,7 +34,7 @@ type Executor struct {
 
 	buf       *dns.PacketBuffer
 	dnsWriter *dns.Writer
-	sniffer   dns.Sniffer
+	sniffer   sniffer.Sniffer
 
 	// mutex for synchronize sending packets.
 	mx sync.Mutex
@@ -73,7 +74,7 @@ func (e *Executor) Start() error {
 	}
 	log.Infof("creating sniffer for %s interface, port %d, protocols %v",
 		e.cfg.Network.Interface, e.cfg.Network.Port, e.cfg.Network.Protocols)
-	sniffer, err := dns.NewLivePcapSniffer(e.cfg.Network.Interface, e.cfg.Network.Protocols, e.cfg.Network.Port)
+	sniffer, err := sniffer.NewLivePcapSniffer(e.cfg.Network.Interface, e.cfg.Network.Protocols, e.cfg.Network.Port)
 	if err != nil {
 		return err
 	}
@@ -102,7 +103,7 @@ func (e *Executor) Send(file string, fileFomrat string) error {
 	case "bro":
 		e.sniffer, err = bro.NewReader(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
 	case "pcap":
-		e.sniffer, err = dns.NewOfflinePcapSniffer(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
+		e.sniffer, err = sniffer.NewOfflinePcapSniffer(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
 	case "suricata":
 		e.sniffer, err = suricata.NewReader(file, e.cfg.Network.Protocols, e.cfg.Network.Port)
 	}
