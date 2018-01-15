@@ -26,7 +26,7 @@ func (q *QueriesRequest) AddQuery(query [4]string) {
 	q.Data = append(q.Data, query)
 }
 
-// QueriesResponse represents response for /quiery call.
+// QueriesResponse represents response for /queries call.
 type QueriesResponse struct {
 	Received int            `json:"received"`
 	Accepted int            `json:"accepted"`
