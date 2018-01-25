@@ -1,0 +1,52 @@
+platform: x64
+
+matrix:
+  fast_finish: true
+
+environment:
+  GOPATH: c:\gopath
+
+clone_folder: c:\gopath\src\github.com\alphasoc\nfr
+
+install:
+    # install winpcap dev
+  - appveyor DownloadFile http://www.winpcap.org/install/bin/WpdPack_4_1_2.zip
+  - 7z x .\WpdPack_4_1_2.zip -oc:\
+    # install winpcap - testing requires it
+  - choco install winpcap
+
+cache:
+  - C:\tools\mingw64
+
+test_script:
+ - go test -v ./...
+
+build_script:
+  # AppVeyor installed mingw is 32-bit only so install 64-bit version.
+  - ps: >-
+      if(!(Test-Path "C:\tools\mingw64")) {
+        cinst mingw > mingw-install.txt
+        Push-AppveyorArtifact mingw-install.txt
+      }
+  - set PATH=C:\tools\mingw64\bin;%PATH%
+  - ps: |
+      $version = git describe
+      go build -o nfr-windows-amd64.exe -ldflags "-X github.com/alphasoc/nfr/version.Version=$version"
+      Push-AppveyorArtifact nfr-windows-amd64.exe
+
+artifacts:
+  - path: nfr-windows-amd64.exe
+    name: exe
+
+deploy:
+  - release: $(APPVEYOR_REPO_TAG_NAME)
+    provider: GitHub
+    auth_token:
+      secure: M5vPi6Su4YYq6Y2w1ZJ+LD1L06vRkRyGrx2rnLT8zr6XEoPXhendZVKJHtpMTs2G
+    artifact: exe
+    force_update: true
+    draft: false
+    prerelease: false
+    on:
+      branch: /^v[0-9]+\.[0-9]+\.[0-9]+$/
+      appveyor_repo_tag: true
