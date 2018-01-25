@@ -6,8 +6,7 @@ import (
 	"github.com/alphasoc/nfr/matchers"
 )
 
-// Group represents single group used for
-// whitelising dns traffic.
+// Group is a definition used for whitelising dns traffic.
 type Group struct {
 	Name     string
 	Includes []string
@@ -21,8 +20,7 @@ type matcher struct {
 	nm *matchers.Network
 }
 
-// Groups represents all groups used for
-// whitelisting dns traffic.
+// Groups is a set of group definition used for whitelisting dns traffic.
 type Groups struct {
 	groups map[string]matcher
 }
@@ -43,11 +41,12 @@ func (g *Groups) Add(group *Group) error {
 	if err != nil {
 		return err
 	}
+
 	g.groups[group.Name] = matcher{dm, nm}
 	return nil
 }
 
-// IsDNSQueryWhitelisted returns true if dns query is not match any of groups
+// IsDNSQueryWhitelisted returns true if dns query is not match any of groups.
 func (g *Groups) IsDNSQueryWhitelisted(domain string, ip net.IP) (string, bool) {
 	// if there is no groups, then every query is whitelisted
 	if g == nil || len(g.groups) == 0 {

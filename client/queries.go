@@ -1,4 +1,3 @@
-// Package client provides functions to handle AlphaSOC public API and manage API related files.
 package client
 
 import (
@@ -33,13 +32,13 @@ type QueriesResponse struct {
 	Rejected map[string]int `json:"rejected"`
 }
 
-// Queries pushes dns queries to AlphaSOC api for analize.
+// Queries sends dns queries to AlphaSOC api for analize.
 func (c *AlphaSOCClient) Queries(req *QueriesRequest) (*QueriesResponse, error) {
 	if c.key == "" {
 		return nil, ErrNoAPIKey
 	}
 
-	resp, err := c.post(context.Background(), "queries", nil, req)
+	resp, err := c.post(context.Background(), "queries", nil, req, false)
 	if err != nil {
 		return nil, err
 	}

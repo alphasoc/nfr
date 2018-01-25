@@ -1,4 +1,4 @@
-package dns
+package packet
 
 import (
 	"os"
@@ -7,7 +7,7 @@ import (
 	"github.com/google/gopacket/pcapgo"
 )
 
-// Writer writes dns packetc in PCAP fromat.
+// Writer writes packetc in PCAP fromat.
 type Writer struct {
 	w *pcapgo.Writer
 	f *os.File
@@ -36,17 +36,12 @@ func newWriter(file string, writeHeader bool) (*Writer, error) {
 }
 
 // Write writes slice of packets.
-func (w *Writer) Write(packets []*Packet) error {
+func (w *Writer) Write(packet RawPacket) error {
 	if w == nil {
 		return nil
 	}
 
-	for _, packet := range packets {
-		if err := w.w.WritePacket(packet.raw.Metadata().CaptureInfo, packet.raw.Data()); err != nil {
-			return err
-		}
-	}
-	return nil
+	return w.w.WritePacket(packet.Raw().Metadata().CaptureInfo, packet.Raw().Data())
 }
 
 // Close closes the file for saving packets.

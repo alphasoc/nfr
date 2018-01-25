@@ -15,29 +15,18 @@ jobs:
           name: build
           command: |
             GOARCH=amd64 GOOS=linux go build -o nfr-linux-amd64 -ldflags "-X github.com/alphasoc/nfr/version.Version=$(git describe)"
+            GOARCH=amd64 GOOS=darwin go build -o nfr-darwin-amd6 -ldflags "-X github.com/alphasoc/nfr/version.Version=$(git describe)"
       - persist_to_workspace:
           root: .
           paths:
             - nfr-linux-amd64
+            - nfr-darwin-amd64
 
   lint:
     docker:
-      - image: circleci/golang:1.9
+      - image: mozgiii/gometalinter-docker
     working_directory: /go/src/github.com/alphasoc/nfr
     steps:
-      - checkout
-      - run:
-          name: install libpcap-dev
-          command: sudo apt-get install --quiet --yes libpcap-dev
-      - restore_cache:
-          key: gometalinter-tools-{{ checksum "/go/bin/gometalinter" }}
-      - run: go get github.com/alecthomas/gometalinter
-      - run: gometalinter --install
-      - save_cache:
-          key: gometalinter-tools-{{ checksum "/go/bin/gometalinter" }}
-          paths:
-            - /go/bin/
-      - run: go install ./...
       - run:
           name: run linters
           command:  |
@@ -63,7 +52,8 @@ jobs:
           command: |
             go get github.com/aktau/github-release
             github-release release --user alphasoc --repo nfr --tag $CIRCLE_TAG
-            github-release upload  --user alphasoc --repo nfr --tag $CIRCLE_TAG --name nfr-linux-amd64 --file nfr-linux-amd64
+            github-release upload --user alphasoc --repo nfr --tag $CIRCLE_TAG --name nfr-linux-amd64 --file nfr-linux-amd64
+            github-release upload --user alphasoc --repo nfr --tag $CIRCLE_TAG --name nfr-darwin-amd64 --file nfr-darwin-amd64
 
 workflows:
   version: 2

@@ -22,6 +22,7 @@ type Client interface {
 	AccountStatus() (*AccountStatusResponse, error)
 	Events(string) (*EventsResponse, error)
 	Queries(*QueriesRequest) (*QueriesResponse, error)
+	Ips(*IPRequest) (*IPResponse, error)
 	KeyRequest() (*KeyRequestResponse, error)
 	KeyReset(*KeyResetRequest) error
 }
@@ -35,11 +36,14 @@ type ErrorResponse struct {
 // api key set if it's required.
 var ErrNoAPIKey = errors.New("no api key")
 
+// ErrNoRequest is returned when nil request is pass to method.
+var ErrNoRequest = errors.New("request is empty")
+
 // DefaultVersion for AlphaSOC API.
 const DefaultVersion = "v1"
 
 // default user agent for nfr.
-const defaultUserAgent = "AlphaSOC NFR/" + version.Version
+var defaultUserAgent = "AlphaSOC NFR/" + version.Version
 
 // AlphaSOCClient handles connection to AlphaSOC server.
 type AlphaSOCClient struct {
@@ -84,12 +88,15 @@ func (c *AlphaSOCClient) get(ctx context.Context, path string, query url.Values)
 	return c.do(ctx, http.MethodGet, path, query, nil, nil)
 }
 
-func (c *AlphaSOCClient) post(ctx context.Context, path string, query url.Values, obj interface{}) (*http.Response, error) {
+func (c *AlphaSOCClient) post(ctx context.Context, path string, query url.Values, obj interface{}, objEncoded bool) (*http.Response, error) {
 	var buffer bytes.Buffer
 	headers := http.Header{
 		"Content-Type": []string{"application/json"},
 	}
-	if obj != nil {
+
+	if objEncoded {
+		buffer.Write(obj.([]byte))
+	} else if obj != nil {
 		if err := json.NewEncoder(&buffer).Encode(obj); err != nil {
 			return nil, err
 		}

@@ -9,7 +9,7 @@ type KeyResetRequest struct {
 
 // KeyReset reset AlphaSOC account key.
 func (c *AlphaSOCClient) KeyReset(req *KeyResetRequest) error {
-	resp, err := c.post(context.Background(), "key/reset", nil, req)
+	resp, err := c.post(context.Background(), "key/reset", nil, req, false)
 	if err != nil {
 		return err
 	}

@@ -6,8 +6,6 @@ import (
 	"net/mail"
 	"os"
 	"strings"
-
-	"github.com/alphasoc/nfr/client"
 )
 
 func emailValidator(email string) bool {
@@ -15,9 +13,15 @@ func emailValidator(email string) bool {
 	return err == nil
 }
 
+// Details about user.
+type Details struct {
+	Name  string
+	Email string
+}
+
 // GetAccountRegisterDetails prompts user for registration data
 // like name, email, organizatoin.
-func GetAccountRegisterDetails() (*client.AccountRegisterRequest, error) {
+func GetAccountRegisterDetails() (*Details, error) {
 	name, err := getInfo("Full Name", nil)
 	if err != nil {
 		return nil, err
@@ -34,10 +38,10 @@ func GetAccountRegisterDetails() (*client.AccountRegisterRequest, error) {
 	}
 	email = address.Address
 
-	var req client.AccountRegisterRequest
-	req.Details.Name = name
-	req.Details.Email = email
-	return &req, nil
+	return &Details{
+		Name:  name,
+		Email: email,
+	}, nil
 }
 
 // maximum number of tries for user input before return error.

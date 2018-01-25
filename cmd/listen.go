@@ -24,7 +24,7 @@ API key must be set before calling this mode.`,
 			return listen(c, cfg)
 		},
 	}
-	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for nfr")
+	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 	return cmd
 }
 

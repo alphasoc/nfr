@@ -1,4 +1,4 @@
-package dns
+package packet
 
 import (
 	"testing"
@@ -31,8 +31,8 @@ func TestNewPacket(t *testing.T) {
 	checkDNSPacket(t, rawPacket)
 }
 
-func TestPacketEqual(t *testing.T) {
-	packet := NewPacket(gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default))
+func TestDNSPacketEqual(t *testing.T) {
+	packet := NewDNSPacket(gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default))
 	if packet.Equal(nil) {
 		t.Fatalf("equal with nil must return false")
 	}
@@ -43,14 +43,14 @@ func TestPacketEqual(t *testing.T) {
 }
 
 func TestToRequestQuery(t *testing.T) {
-	packet := NewPacket(gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default))
+	packet := NewDNSPacket(gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default))
 	if s := packet.ToRequestQuery(); s[1] != "10.0.2.15" || s[2] != "A" || s[3] != "api.alphasoc.net" {
 		t.Fatalf("invalid request query %v", s)
 	}
 }
 
 func checkDNSPacket(t *testing.T, rawPacket gopacket.Packet) {
-	packet := NewPacket(rawPacket)
+	packet := NewDNSPacket(rawPacket)
 	if packet == nil {
 		t.Fatal("got nic packet")
 	}
@@ -61,7 +61,7 @@ func checkDNSPacket(t *testing.T, rawPacket gopacket.Packet) {
 	if packet.RecordType != "A" {
 		t.Fatalf("invalid recort type - got %s; exptected %s", packet.RecordType, "A")
 	}
-	if packet.SourceIP.String() != "10.0.2.15" {
-		t.Fatalf("invalid source ip - got %s; exptected %s", packet.SourceIP, "10.0.2.15")
+	if packet.SrcIP.String() != "10.0.2.15" {
+		t.Fatalf("invalid source ip - got %s; exptected %s", packet.SrcIP, "10.0.2.15")
 	}
 }

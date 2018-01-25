@@ -32,7 +32,7 @@ func newAccountRegisterCommand() *cobra.Command {
 			},
 		}
 	)
-	cmd.Flags().StringVarP(&configPath, "config", "c", "", "Config path for nfr")
+	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 	cmd.Flags().StringVar(&key, "key", "", "AlphaSOC API key")
 	return cmd
 }
@@ -56,7 +56,7 @@ A valid email address is required for activation purposes.
 By performing this request you agree to our Terms of Service and Privacy Policy
 (https://www.alphasoc.com/terms-of-service)
 `)
-	req, err := utils.GetAccountRegisterDetails()
+	details, err := utils.GetAccountRegisterDetails()
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ By performing this request you agree to our Terms of Service and Privacy Policy
 
 	var errSave error
 	if configPath == "" {
-		errSave = cfg.SaveDefault()
+		errSave = cfg.Save(configDefaultLocation)
 	} else {
 		errSave = cfg.Save(configPath)
 	}
@@ -89,6 +89,13 @@ alphasoc:
 		fmt.Println("\nSuccess! The configuration has been written to /etc/nfr/config.yml")
 	}
 
+	req := &client.AccountRegisterRequest{Details: struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}{
+		Name:  details.Name,
+		Email: details.Email,
+	}}
 	if err := c.AccountRegister(req); err != nil {
 		if errSave != nil {
 			fmt.Fprintf(os.Stderr, `We were unable to register your account. Please run nfr again with following command:

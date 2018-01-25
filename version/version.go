@@ -1,4 +1,4 @@
 package version
 
 // Version nfr
-const Version = "0.1.1"
+var Version = "0.1.1"

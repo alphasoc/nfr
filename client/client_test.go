@@ -27,7 +27,7 @@ func checkMethodAndPath(t *testing.T, r *http.Request, method string, path strin
 		return
 	}
 	if r.URL.Path != "/"+DefaultVersion+path {
-		t.Fatalf("invalid url path %s", r.URL.Path)
+		t.Fatalf("invalid url path %s != %s", r.URL.Path, "/"+DefaultVersion+path)
 		return
 	}
 }
@@ -68,7 +68,7 @@ func TestBasicAuth(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := New(ts.URL, "test-key").post(context.Background(), "/", nil, nil); err != nil {
+	if _, err := New(ts.URL, "test-key").post(context.Background(), "/", nil, nil, false); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -116,7 +116,7 @@ func TestDoInvalidMethod(t *testing.T) {
 }
 
 func TestPostMarshalError(t *testing.T) {
-	if _, err := New(noopServer.URL, "").post(context.Background(), "/", nil, func() {}); err == nil {
+	if _, err := New(noopServer.URL, "").post(context.Background(), "/", nil, func() {}, false); err == nil {
 		t.Fatal("exptected json marshal error")
 	}
 }

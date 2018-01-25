@@ -18,11 +18,11 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if !cfg.Alphasoc.Analyze.IP {
 		t.Fatalf("analyze ip set to false")
 	}
-	if len(cfg.Network.Protocols) != 1 && cfg.Network.Protocols[0] != "udp" {
-		t.Fatalf("invalid network protocols - got %v; expected %v", cfg.Network.Protocols, []string{"udp"})
+	if len(cfg.Network.DNS.Protocols) != 1 && cfg.Network.DNS.Protocols[0] != "udp" {
+		t.Fatalf("invalid network protocols - got %v; expected %v", cfg.Network.DNS.Protocols, []string{"udp"})
 	}
-	if cfg.Network.Port != 53 {
-		t.Fatalf("invalid network port - got %d; expected %d", cfg.Network.Port, 53)
+	if cfg.Network.DNS.Port != 53 {
+		t.Fatalf("invalid network port - got %d; expected %d", cfg.Network.DNS.Port, 53)
 	}
 	if cfg.Events.File != "stderr" {
 		t.Fatalf("invalid events file - got %s; expected %s", cfg.Events.File, "stderr")
@@ -39,11 +39,17 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Events.PollInterval != 5*time.Minute {
 		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Events.PollInterval, 5*time.Minute)
 	}
-	if cfg.Queries.BufferSize != 65535 {
-		t.Fatalf("invalid queries buffer size - got %d; expected %d", cfg.Queries.BufferSize, 65535)
+	if cfg.DNSQueries.BufferSize != 65535 {
+		t.Fatalf("invalid dns queries buffer size - got %d; expected %d", cfg.DNSQueries.BufferSize, 65535)
 	}
-	if cfg.Queries.FlushInterval != 30*time.Second {
-		t.Fatalf("invalid queries flush interval - got %s; expected %s", cfg.Queries.FlushInterval, 30*time.Second)
+	if cfg.DNSQueries.FlushInterval != 30*time.Second {
+		t.Fatalf("invalid dns queries flush interval - got %s; expected %s", cfg.DNSQueries.FlushInterval, 30*time.Second)
+	}
+	if cfg.IPEvents.BufferSize != 65535 {
+		t.Fatalf("invalid ip events buffer size - got %d; expected %d", cfg.IPEvents.BufferSize, 65535)
+	}
+	if cfg.IPEvents.FlushInterval != 30*time.Second {
+		t.Fatalf("invalid ip events flush interval - got %s; expected %s", cfg.IPEvents.FlushInterval, 30*time.Second)
 	}
 	if len(cfg.ScopeConfig.Groups) != 1 {
 		t.Fatalf("invalid number of scope groups - got %d; expected %d", len(cfg.ScopeConfig.Groups), 1)
@@ -73,9 +79,10 @@ alphasoc:
   api_key: test-api-key
 network:
   interface: lo
-  protocols:
-  - udp
-  port: 53
+  dns:
+    protocols:
+    - udp
+    port: 53
 log:
   file: stdout
   level: info
@@ -84,7 +91,7 @@ data:
 events:
   file: stderr
   poll_interval: 5m
-queries:
+dns_queries:
   buffer_size: 65535
   flush_interval: 30s
   failed:

@@ -28,6 +28,11 @@ func (c *MockAlphaSOCClient) Queries(req *QueriesRequest) (*QueriesResponse, err
 	return &QueriesResponse{}, nil
 }
 
+// Ips mock.
+func (c *MockAlphaSOCClient) Ips(req *IPRequest) (*IPResponse, error) {
+	return &IPResponse{}, nil
+}
+
 // KeyRequest mock.
 func (c *MockAlphaSOCClient) KeyRequest() (*KeyRequestResponse, error) {
 	return &KeyRequestResponse{}, nil

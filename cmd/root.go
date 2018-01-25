@@ -7,6 +7,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// default location for config file.
+const configDefaultLocation = "/etc/nfr/config.yml"
+
 // NewRootCommand represents the base command when called without any subcommands
 func NewRootCommand() *cobra.Command {
 	var cmd = &cobra.Command{

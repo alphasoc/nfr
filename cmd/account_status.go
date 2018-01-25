@@ -21,7 +21,7 @@ func newAccountStatusCommand() *cobra.Command {
 			return accountStatus(c)
 		},
 	}
-	cmd.Flags().StringVarP(&configPath, "config", "c", "", "Config path for nfr")
+	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 	return cmd
 }
 

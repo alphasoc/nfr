@@ -30,7 +30,7 @@ func (c *AlphaSOCClient) AccountRegister(req *AccountRegisterRequest) error {
 	}
 	req.Details.Email = email.Address
 
-	resp, err := c.post(context.Background(), "account/register", nil, req)
+	resp, err := c.post(context.Background(), "account/register", nil, req, false)
 	if err != nil {
 		return err
 	}

@@ -3,44 +3,51 @@ package sniffer
 import (
 	"fmt"
 
-	"github.com/alphasoc/nfr/dns"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
 )
 
 // Sniffer is an interface for iterate over captured packets.
 type Sniffer interface {
-	Packets() chan *dns.Packet // channel with captured packets
+	Packets() chan gopacket.Packet // channel with captured packets
 }
 
 // PcapSniffer sniffs dns packets.
 type PcapSniffer struct {
 	handle *pcap.Handle
 	source *gopacket.PacketSource
-	c      chan *dns.Packet
+}
+
+// Config options for sniffer.
+type Config struct {
+	EnableDNSAnalitics bool
+	Protocols          []string
+	Port               int
+
+	EnableIPAnalitics bool
 }
 
 // NewLivePcapSniffer creates sniffer that capture packets from interface.
-func NewLivePcapSniffer(iface string, protocols []string, port int) (*PcapSniffer, error) {
+func NewLivePcapSniffer(iface string, cfg *Config) (*PcapSniffer, error) {
 	handle, err := pcap.OpenLive(iface, 1600, false, pcap.BlockForever)
 	if err != nil {
 		return nil, err
 	}
-	return newsniffer(handle, protocols, port)
+	return newsniffer(handle, cfg)
 }
 
 // NewOfflinePcapSniffer creates sniffer that capture packets from pcap file.
-func NewOfflinePcapSniffer(file string, protocols []string, port int) (*PcapSniffer, error) {
+func NewOfflinePcapSniffer(file string, cfg *Config) (*PcapSniffer, error) {
 	handle, err := pcap.OpenOffline(file)
 	if err != nil {
 		return nil, err
 	}
-	return newsniffer(handle, protocols, port)
+	return newsniffer(handle, cfg)
 }
 
 // newsniffer creates new sniffer and sets pcap filter for it.
-func newsniffer(handle *pcap.Handle, protocols []string, port int) (*PcapSniffer, error) {
-	filter, err := sprintBPFFilter(protocols, port)
+func newsniffer(handle *pcap.Handle, cfg *Config) (*PcapSniffer, error) {
+	filter, err := sprintBPFFilter(cfg)
 	if err != nil {
 		handle.Close()
 		return nil, err
@@ -57,13 +64,9 @@ func newsniffer(handle *pcap.Handle, protocols []string, port int) (*PcapSniffer
 	}, nil
 }
 
-// Packets returns a channel of captured packets, allowing easy iterating over packets.
-func (s *PcapSniffer) Packets() chan *dns.Packet {
-	if s.c == nil {
-		s.c = make(chan *dns.Packet, 2048)
-		go s.readPackets()
-	}
-	return s.c
+// Packets returns a channel of captured packets, allowing easy iterating over them.
+func (s *PcapSniffer) Packets() chan gopacket.Packet {
+	return s.source.Packets()
 }
 
 // Close closes underlying handle and stops sniffer.
@@ -71,37 +74,36 @@ func (s *PcapSniffer) Close() {
 	s.handle.Close()
 }
 
-// readPackets reads in all packets from the pcap source and creates
-// new *Packet that is sent to the channel.
-func (s *PcapSniffer) readPackets() {
-	defer close(s.c)
-	for packet := range s.source.Packets() {
-		if p := dns.NewPacket(packet); p != nil {
-			s.c <- p
+// print pcap format filter based on given config
+func sprintBPFFilter(cfg *Config) (string, error) {
+	expr := ""
+
+	// set expresion only when dns is turn on and ip is turn off.
+	// in other cases just filter tcp and udp traffic.
+	if cfg.EnableDNSAnalitics && !cfg.EnableIPAnalitics {
+		if len(cfg.Protocols) > 2 {
+			return "", fmt.Errorf("too many protocols in list")
 		}
-	}
-}
 
-// print pcap format filter based on protocols and port
-func sprintBPFFilter(protocols []string, port int) (string, error) {
-	if len(protocols) > 2 {
-		return "", fmt.Errorf("too many protocols in list")
-	}
-
-	for _, proto := range protocols {
-		if proto != "udp" && proto != "tcp" {
-			return "", fmt.Errorf("invalid protocol %q name", proto)
+		for _, proto := range cfg.Protocols {
+			if proto != "udp" && proto != "tcp" {
+				return "", fmt.Errorf("invalid protocol %q name", proto)
+			}
 		}
+
+		if cfg.Port < 0 || cfg.Port > 65355 {
+			return "", fmt.Errorf("invalid %d port number", cfg.Port)
+		}
+
+		switch len(cfg.Protocols) {
+		case 1:
+			expr = fmt.Sprintf("(%s dst port %d)", cfg.Protocols[0], cfg.Port)
+		default:
+			expr = fmt.Sprintf("(tcp or udp dst port %d)", cfg.Port)
+		}
+	} else {
+		expr = "tcp or udp"
 	}
 
-	if port < 0 || port > 65355 {
-		return "", fmt.Errorf("invalid %d port number", port)
-	}
-
-	switch len(protocols) {
-	case 1:
-		return fmt.Sprintf("%s dst port %d", protocols[0], port), nil
-	default:
-		return fmt.Sprintf("tcp or udp dst port %d", port), nil
-	}
+	return expr, nil
 }

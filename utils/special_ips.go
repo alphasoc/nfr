@@ -2,6 +2,22 @@ package utils
 
 import "net"
 
+// IsSpecialIP returns true if given ip belongs
+// to network address from RFC 3330 and RFC 5166.
+func IsSpecialIP(ip net.IP) bool {
+	for _, net := range SpecialIPv4Addresses {
+		if net.Contains(ip) {
+			return true
+		}
+	}
+	for _, net := range SpecialIPv6Addresses {
+		if net.Contains(ip) {
+			return true
+		}
+	}
+	return false
+}
+
 // Special-Use IPv4 and IPv6 Addresses
 var (
 	// Special-Use IPv4 Addresses RFC 3330 (https://tools.ietf.org/html/rfc3330)

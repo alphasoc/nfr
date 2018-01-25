@@ -8,16 +8,12 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strings"
 	"time"
 
 	"github.com/alphasoc/nfr/utils"
 	yaml "gopkg.in/yaml.v2"
 )
-
-// DefaultLocation for config file.
-const DefaultLocation = "/etc/nfr/config.yml"
 
 // Config for nfr
 type Config struct {
@@ -41,14 +37,23 @@ type Config struct {
 
 	// Network interface configuration.
 	Network struct {
-		// Interface on which nfr should listen. Default: (none)
-		Interface string `yaml:"interface,omitempty"`
-		// Protocols on which nfr should listen.
-		// Possible values are udp and tcp.
-		// Default: [udp]
-		Protocols []string `yaml:"protocols,omitempty"`
-		// Port on which nfr should listen. Default: 53
-		Port int `yaml:"port,omitempty"`
+		// Interface on which nfr should listen.
+		// Default: (none)
+		Interface string `yaml:"interface"`
+
+		// Interface physical hardware address.
+		HardwareAddr net.HardwareAddr `yaml:"-"`
+
+		// DNS network configuration
+		DNS struct {
+			// Protocols on which nfr should listen.
+			// Possible values are udp and tcp.
+			// Default: [udp]
+			Protocols []string `yaml:"protocols,omitempty"`
+			// Port on which nfr should listen.
+			// Default: 53
+			Port int `yaml:"port,omitempty"`
+		} `yaml:"dns,omitempty"`
 	} `yaml:"network,omitempty"`
 
 	// Log configuration.
@@ -123,23 +128,40 @@ type Config struct {
 	} `yaml:"events,omitempty"`
 
 	// DNS queries configuration.
-	Queries struct {
+	DNSQueries struct {
 		// Buffer size for dns queries queue. If the size will be exceded then
 		// nfr send quries to AlphaSOC api. Default: 65535
 		BufferSize int `yaml:"buffer_size,omitempty"`
-		// Interval for flushing queries to AlphaSOC api. Default: 30s
+		// Interval for flushing dns queries to AlphaSOC api. Default: 30s
 		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
 
 		// Queries that were unable to send to AlphaSOC api.
-		// If file is set, then unsent queries will be saved on disk
-		// and then send again.
+		// If file is set, then unsent queries will be saved on disk and send again.
 		// Pcap format is used to store queries. You can view it in
 		// programs like tcpdump or whireshark.
 		Failed struct {
 			// File to store DNS Queries. Default: (none)
 			File string `yaml:"file,omitempty"`
 		} `yaml:"failed,omitempty"`
-	} `yaml:"queries,omitempty"`
+	} `yaml:"dns_queries,omitempty"`
+
+	// IP events configuration.
+	IPEvents struct {
+		// Buffer size for ip events queue. If the size will be exceded then
+		// nfr send quries to AlphaSOC api. Default: 65535
+		BufferSize int `yaml:"buffer_size,omitempty"`
+		// Interval for flushing ip events to AlphaSOC api. Default: 30s
+		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
+
+		// Events that were unable to send to AlphaSOC api.
+		// If file is set, then unsent events will be saved on disk and send again.
+		// Pcap format is used to store events. You can view it in
+		// programs like tcpdump or whireshark.
+		Failed struct {
+			// File to store ip events. Default: (none)
+			File string `yaml:"file,omitempty"`
+		} `yaml:"failed,omitempty"`
+	} `yaml:"ip_events,omitempty"`
 }
 
 // New reads the config from file location. If file is not set
@@ -156,11 +178,12 @@ func New(file ...string) (*Config, error) {
 		panic("config: too many files")
 	}
 
-	if _, err = os.Stat(DefaultLocation); len(file) == 0 && err == nil {
-		file = append(file, DefaultLocation)
+	filename := ""
+	if len(file) == 1 {
+		filename = file[0]
 	}
 
-	if len(file) == 1 && file[0] != "" {
+	if filename != "" {
 		content, err = ioutil.ReadFile(file[0])
 		if err != nil {
 			return nil, fmt.Errorf("config: can't read file %s", err)
@@ -175,8 +198,11 @@ func New(file ...string) (*Config, error) {
 		return nil, err
 	}
 
-	// HACK: some packages need the slice sorted.
-	sort.Strings(cfg.Network.Protocols)
+	if filename == "" {
+		// do not validate default config
+		return cfg, nil
+	}
+
 	return cfg, cfg.validate()
 }
 
@@ -187,6 +213,10 @@ func (cfg *Config) load(content []byte) error {
 
 // Save saves config to file.
 func (cfg *Config) Save(file string) error {
+	if err := os.MkdirAll(filepath.Dir(file), os.ModeDir); err != nil {
+		return err
+	}
+
 	content, err := yaml.Marshal(cfg)
 	if err != nil {
 		return err
@@ -195,23 +225,14 @@ func (cfg *Config) Save(file string) error {
 	return ioutil.WriteFile(file, content, 0666)
 }
 
-// SaveDefault saves config to default file.
-func (cfg *Config) SaveDefault() error {
-	// create default directory if not exists.
-	if err := os.MkdirAll(filepath.Dir(DefaultLocation), os.ModeDir); err != nil {
-		return err
-	}
-	return cfg.Save(DefaultLocation)
-}
-
 // newDefaultConfig returns config with set defaults.
 func newDefaultConfig() *Config {
 	cfg := &Config{}
 	cfg.Alphasoc.Host = "https://api.alphasoc.net"
 	cfg.Alphasoc.Analyze.DNS = true
 	cfg.Alphasoc.Analyze.IP = true
-	cfg.Network.Protocols = []string{"udp"}
-	cfg.Network.Port = 53
+	cfg.Network.DNS.Protocols = []string{"udp"}
+	cfg.Network.DNS.Port = 53
 	cfg.Events.File = "stderr"
 	cfg.Log.File = "stdout"
 	cfg.Log.Level = "info"
@@ -221,8 +242,10 @@ func newDefaultConfig() *Config {
 		cfg.Data.File = path.Join("/run", "nfr.data")
 	}
 	cfg.Events.PollInterval = 5 * time.Minute
-	cfg.Queries.BufferSize = 65535
-	cfg.Queries.FlushInterval = 30 * time.Second
+	cfg.DNSQueries.BufferSize = 65535
+	cfg.DNSQueries.FlushInterval = 30 * time.Second
+	cfg.IPEvents.BufferSize = 65535
+	cfg.IPEvents.FlushInterval = 30 * time.Second
 	return cfg
 }
 
@@ -231,26 +254,28 @@ func (cfg *Config) validate() error {
 		return fmt.Errorf("config: empty network.interface")
 	}
 
-	if _, err := net.InterfaceByName(cfg.Network.Interface); err != nil {
+	iface, err := net.InterfaceByName(cfg.Network.Interface)
+	if err != nil {
 		return fmt.Errorf("config: can't open interface %s: %s", cfg.Network.Interface, err)
 	}
+	cfg.Network.HardwareAddr = iface.HardwareAddr
 
-	if len(cfg.Network.Protocols) == 0 {
+	if len(cfg.Network.DNS.Protocols) == 0 {
 		return fmt.Errorf("config: empty protocol list")
 	}
 
-	if len(cfg.Network.Protocols) > 2 {
+	if len(cfg.Network.DNS.Protocols) > 2 {
 		return fmt.Errorf("config: too many protocols in list (only tcp and udp are available)")
 	}
 
-	for _, proto := range cfg.Network.Protocols {
+	for _, proto := range cfg.Network.DNS.Protocols {
 		if proto != "udp" && proto != "tcp" {
 			return fmt.Errorf("config: invalid protocol %q name (only tcp and udp are available)", proto)
 		}
 	}
 
-	if cfg.Network.Port < 0 || cfg.Network.Port > 65535 {
-		return fmt.Errorf("config: invalid %d port number", cfg.Network.Port)
+	if cfg.Network.DNS.Port < 0 || cfg.Network.DNS.Port > 65535 {
+		return fmt.Errorf("config: invalid %d port number", cfg.Network.DNS.Port)
 	}
 
 	if err := validateFilename(cfg.Log.File, true); err != nil {
@@ -277,16 +302,30 @@ func (cfg *Config) validate() error {
 		return fmt.Errorf("config: events poll interval must be at least 5s")
 	}
 
-	if cfg.Queries.BufferSize < 64 {
+	if cfg.DNSQueries.BufferSize < 64 {
 		return fmt.Errorf("config: queries buffer size must be at least 64")
 	}
 
-	if cfg.Queries.FlushInterval < 5*time.Second {
+	if cfg.DNSQueries.FlushInterval < 5*time.Second {
 		return fmt.Errorf("config: queries flush interval must be at least 5s")
 	}
 
-	if cfg.Queries.Failed.File != "" {
-		if err := validateFilename(cfg.Queries.Failed.File, false); err != nil {
+	if cfg.DNSQueries.Failed.File != "" {
+		if err := validateFilename(cfg.DNSQueries.Failed.File, false); err != nil {
+			return fmt.Errorf("config: %s", err)
+		}
+	}
+
+	if cfg.IPEvents.BufferSize < 64 {
+		return fmt.Errorf("config: queries buffer size must be at least 64")
+	}
+
+	if cfg.IPEvents.FlushInterval < 5*time.Second {
+		return fmt.Errorf("config: queries flush interval must be at least 5s")
+	}
+
+	if cfg.IPEvents.Failed.File != "" {
+		if err := validateFilename(cfg.IPEvents.Failed.File, false); err != nil {
 			return fmt.Errorf("config: %s", err)
 		}
 	}

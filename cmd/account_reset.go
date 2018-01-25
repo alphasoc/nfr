@@ -5,7 +5,6 @@ import (
 	"net/mail"
 
 	"github.com/alphasoc/nfr/client"
-	"github.com/alphasoc/nfr/config"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +32,7 @@ func newAccountKeyResetCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&configPath, "config", "c", config.DefaultLocation, "Config path for nfr")
+	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 	return cmd
 }
 

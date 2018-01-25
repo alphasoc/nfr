@@ -1,4 +1,3 @@
-// Package client provides functions to handle AlphaSOC public API and manage API related files.
 package client
 
 import (
