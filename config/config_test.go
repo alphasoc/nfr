@@ -33,9 +33,6 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Log.Level != "info" {
 		t.Fatalf("invalid log level - got %s; expected %s", cfg.Log.Level, "info")
 	}
-	if cfg.Data.File != "/run/nfr.data" {
-		t.Fatalf("invalid data file - got %s; expected %s", cfg.Data.File, "/run/nfr.data")
-	}
 	if cfg.Events.PollInterval != 5*time.Minute {
 		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Events.PollInterval, 5*time.Minute)
 	}
@@ -78,7 +75,6 @@ alphasoc:
   host: https://api.alphasoc.net
   api_key: test-api-key
 network:
-  interface: lo
   dns:
     protocols:
     - udp
@@ -87,7 +83,7 @@ log:
   file: stdout
   level: info
 data:
-  file: /run/nfr.data
+  file: nfr.data
 events:
   file: stderr
   poll_interval: 5m
@@ -95,7 +91,7 @@ dns_queries:
   buffer_size: 65535
   flush_interval: 30s
   failed:
-    file: /run/nfr.pcap`)
+    file: nfr.pcap`)
 	f, err := ioutil.TempFile("", "nfr-config")
 	if err != nil {
 		log.Fatal(err)
@@ -114,9 +110,6 @@ dns_queries:
 	checkDefaults(t, cfg)
 	if cfg.Alphasoc.APIKey != "test-api-key" {
 		t.Fatalf("invalid alphasoc api key - got %s; expected %s", cfg.Alphasoc.APIKey, "test-api-key")
-	}
-	if cfg.Network.Interface != "lo" {
-		t.Fatalf("invalid network interface name - got %s; expected %s", cfg.Network.Interface, "lo")
 	}
 }
 

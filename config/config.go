@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"time"
 
@@ -236,11 +235,6 @@ func newDefaultConfig() *Config {
 	cfg.Events.File = "stderr"
 	cfg.Log.File = "stdout"
 	cfg.Log.Level = "info"
-	if runtime.GOOS == "windows" {
-		cfg.Data.File = path.Join(os.Getenv("APPDATA"), "nfr.data")
-	} else {
-		cfg.Data.File = path.Join("/run", "nfr.data")
-	}
 	cfg.Events.PollInterval = 5 * time.Minute
 	cfg.DNSQueries.BufferSize = 65535
 	cfg.DNSQueries.FlushInterval = 30 * time.Second
@@ -250,15 +244,13 @@ func newDefaultConfig() *Config {
 }
 
 func (cfg *Config) validate() error {
-	if cfg.Network.Interface == "" {
-		return fmt.Errorf("config: empty network.interface")
+	if cfg.Network.Interface != "" {
+		iface, err := net.InterfaceByName(cfg.Network.Interface)
+		if err != nil {
+			return fmt.Errorf("config: can't open interface %s: %s", cfg.Network.Interface, err)
+		}
+		cfg.Network.HardwareAddr = iface.HardwareAddr
 	}
-
-	iface, err := net.InterfaceByName(cfg.Network.Interface)
-	if err != nil {
-		return fmt.Errorf("config: can't open interface %s: %s", cfg.Network.Interface, err)
-	}
-	cfg.Network.HardwareAddr = iface.HardwareAddr
 
 	if len(cfg.Network.DNS.Protocols) == 0 {
 		return fmt.Errorf("config: empty protocol list")
