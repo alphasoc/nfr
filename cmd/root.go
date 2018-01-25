@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"os"
+	"path"
+	"runtime"
+
 	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/config"
 	"github.com/alphasoc/nfr/logger"
@@ -8,7 +12,15 @@ import (
 )
 
 // default location for config file.
-const configDefaultLocation = "/etc/nfr/config.yml"
+var configDefaultLocation string
+
+func init() {
+	if runtime.GOOS == "windows" {
+		configDefaultLocation = path.Join(os.Getenv("APPDATA"), "nfr.data")
+	} else {
+		configDefaultLocation = "/etc/nfr/config.yml"
+	}
+}
 
 // NewRootCommand represents the base command when called without any subcommands
 func NewRootCommand() *cobra.Command {
