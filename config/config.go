@@ -14,6 +14,13 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+// Monitor is a config for monitoring files
+type Monitor struct {
+	Format string `yaml:"format"`
+	Type   string `yaml:"type"`
+	File   string `yaml:"file"`
+}
+
 // Config for nfr
 type Config struct {
 	// AlphaSOC server configuration
@@ -161,6 +168,8 @@ type Config struct {
 			File string `yaml:"file,omitempty"`
 		} `yaml:"failed,omitempty"`
 	} `yaml:"ip_events,omitempty"`
+
+	Monitors []Monitor `yaml:"monitor"`
 }
 
 // New reads the config from file location. If file is not set
@@ -319,6 +328,15 @@ func (cfg *Config) validate() error {
 	if cfg.IPEvents.Failed.File != "" {
 		if err := validateFilename(cfg.IPEvents.Failed.File, false); err != nil {
 			return fmt.Errorf("config: %s", err)
+		}
+	}
+
+	for _, monitor := range cfg.Monitors {
+		if monitor.Format != "bro" && monitor.Format != "suricata" {
+			return fmt.Errorf("config: unknown format %s for monitoring", monitor.Format)
+		}
+		if monitor.Type != "dns" && monitor.Type != "ip" {
+			return fmt.Errorf("config: unknown type %s for monitoring", monitor.Type)
 		}
 	}
 

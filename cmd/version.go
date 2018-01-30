@@ -11,11 +11,10 @@ func newVersionCommand() *cobra.Command {
 	return &cobra.Command{
 		Use:   "version",
 		Short: "Show the NFR binary version",
-		RunE:  printversion,
+		Run:   printversion,
 	}
 }
 
-func printversion(cmd *cobra.Command, args []string) error {
+func printversion(cmd *cobra.Command, args []string) {
 	fmt.Printf("nfr version %s\n", version.Version)
-	return nil
 }

@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newListenCommand() *cobra.Command {
-	var cmd = &cobra.Command{
-		Use:   "listen",
+func newMonitorCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "monitor",
 		Short: "Start the DNS sniffer and score live events",
 		Long: `Captures DNS traffic and provides analysis of them.
 API key must be set before calling this mode.`,
@@ -18,16 +18,16 @@ API key must be set before calling this mode.`,
 			if err != nil {
 				return err
 			}
-			return listen(c, cfg)
+			return monitor(c, cfg)
 		},
 	}
-	return cmd
 }
 
-func listen(c client.Client, cfg *config.Config) error {
+func monitor(c client.Client, cfg *config.Config) error {
 	e, err := executor.New(c, cfg)
 	if err != nil {
 		return err
 	}
-	return e.Start()
+
+	return e.Monitor()
 }

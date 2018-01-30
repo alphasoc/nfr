@@ -33,6 +33,36 @@
 			"revisionTime": "2017-05-03T21:52:36Z"
 		},
 		{
+			"checksumSHA1": "P5KyE9QEbAeHLeXzycSF/jS1FIc=",
+			"path": "github.com/hpcloud/tail",
+			"revision": "37f4271387456dd1bf82ab1ad9229f060cc45386",
+			"revisionTime": "2017-08-14T16:06:53Z"
+		},
+		{
+			"checksumSHA1": "qn3/Y771JaGG94CvdKa8pIj5hH0=",
+			"path": "github.com/hpcloud/tail/ratelimiter",
+			"revision": "37f4271387456dd1bf82ab1ad9229f060cc45386",
+			"revisionTime": "2017-08-14T16:06:53Z"
+		},
+		{
+			"checksumSHA1": "0xM336Lb25URO/1W1/CtGoRygVU=",
+			"path": "github.com/hpcloud/tail/util",
+			"revision": "37f4271387456dd1bf82ab1ad9229f060cc45386",
+			"revisionTime": "2017-08-14T16:06:53Z"
+		},
+		{
+			"checksumSHA1": "TP4OAv5JMtzj2TB6OQBKqauaKDc=",
+			"path": "github.com/hpcloud/tail/watch",
+			"revision": "37f4271387456dd1bf82ab1ad9229f060cc45386",
+			"revisionTime": "2017-08-14T16:06:53Z"
+		},
+		{
+			"checksumSHA1": "j65V4wnJboT4pfppNC/gjr2Gl+c=",
+			"path": "github.com/hpcloud/tail/winfile",
+			"revision": "37f4271387456dd1bf82ab1ad9229f060cc45386",
+			"revisionTime": "2017-08-14T16:06:53Z"
+		},
+		{
 			"checksumSHA1": "40vJyUB4ezQSn/NSadsKEOrudMc=",
 			"path": "github.com/inconshreveable/mousetrap",
 			"revision": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75",
@@ -67,6 +97,20 @@
 			"path": "golang.org/x/sys/unix",
 			"revision": "9c9d83fe39ed3fd2d9249fcf6b755891fff54b03",
 			"revisionTime": "2017-05-06T01:47:39Z"
+		},
+		{
+			"checksumSHA1": "mFhvo8ZlZg1Y1wxet9ndm6JQkJQ=",
+			"origin": "github.com/hpcloud/tail/vendor/gopkg.in/fsnotify.v1",
+			"path": "gopkg.in/fsnotify.v1",
+			"revision": "37f4271387456dd1bf82ab1ad9229f060cc45386",
+			"revisionTime": "2017-08-14T16:06:53Z"
+		},
+		{
+			"checksumSHA1": "z56sI90RWCJhiiLlOExjEARbj7I=",
+			"origin": "github.com/hpcloud/tail/vendor/gopkg.in/tomb.v1",
+			"path": "gopkg.in/tomb.v1",
+			"revision": "37f4271387456dd1bf82ab1ad9229f060cc45386",
+			"revisionTime": "2017-08-14T16:06:53Z"
 		},
 		{
 			"checksumSHA1": "qOmvuDm+F+2nQQecUZBVkZrTn6Y=",

@@ -12,14 +12,13 @@ import (
 
 func newAccountRegisterCommand() *cobra.Command {
 	var (
-		key        string
-		configPath string
-		cmd        = &cobra.Command{
+		key string
+		cmd = &cobra.Command{
 			Use:   "register",
 			Short: "Generate and register an AlphaSOC API key",
 			Long:  "This command provides interactive API key generation and registration.",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				cfg, c, err := createConfigAndClient(configPath, false)
+				cfg, c, err := createConfigAndClient(false)
 				if err != nil {
 					return err
 				}
@@ -32,7 +31,6 @@ func newAccountRegisterCommand() *cobra.Command {
 			},
 		}
 	)
-	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 	cmd.Flags().StringVar(&key, "key", "", "AlphaSOC API key")
 	return cmd
 }

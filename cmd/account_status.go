@@ -9,19 +9,17 @@ import (
 )
 
 func newAccountStatusCommand() *cobra.Command {
-	var configPath string
 	var cmd = &cobra.Command{
 		Use:   "status",
 		Short: "Show status of AlphaSOC account",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			_, c, err := createConfigAndClient(configPath, false)
+			_, c, err := createConfigAndClient(false)
 			if err != nil {
 				return err
 			}
 			return accountStatus(c)
 		},
 	}
-	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 	return cmd
 }
 

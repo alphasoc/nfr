@@ -22,7 +22,6 @@ var (
 
 func newReadCommand() *cobra.Command {
 	var (
-		configPath string
 		fileFormat string
 		fileType   string
 	)
@@ -46,14 +45,13 @@ See nfr read --help for more informations.`,
 				return errors.New("at least 1 file required")
 			}
 
-			cfg, c, err := createConfigAndClient(configPath, true)
+			cfg, c, err := createConfigAndClient(true)
 			if err != nil {
 				return err
 			}
 			return send(cfg, c, fileFormat, fileType, args)
 		},
 	}
-	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 	cmd.Flags().StringVarP(&fileFormat, "format", "f", "pcap", fmt.Sprintf("One of %s file format", sprintSlice(fileFormats)))
 	cmd.Flags().StringVar(&fileType, "type", "dns", fmt.Sprintf("One of %s type to analyze", sprintSlice(analyzeTypes)))
 	return cmd

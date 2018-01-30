@@ -11,8 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// default location for config file.
-var configDefaultLocation string
+var (
+	configDefaultLocation string // default location for config file.
+	configPath            string // config path flag
+)
 
 func init() {
 	if runtime.GOOS == "windows" {
@@ -33,15 +35,19 @@ highlighting targeted attacks.`,
 		SilenceErrors: true,
 		SilenceUsage:  true,
 	}
+
+	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
+
 	cmd.AddCommand(newVersionCommand())
 	cmd.AddCommand(newAccountCommand())
 	cmd.AddCommand(newListenCommand())
 	cmd.AddCommand(newReadCommand())
+	cmd.AddCommand(newMonitorCommand())
 	return cmd
 }
 
 // createConfigAndClient takes one argument to check if key is active.
-func createConfigAndClient(configPath string, checkKey bool) (*config.Config, *client.AlphaSOCClient, error) {
+func createConfigAndClient(checkKey bool) (*config.Config, *client.AlphaSOCClient, error) {
 	cfg, err := config.New(configPath)
 	if err != nil {
 		return nil, nil, err

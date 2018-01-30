@@ -28,8 +28,8 @@ func TestReaderReadDNS(t *testing.T) {
 `
 	)
 
-	if _, err := NewReader("non-existing-log.json"); err == nil {
-		t.Fatal("NewReader should return error")
+	if _, err := NewFileParser("non-existing-log.json"); err == nil {
+		t.Fatal("file parser should return error")
 	}
 
 	if err := ioutil.WriteFile(filename, []byte(logcontent), os.ModePerm); err != nil {
@@ -37,9 +37,9 @@ func TestReaderReadDNS(t *testing.T) {
 	}
 	defer os.Remove(filename)
 
-	r, err := NewReader(filename)
+	r, err := NewFileParser(filename)
 	if err != nil {
-		t.Fatalf("create sucricata reader failed - %s", err)
+		t.Fatalf("create sucricata parser failed - %s", err)
 	}
 	defer r.Close()
 
@@ -86,8 +86,8 @@ func TestReaderReadIP(t *testing.T) {
 1483228800.000000	2	10.0.0.1	21	10.0.0.2	22	tcp	ssh	-	-	20	S1	-	-	0	D	1	0	0	0	(empty)`
 	)
 
-	if _, err := NewReader("non-existing-log.json"); err == nil {
-		t.Fatal("NewReader should return error")
+	if _, err := NewFileParser("non-existing-log.json"); err == nil {
+		t.Fatal("file parser should return error")
 	}
 
 	if err := ioutil.WriteFile(filename, []byte(logcontent), os.ModePerm); err != nil {
@@ -95,9 +95,9 @@ func TestReaderReadIP(t *testing.T) {
 	}
 	defer os.Remove(filename)
 
-	r, err := NewReader(filename)
+	r, err := NewFileParser(filename)
 	if err != nil {
-		t.Fatalf("create sucricata reader failed - %s", err)
+		t.Fatalf("create sucricata parser failed - %s", err)
 	}
 	defer r.Close()
 

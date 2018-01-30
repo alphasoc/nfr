@@ -22,6 +22,7 @@ import (
 	"github.com/alphasoc/nfr/packet"
 	"github.com/alphasoc/nfr/sniffer"
 	"github.com/alphasoc/nfr/utils"
+	"github.com/hpcloud/tail"
 )
 
 // Executor executes main nfr loop.
@@ -43,7 +44,7 @@ type Executor struct {
 	ipWriter *packet.Writer
 
 	sniffer sniffer.Sniffer
-	lr      logs.Reader
+	lr      logs.FileParser
 
 	// mutex for synchronize sending packets.
 	mx sync.Mutex
@@ -100,10 +101,7 @@ func (e *Executor) Start() (err error) {
 		}
 	}
 
-	e.installSignalHandler()
-	e.startEventPoller()
-	e.startPacketSender()
-
+	e.init()
 	return e.do()
 }
 
@@ -111,11 +109,11 @@ func (e *Executor) Start() (err error) {
 func (e *Executor) Send(file string, fileFomrat string, fileType string) (err error) {
 	switch fileFomrat {
 	case "bro":
-		e.lr, err = bro.NewReader(file)
+		e.lr, err = bro.NewFileParser(file)
 	case "pcap":
 		e.lr, err = pcap.NewReader(file)
 	case "suricata":
-		e.lr, err = suricata.NewReader(file)
+		e.lr, err = suricata.NewFileParser(file)
 	default:
 		return errors.New("file format not supported")
 	}
@@ -131,6 +129,64 @@ func (e *Executor) Send(file string, fileFomrat string, fileType string) (err er
 	default:
 		return errors.New("file type not supported")
 	}
+}
+
+// Monitor monitors log files and send data to engine.
+func (e *Executor) Monitor() error {
+	e.init()
+	for _, monitor := range e.cfg.Monitors {
+		t, err := tail.TailFile(monitor.File, tail.Config{
+			Follow: true,
+			ReOpen: true,
+			Logger: log.StandardLogger(),
+		})
+		if err != nil {
+			return err
+		}
+
+		go func(monitor config.Monitor) {
+			var parser logs.Parser
+			switch monitor.Format {
+			case "bro":
+				parser = bro.NewParser()
+			case "suricata":
+				parser = suricata.NewParser()
+			}
+
+			for line := range t.Lines {
+				switch monitor.Type {
+				case "ip":
+					ippacket, err := parser.ParseLineIP(line.Text)
+					if err != nil {
+						log.Error(err)
+						continue
+					}
+					if !e.shouldSendIPPacket(ippacket) {
+						continue
+					}
+					e.ipbuf.Write(ippacket)
+				case "dns":
+					dnspacket, err := parser.ParseLineDNS(line.Text)
+					if err != nil {
+						log.Error(err)
+						continue
+					}
+					if !e.shouldSendDNSPacket(dnspacket) {
+						continue
+					}
+					e.dnsbuf.Write(dnspacket)
+				}
+			}
+		}(monitor)
+	}
+	return nil
+}
+
+// init initialize executor.
+func (e *Executor) init() {
+	e.installSignalHandler()
+	e.startEventPoller()
+	e.startPacketSender()
 }
 
 func (e *Executor) processDNSReader() error {

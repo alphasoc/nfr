@@ -9,7 +9,6 @@ import (
 )
 
 func newAccountKeyResetCommand() *cobra.Command {
-	var configPath string
 	var cmd = &cobra.Command{
 		Use:   "reset",
 		Short: "Reset the API key associated with a given email address",
@@ -23,7 +22,7 @@ func newAccountKeyResetCommand() *cobra.Command {
 				return fmt.Errorf("invalid email %s", args[0])
 			}
 
-			_, c, err := createConfigAndClient(configPath, false)
+			_, c, err := createConfigAndClient(false)
 			if err != nil {
 				return err
 			}
@@ -32,7 +31,6 @@ func newAccountKeyResetCommand() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 	return cmd
 }
 
