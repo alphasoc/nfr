@@ -11,13 +11,13 @@ import (
 // IPEntry is single ip entry for analize.
 type IPEntry struct {
 	Timestamp time.Time `json:"ts"`
-	SrcIP     net.IP    `json:"src_ip"`
-	SrcPort   int       `json:"src_port"`
-	DestIP    net.IP    `json:"dest_ip"`
-	DestPort  int       `json:"dest_port"`
-	Protocol  string    `json:"protocol"`
-	BytesIn   int       `json:"bytes_in"`
-	BytesOut  int       `json:"bytes_out"`
+	SrcIP     net.IP    `json:"srcIp"`
+	SrcPort   int       `json:"srcPort"`
+	DestIP    net.IP    `json:"destIp"`
+	DestPort  int       `json:"destPort"`
+	Protocol  string    `json:"proto"`
+	BytesIn   int       `json:"bytesIn"`
+	BytesOut  int       `json:"bytesOut"`
 }
 
 // IPRequest contains slice of ip events for sending.
