@@ -1,5 +1,5 @@
-// Package events polls and writes events from AlphaSOC api.
-package events
+// Package alerts polls and writes alerts from AlphaSOC api.
+package alerts
 
 import (
 	"io/ioutil"
@@ -10,7 +10,7 @@ import (
 )
 
 func TestPollerDo(t *testing.T) {
-	const fname = "_events"
+	const fname = "_alerts"
 	defer os.Remove(fname)
 
 	w, err := NewJSONFileWriter(fname)
@@ -28,6 +28,6 @@ func TestPollerDo(t *testing.T) {
 	}
 
 	if string(b) != "" {
-		t.Fatal("no events should be written to file")
+		t.Fatal("no alerts should be written to file")
 	}
 }

@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccountStatus(t *testing.T) {
@@ -13,26 +15,21 @@ func TestAccountStatus(t *testing.T) {
 		json.NewEncoder(w).Encode(&AccountStatusResponse{})
 	}))
 	defer ts.Close()
-
-	if _, err := New(ts.URL, "test-key").AccountStatus(); err != nil {
-		t.Fatal(err)
-	}
+	_, err := New(ts.URL, "test-key").AccountStatus()
+	require.NoError(t, err)
 }
 
 func TestAccountStatusFail(t *testing.T) {
-	if _, err := New(internalServerErrorServer.URL, "test-key").AccountStatus(); err == nil {
-		t.Fatal("expected error")
-	}
+	_, err := New(internalServerErrorServer.URL, "test-key").AccountStatus()
+	require.Error(t, err)
 }
 
 func TestAccountStatusNoKey(t *testing.T) {
-	if _, err := New("", "").AccountStatus(); err != ErrNoAPIKey {
-		t.Fatalf("expected error %s", ErrNoAPIKey)
-	}
+	_, err := New("", "").AccountStatus()
+	require.Error(t, err)
 }
 
 func TestAccountStatusInvalidJSON(t *testing.T) {
-	if _, err := New(noopServer.URL, "test-key").AccountStatus(); err == nil {
-		t.Fatal("expected error")
-	}
+	_, err := New(noopServer.URL, "test-key").AccountStatus()
+	require.Error(t, err)
 }

@@ -1,20 +1,19 @@
-package events
+package alerts
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/alphasoc/nfr/client"
 )
 
-// Writer interface for log api events response.
+// Writer interface for log api alerts response.
 type Writer interface {
-	Write(*client.EventsResponse) error
+	Write(*client.AlertsResponse) error
 }
 
 // JSONFileWriter implements Writer interface and write
-// api events in JSON format.
+// api alerts in JSON format.
 type JSONFileWriter struct {
 	f *os.File
 }
@@ -36,9 +35,9 @@ func NewJSONFileWriter(file string) (*JSONFileWriter, error) {
 }
 
 // Write writes event response to file in json format
-func (l *JSONFileWriter) Write(e *client.EventsResponse) error {
-	// do not log if there is no events
-	if len(e.Events) == 0 {
+func (l *JSONFileWriter) Write(e *client.AlertsResponse) error {
+	// do not log if there is no alerts
+	if len(e.Alerts) == 0 {
 		return nil
 	}
 
@@ -46,8 +45,6 @@ func (l *JSONFileWriter) Write(e *client.EventsResponse) error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("un", string(b))
 
 	if _, err = l.f.Write(b); err != nil {
 		return err

@@ -91,7 +91,7 @@ func sprintBPFFilter(cfg *Config) (string, error) {
 			}
 		}
 
-		if cfg.Port < 0 || cfg.Port > 65355 {
+		if cfg.Port <= 0 || cfg.Port > 65355 {
 			return "", fmt.Errorf("invalid %d port number", cfg.Port)
 		}
 

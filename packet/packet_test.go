@@ -1,10 +1,12 @@
 package packet
 
 import (
+	"net"
 	"testing"
 
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
+	"github.com/stretchr/testify/require"
 )
 
 // testPacketPacket0 is the packet:
@@ -26,42 +28,31 @@ var testPacketDNSQuery = []byte{
 
 const testPacketDNSQueryLenght = 87
 
-func TestNewPacket(t *testing.T) {
+func TestNewDNSPacket(t *testing.T) {
 	rawPacket := gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default)
-	checkDNSPacket(t, rawPacket)
+	packet := NewDNSPacket(rawPacket)
+	require.NotNil(t, packet)
+	require.Equal(t, "api.alphasoc.net", packet.FQDN, "invalid fqdn")
+	require.Equal(t, "A", packet.RecordType, "invalid record type")
+	require.True(t, net.IPv4(10, 0, 2, 15).Equal(packet.SrcIP), "invalid soruce ip")
 }
 
 func TestDNSPacketEqual(t *testing.T) {
 	packet := NewDNSPacket(gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default))
-	if packet.Equal(nil) {
-		t.Fatalf("equal with nil must return false")
-	}
-
-	if !packet.Equal(packet) {
-		t.Fatalf("packet not equal to itself")
-	}
+	require.False(t, packet.Equal(nil), "equal with nil must return false")
+	require.True(t, packet.Equal(packet), "not equal with itself")
 }
 
-func TestToRequestQuery(t *testing.T) {
-	packet := NewDNSPacket(gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default))
-	if s := packet.ToRequestQuery(); s[1] != "10.0.2.15" || s[2] != "A" || s[3] != "api.alphasoc.net" {
-		t.Fatalf("invalid request query %v", s)
-	}
-}
+func TestNewIPPacket(t *testing.T) {
+	rawPacket := gopacket.NewPacket(testPacketDNSQuery, layers.LinkTypeEthernet, gopacket.Default)
+	packet := NewIPPacket(rawPacket)
+	require.NotNil(t, packet)
 
-func checkDNSPacket(t *testing.T, rawPacket gopacket.Packet) {
-	packet := NewDNSPacket(rawPacket)
-	if packet == nil {
-		t.Fatal("got nic packet")
-	}
-
-	if packet.FQDN != "api.alphasoc.net" {
-		t.Fatalf("invalid fqdn - got %s; exptected %s", packet.FQDN, "api.alphasoc.net")
-	}
-	if packet.RecordType != "A" {
-		t.Fatalf("invalid recort type - got %s; exptected %s", packet.RecordType, "A")
-	}
-	if packet.SrcIP.String() != "10.0.2.15" {
-		t.Fatalf("invalid source ip - got %s; exptected %s", packet.SrcIP, "10.0.2.15")
-	}
+	packet.DetermineDirection(net.HardwareAddr{0x8, 0x0, 0x27, 0xb1, 0x89, 0x1d})
+	require.Equal(t, "udp", packet.Protocol)
+	require.True(t, packet.SrcIP.Equal(net.IPv4(10, 0, 2, 15)))
+	require.Equal(t, 13705, packet.SrcPort)
+	require.True(t, packet.DstIP.Equal(net.IPv4(8, 8, 8, 8)))
+	require.Equal(t, 53, packet.DstPort)
+	require.Equal(t, DirectionOut, packet.Direction)
 }

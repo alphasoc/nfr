@@ -7,7 +7,7 @@ type IPPacketBuffer struct {
 
 // NewIPPacketBuffer initializes a new IPPacketBuffer.
 func NewIPPacketBuffer() *IPPacketBuffer {
-	return &IPPacketBuffer{}
+	return &IPPacketBuffer{packets: make([]*IPPacket, 0, 1024)}
 }
 
 // Writes single ip packet to the buffer.

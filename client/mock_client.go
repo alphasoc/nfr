@@ -18,19 +18,19 @@ func (c *MockAlphaSOCClient) AccountStatus() (*AccountStatusResponse, error) {
 	return &AccountStatusResponse{}, nil
 }
 
-// Events mock.
-func (c *MockAlphaSOCClient) Events(follow string) (*EventsResponse, error) {
-	return &EventsResponse{}, nil
+// Alerts mock.
+func (c *MockAlphaSOCClient) Alerts(follow string) (*AlertsResponse, error) {
+	return &AlertsResponse{}, nil
 }
 
-// Queries mock.
-func (c *MockAlphaSOCClient) Queries(req *QueriesRequest) (*QueriesResponse, error) {
-	return &QueriesResponse{}, nil
+// EventsDNS mock.
+func (c *MockAlphaSOCClient) EventsDNS(req *EventsDNSRequest) (*EventsDNSResponse, error) {
+	return &EventsDNSResponse{}, nil
 }
 
-// Ips mock.
-func (c *MockAlphaSOCClient) Ips(req *IPRequest) (*IPResponse, error) {
-	return &IPResponse{}, nil
+// EventsIP mock.
+func (c *MockAlphaSOCClient) EventsIP(req *EventsIPRequest) (*EventsIPResponse, error) {
+	return &EventsIPResponse{}, nil
 }
 
 // KeyRequest mock.

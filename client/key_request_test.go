@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeyRequest(t *testing.T) {
@@ -14,19 +16,16 @@ func TestKeyRequest(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := New(ts.URL, "").KeyRequest(); err != nil {
-		t.Fatal(err)
-	}
+	_, err := New(ts.URL, "").KeyRequest()
+	require.NoError(t, err)
 }
 
 func TestKeyRequestFail(t *testing.T) {
-	if _, err := New(internalServerErrorServer.URL, "").KeyRequest(); err == nil {
-		t.Fatal("expected error")
-	}
+	_, err := New(internalServerErrorServer.URL, "").KeyRequest()
+	require.Error(t, err)
 }
 
 func TestKeyRequestInvalidJSON(t *testing.T) {
-	if _, err := New(noopServer.URL, "").KeyRequest(); err == nil {
-		t.Fatal("expected error")
-	}
+	_, err := New(noopServer.URL, "").KeyRequest()
+	require.Error(t, err)
 }

@@ -41,6 +41,13 @@ func TestNetwork(t *testing.T) {
 			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 0, 1, 0), net.IPv4(10, 1, 1, 0)},
 			[]bool{true, true, true, true, true, false, true, false},
 		},
+		{
+			"max mask size networks",
+			[]string{"10.0.0.0/32", "10.0.0.1/32"},
+			[]string{"10.0.0.1/32", "::1/128"},
+			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 1)},
+			[]bool{true, false, true, true},
+		},
 	}
 
 	for _, tt := range networksTests {

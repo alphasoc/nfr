@@ -242,6 +242,12 @@ func (p *Parser) Close() error {
 
 // reads metadata from bro file.
 func (p *Parser) readMetadata(line string) error {
+	// sometimes metadata needs to be reload
+	// if line starts with set_separator then clear metadata separator
+	if strings.HasPrefix(line, "#separator") {
+		p.metadata.separator = " "
+	}
+
 	// skip first # and extract values
 	metadata := strings.SplitN(line[1:], p.metadata.separator, 2)
 	if len(metadata) < 2 {

@@ -123,13 +123,13 @@ type Config struct {
 		} `yaml:"groups,omitempty"`
 	} `yaml:"-"`
 
-	// AlphaSOC events configuration.
-	Events struct {
-		// File where to store events. If not set then none events will be retrieved.
-		// To print events to console use two special outputs: stderr or stdout
+	// AlphaSOC alerts configuration.
+	Alerts struct {
+		// File where to store alerts. If not set then none alerts will be retrieved.
+		// To print alerts to console use two special outputs: stderr or stdout
 		// Default: "stderr"
 		File string `yaml:"file,omitempty"`
-		// Interval for polling events from AlphaSOC api. Default: 5m
+		// Interval for polling alerts from AlphaSOC api. Default: 5m
 		PollInterval time.Duration `yaml:"poll_interval,omitempty"`
 	} `yaml:"events,omitempty"`
 
@@ -241,10 +241,10 @@ func newDefaultConfig() *Config {
 	cfg.Alphasoc.Analyze.IP = true
 	cfg.Network.DNS.Protocols = []string{"udp"}
 	cfg.Network.DNS.Port = 53
-	cfg.Events.File = "stderr"
+	cfg.Alerts.File = "stderr"
+	cfg.Alerts.PollInterval = 5 * time.Minute
 	cfg.Log.File = "stdout"
 	cfg.Log.Level = "info"
-	cfg.Events.PollInterval = 5 * time.Minute
 	cfg.DNSQueries.BufferSize = 65535
 	cfg.DNSQueries.FlushInterval = 30 * time.Second
 	cfg.IPEvents.BufferSize = 65535
@@ -275,7 +275,7 @@ func (cfg *Config) validate() error {
 		}
 	}
 
-	if cfg.Network.DNS.Port < 0 || cfg.Network.DNS.Port > 65535 {
+	if cfg.Network.DNS.Port <= 0 || cfg.Network.DNS.Port > 65535 {
 		return fmt.Errorf("config: invalid %d port number", cfg.Network.DNS.Port)
 	}
 
@@ -293,13 +293,13 @@ func (cfg *Config) validate() error {
 		return err
 	}
 
-	if cfg.Events.File != "" {
-		if err := validateFilename(cfg.Events.File, true); err != nil {
+	if cfg.Alerts.File != "" {
+		if err := validateFilename(cfg.Alerts.File, true); err != nil {
 			return fmt.Errorf("config: %s", err)
 		}
 	}
 
-	if cfg.Events.PollInterval < 5*time.Second {
+	if cfg.Alerts.PollInterval < 5*time.Second {
 		return fmt.Errorf("config: events poll interval must be at least 5s")
 	}
 

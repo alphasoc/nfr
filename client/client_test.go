@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 // noop server and handler for testing
@@ -22,14 +24,8 @@ var (
 )
 
 func checkMethodAndPath(t *testing.T, r *http.Request, method string, path string) {
-	if r.Method != method {
-		t.Fatalf("method %s not found", method)
-		return
-	}
-	if r.URL.Path != "/"+DefaultVersion+path {
-		t.Fatalf("invalid url path %s != %s", r.URL.Path, "/"+DefaultVersion+path)
-		return
-	}
+	require.Equal(t, method, r.Method, "method not found")
+	require.Equal(t, "/"+DefaultVersion+path, r.URL.Path, "invalid url path")
 }
 
 func TestMain(m *testing.M) {
@@ -48,16 +44,13 @@ func TestCheckKey(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := New(ts.URL, "test-key").CheckKey(); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, New(ts.URL, "test-key").CheckKey())
 }
 
 func TestSetKey(t *testing.T) {
 	c := New("", "")
-	if c.SetKey("test-api-key"); c.key != "test-api-key" {
-		t.Fatalf("invalid key")
-	}
+	c.SetKey("test-api-key")
+	require.Equal(t, "test-api-key", c.key)
 }
 
 func TestBasicAuth(t *testing.T) {
@@ -68,22 +61,18 @@ func TestBasicAuth(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := New(ts.URL, "test-key").post(context.Background(), "/", nil, nil, false); err != nil {
-		t.Fatal(err)
-	}
+	_, err := New(ts.URL, "test-key").post(context.Background(), "/", nil, nil)
+	require.NoError(t, err)
 }
 
 func TestUserAgent(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.UserAgent() != defaultUserAgent {
-			t.Fatalf("invalid user agent")
-		}
+		require.Equal(t, defaultUserAgent, r.UserAgent(), "invalid user agent")
 	}))
 	defer ts.Close()
 
-	if _, err := New(ts.URL, "test-key").get(context.Background(), "/", nil); err != nil {
-		t.Fatal(err)
-	}
+	_, err := New(ts.URL, "test-key").get(context.Background(), "/", nil)
+	require.NoError(t, err)
 }
 
 func TestResponseStatusNotOk(t *testing.T) {
@@ -92,9 +81,8 @@ func TestResponseStatusNotOk(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := New(ts.URL, "").get(context.Background(), "/", nil); err == nil {
-		t.Fatal("exptected error")
-	}
+	_, err := New(ts.URL, "").get(context.Background(), "/", nil)
+	require.Error(t, err)
 }
 
 func TestResponseErrorMessage(t *testing.T) {
@@ -104,9 +92,9 @@ func TestResponseErrorMessage(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if _, err := New(ts.URL, "").get(context.Background(), "/", nil); err == nil || err.Error() != "test-error" {
-		t.Fatal("exptected error")
-	}
+	_, err := New(ts.URL, "").get(context.Background(), "/", nil)
+	require.Error(t, err)
+	require.Equal(t, err.Error(), "test-error")
 }
 
 func TestDoInvalidMethod(t *testing.T) {
@@ -116,13 +104,11 @@ func TestDoInvalidMethod(t *testing.T) {
 }
 
 func TestPostMarshalError(t *testing.T) {
-	if _, err := New(noopServer.URL, "").post(context.Background(), "/", nil, func() {}, false); err == nil {
-		t.Fatal("exptected json marshal error")
-	}
+	_, err := New(noopServer.URL, "").post(context.Background(), "/", nil, func() {})
+	require.Error(t, err, "exptected json marshal error")
 }
 
 func TestDoInvalidRequest(t *testing.T) {
-	if _, err := New("", "").do(context.Background(), "noop", "/", nil, nil, nil); err == nil {
-		t.Fatal("exptected invalid method error")
-	}
+	_, err := New("", "").do(context.Background(), "noop", "/", nil, nil, nil)
+	require.Error(t, err, "exptected invalid method error")
 }

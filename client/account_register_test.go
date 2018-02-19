@@ -1,10 +1,11 @@
 package client
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccountRegister(t *testing.T) {
@@ -17,24 +18,17 @@ func TestAccountRegister(t *testing.T) {
 	accountRegisterRequest.Details.Name = "test-name"
 	accountRegisterRequest.Details.Email = "test-email@alphasoc.com"
 
-	if err := New(ts.URL, "test-key").AccountRegister(accountRegisterRequest); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, New(ts.URL, "test-key").AccountRegister(accountRegisterRequest))
 }
 
 func TestAccountRegisterFail(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		checkMethodAndPath(t, r, http.MethodPost, "/account/register")
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(&ErrorResponse{"invalid email"})
-	}))
-	defer ts.Close()
-
 	var accountRegisterRequest = &AccountRegisterRequest{}
-	accountRegisterRequest.Details.Name = "test-name"
-	accountRegisterRequest.Details.Email = "test-email@alphasoc.com"
 
-	if err := New(ts.URL, "test-key").AccountRegister(accountRegisterRequest); err == nil {
-		t.Fatal("expected error")
-	}
+	require.Error(t, New(noopServer.URL, "test-key").AccountRegister(accountRegisterRequest))
+
+	accountRegisterRequest.Details.Name = "test-name"
+	require.Error(t, New(noopServer.URL, "test-key").AccountRegister(accountRegisterRequest))
+
+	accountRegisterRequest.Details.Email = "test-emailalphasoc.com"
+	require.Error(t, New(noopServer.URL, "test-key").AccountRegister(accountRegisterRequest))
 }

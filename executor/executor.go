@@ -11,9 +11,9 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/alphasoc/nfr/alerts"
 	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/config"
-	"github.com/alphasoc/nfr/events"
 	"github.com/alphasoc/nfr/groups"
 	"github.com/alphasoc/nfr/logs"
 	"github.com/alphasoc/nfr/logs/bro"
@@ -27,13 +27,13 @@ import (
 
 // Executor executes main nfr loop.
 // It's respnsible for start the sniffer, send dns queries to the server
-// and poll events from the server.
+// and poll alerts from the server.
 type Executor struct {
 	c   client.Client
 	cfg *config.Config
 
-	eventsPoller *events.Poller
-	eventsWriter events.Writer
+	alertsPoller *alerts.Poller
+	alertsWriter alerts.Writer
 
 	groups *groups.Groups
 
@@ -57,27 +57,28 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		return nil, err
 	}
 
-	eventsWriter, err := events.NewJSONFileWriter(cfg.Events.File)
+	alertsWriter, err := alerts.NewJSONFileWriter(cfg.Alerts.File)
 	if err != nil {
 		return nil, err
 	}
 
-	eventsPoller := events.NewPoller(c, eventsWriter)
-	if err = eventsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
+	alertsPoller := alerts.NewPoller(c, alertsWriter)
+	if err = alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
 		return nil, err
 	}
 
 	return &Executor{
 		c:            c,
 		cfg:          cfg,
-		eventsWriter: eventsWriter,
-		eventsPoller: eventsPoller,
+		alertsWriter: alertsWriter,
+		alertsPoller: alertsPoller,
 		groups:       groups,
 		dnsbuf:       packet.NewDNSPacketBuffer(),
+		ipbuf:        packet.NewIPPacketBuffer(),
 	}, nil
 }
 
-// Start starts sniffer in online mode, where network events are sent to api.
+// Start starts sniffer in online mode, where network alerts are sent to api.
 func (e *Executor) Start() (err error) {
 	log.Infof("creating sniffer for %s interface", e.cfg.Network.Interface)
 	e.sniffer, err = sniffer.NewLivePcapSniffer(e.cfg.Network.Interface, &sniffer.Config{
@@ -97,7 +98,7 @@ func (e *Executor) Start() (err error) {
 	}
 	if e.cfg.IPEvents.Failed.File != "" {
 		if e.ipWriter, err = packet.NewWriter(e.cfg.IPEvents.Failed.File); err != nil {
-			return fmt.Errorf("can't open file %s fro writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
+			return fmt.Errorf("can't open file %s fro writing ip alerts: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
 		}
 	}
 
@@ -133,6 +134,10 @@ func (e *Executor) Send(file string, fileFomrat string, fileType string) (err er
 
 // Monitor monitors log files and send data to engine.
 func (e *Executor) Monitor() error {
+	if len(e.cfg.Monitors) == 0 {
+		log.Fatalf("no files specify for monitoring")
+	}
+
 	e.init()
 	for _, monitor := range e.cfg.Monitors {
 		t, err := tail.TailFile(monitor.File, tail.Config{
@@ -158,9 +163,15 @@ func (e *Executor) Monitor() error {
 				case "ip":
 					ippacket, err := parser.ParseLineIP(line.Text)
 					if err != nil {
-						log.Error(err)
+						log.Errorf("file %s: %s", monitor.File, err)
 						continue
 					}
+
+					// some formats have metadata and it returns no error and no packet either
+					if ippacket == nil {
+						continue
+					}
+
 					if !e.shouldSendIPPacket(ippacket) {
 						continue
 					}
@@ -168,9 +179,15 @@ func (e *Executor) Monitor() error {
 				case "dns":
 					dnspacket, err := parser.ParseLineDNS(line.Text)
 					if err != nil {
-						log.Error(err)
+						log.Errorf("file %s: %s", monitor.File, err)
 						continue
 					}
+
+					// some formats have metadata and it returns no error and no packet either
+					if dnspacket == nil {
+						continue
+					}
+
 					if !e.shouldSendDNSPacket(dnspacket) {
 						continue
 					}
@@ -179,6 +196,9 @@ func (e *Executor) Monitor() error {
 			}
 		}(monitor)
 	}
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
 	return nil
 }
 
@@ -270,7 +290,7 @@ func (e *Executor) sendDNSPackets() error {
 	}
 
 	log.Infof("sending %d dns queries to analyze", len(packets))
-	resp, err := e.c.Queries(dnsPacketsToRequest(packets))
+	resp, err := e.c.EventsDNS(dnsPacketsToRequest(packets))
 	if err != nil {
 		log.Errorln(err)
 
@@ -301,8 +321,11 @@ func (e *Executor) sendIPPackets() error {
 		return nil
 	}
 
-	log.Infof("sending %d ip events to analyze", len(packets))
-	resp, err := e.c.Ips(ipPacketsToRequest(packets))
+	log.Infof("sending %d ip alerts to analyze", len(packets))
+	for i := range packets {
+		log.Infof("packet has byte count %d", packets[i].BytesCount)
+	}
+	resp, err := e.c.EventsIP(ipPacketsToRequest(packets))
 	if err != nil {
 		log.Errorln(err)
 
@@ -314,9 +337,9 @@ func (e *Executor) sendIPPackets() error {
 	}
 
 	if resp.Received == resp.Accepted {
-		log.Infof("%d ip events were successfully send", resp.Accepted)
+		log.Infof("%d ip alerts were successfully send", resp.Accepted)
 	} else {
-		log.Infof("%d of %d ip events were send - rejected reason %v",
+		log.Infof("%d of %d ip alerts were send - rejected reason %v",
 			resp.Accepted, resp.Received, resp.Rejected)
 	}
 	return nil
@@ -400,13 +423,13 @@ func (e *Executor) shouldSendDNSPacket(p *packet.DNSPacket) bool {
 	return t
 }
 
-// startEventPoller periodcly checks for new events.
+// startEventPoller periodcly checks for new alerts.
 func (e *Executor) startEventPoller() {
 	// event poller will return error on api call or writing to disk.
 	// In both cases log the error and try again in a moment.
 	go func() {
 		for {
-			if err := e.eventsPoller.Do(e.cfg.Events.PollInterval); err != nil {
+			if err := e.alertsPoller.Do(e.cfg.Alerts.PollInterval); err != nil {
 				log.Errorln(err)
 			}
 		}
@@ -414,7 +437,7 @@ func (e *Executor) startEventPoller() {
 }
 
 // installSignalHandler install os.Interrupt handler
-// for writing network events into file if there some in the buffer.
+// for writing network alerts into file if there some in the buffer.
 // If the dns writer is not configured, signal handler
 // is not installed.
 func (e *Executor) installSignalHandler() {
@@ -478,18 +501,9 @@ func createGroups(cfg *config.Config) (*groups.Groups, error) {
 	return gs, nil
 }
 
-// dnsPacketsToRequest changes dns packets to client queries request.
-func dnsPacketsToRequest(packets []*packet.DNSPacket) *client.QueriesRequest {
-	req := client.NewQueriesRequest()
-	for i := range packets {
-		req.AddQuery(packets[i].ToRequestQuery())
-	}
-	return req
-}
-
 // ipPacketsToRequest changes ip packets to client ip request.
-func ipPacketsToRequest(packets []*packet.IPPacket) *client.IPRequest {
-	var req client.IPRequest
+func ipPacketsToRequest(packets []*packet.IPPacket) *client.EventsIPRequest {
+	var req client.EventsIPRequest
 	for _, ippacket := range packets {
 		entry := &client.IPEntry{
 			Timestamp: ippacket.Timestamp,
@@ -508,6 +522,20 @@ func ipPacketsToRequest(packets []*packet.IPPacket) *client.IPRequest {
 			continue
 		}
 		req.Entries = append(req.Entries, entry)
+	}
+	return &req
+}
+
+// dnsPacketsToRequest changes dns packets to client dns request.
+func dnsPacketsToRequest(packets []*packet.DNSPacket) *client.EventsDNSRequest {
+	var req client.EventsDNSRequest
+	for _, dnspacket := range packets {
+		req.Entries = append(req.Entries, &client.DNSEntry{
+			Timestamp: dnspacket.Timestamp,
+			SrcIP:     dnspacket.SrcIP,
+			Query:     dnspacket.FQDN,
+			QType:     dnspacket.RecordType,
+		})
 	}
 	return &req
 }

@@ -9,6 +9,13 @@
 			"revisionTime": "2017-05-12T10:11:14Z"
 		},
 		{
+			"checksumSHA1": "OFu4xJEIjiI8Suu+j/gabfp+y6Q=",
+			"origin": "github.com/stretchr/testify/vendor/github.com/davecgh/go-spew/spew",
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
 			"checksumSHA1": "5HgC7V5oFyE4xPKkx44bgqpo7ps=",
 			"path": "github.com/google/gopacket",
 			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
@@ -69,6 +76,13 @@
 			"revisionTime": "2014-10-17T20:07:13Z"
 		},
 		{
+			"checksumSHA1": "zKKp5SZ3d3ycKe4EKMNT0BqAWBw=",
+			"origin": "github.com/stretchr/testify/vendor/github.com/pmezard/go-difflib/difflib",
+			"path": "github.com/pmezard/go-difflib/difflib",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
 			"checksumSHA1": "lU+gVOtSFnBKx11uhPL8b9v0uTE=",
 			"path": "github.com/spf13/cobra",
 			"revision": "7be4beda01ec05d0b93d80b3facd2b6f44080d94",
@@ -79,6 +93,18 @@
 			"path": "github.com/spf13/pflag",
 			"revision": "d16db1e50e33dff1b6cdf37596cef36742128670",
 			"revisionTime": "2017-03-27T14:13:44Z"
+		},
+		{
+			"checksumSHA1": "mGbTYZ8dHVTiPTTJu3ktp+84pPI=",
+			"path": "github.com/stretchr/testify/assert",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
+		},
+		{
+			"checksumSHA1": "7vs6dSc1PPGBKyzb/SCIyeMJPLQ=",
+			"path": "github.com/stretchr/testify/require",
+			"revision": "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f",
+			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
 			"checksumSHA1": "Y+HGqEkYM15ir+J93MEaHdyFy0c=",

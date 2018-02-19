@@ -20,9 +20,9 @@ import (
 type Client interface {
 	AccountRegister(*AccountRegisterRequest) error
 	AccountStatus() (*AccountStatusResponse, error)
-	Events(string) (*EventsResponse, error)
-	Queries(*QueriesRequest) (*QueriesResponse, error)
-	Ips(*IPRequest) (*IPResponse, error)
+	Alerts(string) (*AlertsResponse, error)
+	EventsDNS(*EventsDNSRequest) (*EventsDNSResponse, error)
+	EventsIP(*EventsIPRequest) (*EventsIPResponse, error)
 	KeyRequest() (*KeyRequestResponse, error)
 	KeyReset(*KeyResetRequest) error
 }
@@ -88,15 +88,16 @@ func (c *AlphaSOCClient) get(ctx context.Context, path string, query url.Values)
 	return c.do(ctx, http.MethodGet, path, query, nil, nil)
 }
 
-func (c *AlphaSOCClient) post(ctx context.Context, path string, query url.Values, obj interface{}, objEncoded bool) (*http.Response, error) {
+func (c *AlphaSOCClient) post(ctx context.Context, path string, query url.Values, obj interface{}) (*http.Response, error) {
 	var buffer bytes.Buffer
 	headers := http.Header{
 		"Content-Type": []string{"application/json"},
 	}
 
-	if objEncoded {
+	switch obj.(type) {
+	case []byte:
 		buffer.Write(obj.([]byte))
-	} else if obj != nil {
+	default:
 		if err := json.NewEncoder(&buffer).Encode(obj); err != nil {
 			return nil, err
 		}

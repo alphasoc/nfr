@@ -59,9 +59,10 @@ func NewIPPacket(raw gopacket.Packet) *IPPacket {
 	}
 
 	var ippacket = &IPPacket{
-		raw:       raw,
-		srcMAC:    ethernet.SrcMAC,
-		Timestamp: metadata.Timestamp,
+		raw:        raw,
+		srcMAC:     ethernet.SrcMAC,
+		Timestamp:  metadata.Timestamp,
+		BytesCount: len(raw.Data()),
 	}
 	if lipv4, ok := networkLayer.(gopacket.Layer).(*layers.IPv4); ok {
 		ippacket.SrcIP = lipv4.SrcIP
@@ -109,6 +110,7 @@ type DNSPacket struct {
 
 	Timestamp  time.Time
 	Protocol   string
+	SrcPort    int
 	DstPort    int
 	SrcIP      net.IP
 	FQDN       string
@@ -120,10 +122,11 @@ func NewDNSPacket(raw gopacket.Packet) *DNSPacket {
 	var (
 		metadata         = raw.Metadata()
 		networkLayer     = raw.NetworkLayer()
+		transportLayer   = raw.TransportLayer()
 		applicationLayer = raw.ApplicationLayer()
 	)
 
-	if metadata == nil || networkLayer == nil || applicationLayer == nil {
+	if metadata == nil || networkLayer == nil || transportLayer == nil || applicationLayer == nil {
 		return nil
 	}
 
@@ -147,6 +150,18 @@ func NewDNSPacket(raw gopacket.Packet) *DNSPacket {
 		return nil
 	}
 
+	if tcp, ok := transportLayer.(gopacket.Layer).(*layers.TCP); ok {
+		dnspacket.SrcPort = int(tcp.SrcPort)
+		dnspacket.DstPort = int(tcp.DstPort)
+		dnspacket.Protocol = "tcp"
+	} else if udp, ok := transportLayer.(gopacket.Layer).(*layers.UDP); ok {
+		dnspacket.SrcPort = int(udp.SrcPort)
+		dnspacket.DstPort = int(udp.DstPort)
+		dnspacket.Protocol = "udp"
+	} else {
+		return nil
+	}
+
 	return dnspacket
 }
 
@@ -162,16 +177,6 @@ func (p *DNSPacket) Equal(p1 *DNSPacket) bool {
 	return p.SrcIP.Equal(p1.SrcIP) &&
 		p.RecordType == p1.RecordType &&
 		p.FQDN == p1.FQDN
-}
-
-// ToRequestQuery converts packet into valid api request data.
-func (p *DNSPacket) ToRequestQuery() [4]string {
-	return [4]string{
-		p.Timestamp.Format(time.RFC3339),
-		p.SrcIP.String(),
-		p.RecordType,
-		p.FQDN,
-	}
 }
 
 // Raw returns raw packet.

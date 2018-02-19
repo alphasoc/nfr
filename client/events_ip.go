@@ -20,20 +20,20 @@ type IPEntry struct {
 	BytesOut  int       `json:"bytesOut"`
 }
 
-// IPRequest contains slice of ip events for sending.
-type IPRequest struct {
+// EventsIPRequest contains slice of ip events.
+type EventsIPRequest struct {
 	Entries []*IPEntry
 }
 
-// IPResponse for logs/ip call.
-type IPResponse struct {
+// EventsIPResponse for logs/ip call.
+type EventsIPResponse struct {
 	Received int            `json:"received"`
 	Accepted int            `json:"accepted"`
 	Rejected map[string]int `json:"rejected"`
 }
 
-// Ips sends ip logs to AlphaSOC api for analize.
-func (c *AlphaSOCClient) Ips(req *IPRequest) (*IPResponse, error) {
+// EventsIP sends ip events to AlphaSOC engine for analize.
+func (c *AlphaSOCClient) EventsIP(req *EventsIPRequest) (*EventsIPResponse, error) {
 	if c.key == "" {
 		return nil, ErrNoAPIKey
 	}
@@ -53,13 +53,13 @@ func (c *AlphaSOCClient) Ips(req *IPRequest) (*IPResponse, error) {
 		}
 	}
 
-	resp, err := c.post(context.Background(), "logs/ip", nil, buffer.Bytes(), true)
+	resp, err := c.post(context.Background(), "events/ip", nil, buffer.Bytes())
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var r IPResponse
+	var r EventsIPResponse
 	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
 		return nil, err
 	}

@@ -1,5 +1,5 @@
-// Package events polls and writes events from AlphaSOC api.
-package events
+// Package alerts polls and writes alerts from AlphaSOC api.
+package alerts
 
 import (
 	"io/ioutil"
@@ -9,7 +9,7 @@ import (
 	"github.com/alphasoc/nfr/client"
 )
 
-// Poller polls events from AlphaSOC api and user logger
+// Poller polls alerts from AlphaSOC api and user logger
 // to store it into writer
 type Poller struct {
 	c          client.Client
@@ -28,8 +28,8 @@ func NewPoller(c client.Client, l Writer) *Poller {
 }
 
 // SetFollowDataFile sets file for storing follow id.
-// If not used then poller will be retriving all events from the beging.
-// If set then only new events are polled.
+// If not used then poller will be retriving all alerts from the beging.
+// If set then only new alerts are polled.
 func (p *Poller) SetFollowDataFile(file string) error {
 	p.followFile = file
 
@@ -42,34 +42,34 @@ func (p *Poller) SetFollowDataFile(file string) error {
 	return nil
 }
 
-// Do polls events within a period specified by the interval argument.
-// The events are writtne to writer used to create new poller.
+// Do polls alerts within a period specified by the interval argument.
+// The alerts are writtne to writer used to create new poller.
 // If the error occurrs Do method should be call again.
 func (p *Poller) Do(interval time.Duration) error {
 	return p.do(interval, 0)
 }
 
-// do pools maxiumum "count" events. If count <=0 then it pulls forever.
+// do pools maxiumum "count" alerts. If count <=0 then it pulls forever.
 func (p *Poller) do(interval time.Duration, count int) error {
 	p.ticker = time.NewTicker(interval)
 	defer p.stop()
 
 	var c = 0
 	for range p.ticker.C {
-		events, err := p.c.Events(p.follow)
+		alerts, err := p.c.Alerts(p.follow)
 		if err != nil {
 			return err
 		}
 
-		if err := p.l.Write(events); err != nil {
+		if err := p.l.Write(alerts); err != nil {
 			return err
 		}
 
-		if p.follow == events.Follow {
+		if p.follow == alerts.Follow {
 			continue
 		}
 
-		p.follow = events.Follow
+		p.follow = alerts.Follow
 		if p.followFile != "" {
 			if err := ioutil.WriteFile(p.followFile, []byte(p.follow), 0644); err != nil {
 				return err

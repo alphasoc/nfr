@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestKeyReset(t *testing.T) {
@@ -12,13 +14,9 @@ func TestKeyReset(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	if err := New(ts.URL, "").KeyReset(&KeyResetRequest{}); err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, New(ts.URL, "").KeyReset(&KeyResetRequest{}))
 }
 
 func TestResetFail(t *testing.T) {
-	if err := New(internalServerErrorServer.URL, "").KeyReset(nil); err == nil {
-		t.Fatal("expected error")
-	}
+	require.Error(t, New(internalServerErrorServer.URL, "").KeyReset(nil))
 }

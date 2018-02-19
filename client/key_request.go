@@ -24,7 +24,7 @@ type KeyRequestRequest struct {
 func (c *AlphaSOCClient) KeyRequest() (*KeyRequestResponse, error) {
 	var req KeyRequestRequest
 	req.Platform.Name = fmt.Sprintf("nfr-%s-%s", runtime.GOOS, runtime.GOARCH)
-	resp, err := c.post(context.Background(), "key/request", nil, &req, false)
+	resp, err := c.post(context.Background(), "key/request", nil, &req)
 	if err != nil {
 		return nil, err
 	}

@@ -3,6 +3,7 @@ package packet
 import (
 	"bytes"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcapgo"
+	"github.com/stretchr/testify/require"
 )
 
 func TestWriteHeader(t *testing.T) {
@@ -88,7 +90,12 @@ func TestWrite(t *testing.T) {
 	}
 
 	rawPacket2 := gopacket.NewPacket(data, layers.LinkTypeEthernet, gopacket.Default)
-	checkDNSPacket(t, rawPacket2)
+	packet := NewDNSPacket(rawPacket2)
+
+	require.NotNil(t, packet)
+	require.Equal(t, "api.alphasoc.net", packet.FQDN, "invalid fqdn")
+	require.Equal(t, "A", packet.RecordType, "invalid record type")
+	require.True(t, net.IPv4(10, 0, 2, 15).Equal(packet.SrcIP), "invalid soruce ip")
 }
 
 func newPcapReader(t *testing.T, name string) (func() error, *pcapgo.Reader) {

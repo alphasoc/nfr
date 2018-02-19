@@ -24,17 +24,17 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Network.DNS.Port != 53 {
 		t.Fatalf("invalid network port - got %d; expected %d", cfg.Network.DNS.Port, 53)
 	}
-	if cfg.Events.File != "stderr" {
-		t.Fatalf("invalid events file - got %s; expected %s", cfg.Events.File, "stderr")
+	if cfg.Alerts.File != "stderr" {
+		t.Fatalf("invalid events file - got %s; expected %s", cfg.Alerts.File, "stderr")
+	}
+	if cfg.Alerts.PollInterval != 5*time.Minute {
+		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Alerts.PollInterval, 5*time.Minute)
 	}
 	if cfg.Log.File != "stdout" {
 		t.Fatalf("invalid log file - got %s; expected %s", cfg.Log.File, "stdout")
 	}
 	if cfg.Log.Level != "info" {
 		t.Fatalf("invalid log level - got %s; expected %s", cfg.Log.Level, "info")
-	}
-	if cfg.Events.PollInterval != 5*time.Minute {
-		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Events.PollInterval, 5*time.Minute)
 	}
 	if cfg.DNSQueries.BufferSize != 65535 {
 		t.Fatalf("invalid dns queries buffer size - got %d; expected %d", cfg.DNSQueries.BufferSize, 65535)
