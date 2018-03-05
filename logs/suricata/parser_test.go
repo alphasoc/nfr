@@ -29,7 +29,7 @@ func TestReaderReadDNS(t *testing.T) {
 
 	r, err := NewFileParser(filename)
 	if err != nil {
-		t.Fatalf("create sucricata reader failed - %s", err)
+		t.Fatalf("create suricata reader failed - %s", err)
 	}
 	defer r.Close()
 
