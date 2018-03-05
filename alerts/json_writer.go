@@ -7,11 +7,6 @@ import (
 	"github.com/alphasoc/nfr/client"
 )
 
-// Writer interface for log api alerts response.
-type Writer interface {
-	Write(*client.AlertsResponse) error
-}
-
 // JSONFileWriter implements Writer interface and write
 // api alerts in JSON format.
 type JSONFileWriter struct {
@@ -34,7 +29,7 @@ func NewJSONFileWriter(file string) (*JSONFileWriter, error) {
 	}
 }
 
-// Write writes event response to file in json format
+// Write writes alerts response to file in json format
 func (l *JSONFileWriter) Write(e *client.AlertsResponse) error {
 	// do not log if there is no alerts
 	if len(e.Alerts) == 0 {

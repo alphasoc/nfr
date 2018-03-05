@@ -34,7 +34,6 @@ type Executor struct {
 	cfg *config.Config
 
 	alertsPoller *alerts.Poller
-	alertsWriter alerts.Writer
 
 	groups *groups.Groups
 
@@ -58,12 +57,29 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		return nil, err
 	}
 
-	alertsWriter, err := alerts.NewJSONFileWriter(cfg.Alerts.File)
-	if err != nil {
-		return nil, err
+	var jsonWriter, graylogWriter alerts.Writer
+
+	if cfg.Alerts.File != "" {
+		jsonWriter, err = alerts.NewJSONFileWriter(cfg.Alerts.File)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	alertsPoller := alerts.NewPoller(c, alertsWriter)
+	if cfg.Alerts.Graylog.URI != "" {
+		graylogWriter, err = alerts.NewGraylogWriter(cfg.Alerts.Graylog.URI, cfg.Alerts.Graylog.Level)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	alertsPoller := alerts.NewPoller(c)
+	if jsonWriter != nil {
+		alertsPoller.AddWriter(jsonWriter)
+	}
+	if graylogWriter != nil {
+		alertsPoller.AddWriter(graylogWriter)
+	}
 	if err = alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
 		return nil, err
 	}
@@ -71,7 +87,6 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 	return &Executor{
 		c:            c,
 		cfg:          cfg,
-		alertsWriter: alertsWriter,
 		alertsPoller: alertsPoller,
 		groups:       groups,
 		dnsbuf:       packet.NewDNSPacketBuffer(),
@@ -210,7 +225,7 @@ func (e *Executor) Monitor() error {
 // init initialize executor.
 func (e *Executor) init() {
 	e.installSignalHandler()
-	e.startEventPoller()
+	e.startAlertPoller()
 	e.startPacketSender()
 }
 
@@ -428,8 +443,8 @@ func (e *Executor) shouldSendDNSPacket(p *packet.DNSPacket) bool {
 	return t
 }
 
-// startEventPoller periodcly checks for new alerts.
-func (e *Executor) startEventPoller() {
+// startAlertPoller periodcly checks for new alerts.
+func (e *Executor) startAlertPoller() {
 	// event poller will return error on api call or writing to disk.
 	// In both cases log the error and try again in a moment.
 	go func() {

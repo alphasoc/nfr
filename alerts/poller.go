@@ -13,18 +13,23 @@ import (
 // to store it into writer
 type Poller struct {
 	c          client.Client
-	l          Writer
+	writers    []Writer
 	ticker     *time.Ticker
 	follow     string
 	followFile string
 }
 
 // NewPoller creates new poller base on give client and writer.
-func NewPoller(c client.Client, l Writer) *Poller {
+func NewPoller(c client.Client) *Poller {
 	return &Poller{
-		c: c,
-		l: l,
+		c:       c,
+		writers: make([]Writer, 0),
 	}
+}
+
+// AddWriter adds writer to poller.
+func (p *Poller) AddWriter(w Writer) {
+	p.writers = append(p.writers, w)
 }
 
 // SetFollowDataFile sets file for storing follow id.
@@ -61,8 +66,10 @@ func (p *Poller) do(interval time.Duration, count int) error {
 			return err
 		}
 
-		if err := p.l.Write(alerts); err != nil {
-			return err
+		for _, w := range p.writers {
+			if err := w.Write(alerts); err != nil {
+				return err
+			}
 		}
 
 		if p.follow == alerts.Follow {

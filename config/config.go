@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -125,10 +126,16 @@ type Config struct {
 
 	// AlphaSOC alerts configuration.
 	Alerts struct {
+		Graylog struct {
+			URI   string `yaml:"uri"`
+			Level int    `yaml:"level"`
+		} `yaml:"graylog"`
+
 		// File where to store alerts. If not set then none alerts will be retrieved.
 		// To print alerts to console use two special outputs: stderr or stdout
 		// Default: "stderr"
 		File string `yaml:"file,omitempty"`
+
 		// Interval for polling alerts from AlphaSOC api. Default: 5m
 		PollInterval time.Duration `yaml:"poll_interval,omitempty"`
 	} `yaml:"events,omitempty"`
@@ -241,6 +248,7 @@ func newDefaultConfig() *Config {
 	cfg.Alphasoc.Analyze.IP = true
 	cfg.Network.DNS.Protocols = []string{"udp"}
 	cfg.Network.DNS.Port = 53
+	cfg.Alerts.Graylog.Level = 1
 	cfg.Alerts.File = "stderr"
 	cfg.Alerts.PollInterval = 5 * time.Minute
 	cfg.Log.File = "stdout"
@@ -291,6 +299,21 @@ func (cfg *Config) validate() error {
 
 	if err := validateFilename(cfg.Data.File, false); err != nil {
 		return err
+	}
+
+	if cfg.Alerts.Graylog.URI != "" {
+		parsedURI, err := url.Parse(cfg.Alerts.Graylog.URI)
+		if err != nil {
+			return fmt.Errorf("config: invalid graylog uri %s", err)
+		}
+
+		if _, _, err := net.SplitHostPort(parsedURI.Host); err != nil {
+			return fmt.Errorf("config: missing port in graylog uri %s", cfg.Alerts.Graylog.URI)
+		}
+	}
+
+	if cfg.Alerts.Graylog.Level < 0 || cfg.Alerts.Graylog.Level > 7 {
+		return fmt.Errorf("config: invalid graylog alert level %d", cfg.Alerts.Graylog.Level)
 	}
 
 	if cfg.Alerts.File != "" {
