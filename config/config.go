@@ -332,7 +332,7 @@ func (cfg *Config) validate() error {
 	}
 
 	for _, monitor := range cfg.Monitors {
-		if monitor.Format != "bro" && monitor.Format != "suricata" {
+		if monitor.Format != "bro" && monitor.Format != "suricata" && monitor.Format != "msdns" {
 			return fmt.Errorf("config: unknown format %s for monitoring", monitor.Format)
 		}
 		if monitor.Type != "dns" && monitor.Type != "ip" {

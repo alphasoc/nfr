@@ -17,6 +17,7 @@ import (
 	"github.com/alphasoc/nfr/groups"
 	"github.com/alphasoc/nfr/logs"
 	"github.com/alphasoc/nfr/logs/bro"
+	"github.com/alphasoc/nfr/logs/msdns"
 	"github.com/alphasoc/nfr/logs/pcap"
 	"github.com/alphasoc/nfr/logs/suricata"
 	"github.com/alphasoc/nfr/packet"
@@ -115,6 +116,8 @@ func (e *Executor) Send(file string, fileFomrat string, fileType string) (err er
 		e.lr, err = pcap.NewReader(file)
 	case "suricata":
 		e.lr, err = suricata.NewFileParser(file)
+	case "msdns":
+		e.lr, err = msdns.NewFileParser(file)
 	default:
 		return errors.New("file format not supported")
 	}
@@ -156,6 +159,8 @@ func (e *Executor) Monitor() error {
 				parser = bro.NewParser()
 			case "suricata":
 				parser = suricata.NewParser()
+			case "msdns":
+				parser = msdns.NewParser()
 			}
 
 			for line := range t.Lines {

@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	fileFormats  = []string{"bro", "pcap", "suricata"}
+	fileFormats  = []string{"bro", "msdns", "pcap", "suricata"}
 	analyzeTypes = []string{"dns", "ip"}
 )
 
