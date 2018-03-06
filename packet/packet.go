@@ -26,7 +26,7 @@ const (
 )
 
 // IPPacket represents single dns query that could be
-// converted to feed AlphaSOC API.
+// converted to feed AlphaSOC Engine.
 type IPPacket struct {
 	raw    gopacket.Packet
 	srcMAC net.HardwareAddr
@@ -104,7 +104,7 @@ func (p *IPPacket) DetermineDirection(ifaceMac net.HardwareAddr) {
 }
 
 // DNSPacket represents single dns query that could be
-// converted to feed AlphaSOC API.
+// converted to feed AlphaSOC Engine.
 type DNSPacket struct {
 	raw gopacket.Packet
 

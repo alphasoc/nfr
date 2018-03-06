@@ -12,7 +12,7 @@ alphasoc:
   # Location of the server (e.g. cloud or on-premise operation)
   # Default: https://api.alphasoc.net
   host: https://api.alphasoc.net
- 
+
   # Your AlphaSOC API key (required to use the service)
   # Use "nfr account register" to generate one
   api_key: test-api-key
@@ -34,12 +34,16 @@ network:
   # Interface to listen for DNS events on (e.g. eth0)
   interface: <interface-name>
 
-  # Protocols to process (possible values are udp and tcp)
-  protocols:
-  - udp
- 
-  # Port to monitor for DNS traffic on
-  port: 53
+  # DNS network configuration
+  dns:
+    # Protocols to process (possible values are udp and tcp)
+    # Default: [udp]
+    protocols:
+    - udp
+
+    # Port to monitor for DNS traffic on
+    # Default: 53
+    port: 53
 
 ################################################################################
 # Logging configuration
@@ -51,7 +55,7 @@ log:
   # To print log to console use two special outputs: stderr or stdout
   # Default: stdout
   file: stdout
-  
+
   # Logging level. Possibles values are: debug, info, warn, error
   # Default: info
   level: info
@@ -77,25 +81,35 @@ scope:
   file:
 
 ################################################################################
-# AlphaSOC events configuration
+# AlphaSOC alerts configuration
 ################################################################################
 
-events:
+alerts:
 
-  # Location to which events should be written. This can be a file, or a special
+  # Graylog server where AlphaSOC alers will be sent. Nfr asssumes
+  #  that uri points to GELF input.
+  graylog:
+    # Uri to the server (for example tcp://127.0.0.1:12201)
+    # Default: (none)
+    uri:
+    # Message level.
+    # Default: 1
+    level: 1
+
+  # Location to which alerts should be written. This can be a file, or a special
   # ouput (stderr or stdout) to print events to the terminal
-  # Default: stdout
-  file: stdout
+  # Default: stderr
+  file: stderr
 
   # Interval for polling events from the DNS Analytics API
   # Default: 5m
   poll_interval: 5m
 
 ################################################################################
-# DNS queries (data queuing and processing) configuration
+# DNS events (data queuing and processing) configuration
 ################################################################################
 
-queries:
+dns_events:
 
   # NFR buffer size for the DNS event queue
   # Default: 65535
@@ -109,5 +123,26 @@ queries:
   # write the events to disk (in PCAP format) and attempt to send them again
   failed:
     # File in which to store unprocessed DNS events on disk
+    # Default: (none)
+    file:
+
+################################################################################
+# DNS events (data queuing and processing) configuration
+################################################################################
+
+ip_events:
+
+  # NFR buffer size for the IP event queue
+  # Default: 65535
+  buffer_size: 65535
+
+  # Interval for flushing data to IP Analytics API for scoring
+  # Default: 30s
+  flush_interval: 30s
+
+  # If NFR is unable to send IP events to the API for processing, it can
+  # write the events to disk (in PCAP format) and attempt to send them again
+  failed:
+    # File in which to store unprocessed IP events on disk
     # Default: (none)
     file:

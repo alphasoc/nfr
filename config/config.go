@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -31,7 +32,7 @@ type Config struct {
 		// AlphaSOC api key. Required for start sending dns queries.
 		APIKey string `yaml:"api_key,omitempty"`
 
-		// events to analize by AlphaSOC api.
+		// events to analize by AlphaSOC Engine.
 		Analyze struct {
 			// Enable (true) or disable (false) DNS event processing
 			// Default: true
@@ -89,7 +90,7 @@ type Config struct {
 	// or workstations within the IP ranges provided.
 	// Finally, the domain scope is used to specify internal and trusted domains and
 	// hostnames (supporting wildcards, e.g. *.google.com) to ignore.
-	// If you do not scope domains, local DNS traffic will be forwarded to the AlphaSOC API for scoring.
+	// If you do not scope domains, local DNS traffic will be forwarded to the AlphaSOC Engine for scoring.
 	Scope struct {
 		// File with scope groups . See ScopeConfig for more info.
 		// Default: (none)
@@ -136,19 +137,19 @@ type Config struct {
 		// Default: "stderr"
 		File string `yaml:"file,omitempty"`
 
-		// Interval for polling alerts from AlphaSOC api. Default: 5m
+		// Interval for polling alerts from AlphaSOC Engine. Default: 5m
 		PollInterval time.Duration `yaml:"poll_interval,omitempty"`
 	} `yaml:"events,omitempty"`
 
 	// DNS queries configuration.
-	DNSQueries struct {
+	DNSEvents struct {
 		// Buffer size for dns queries queue. If the size will be exceded then
-		// nfr send quries to AlphaSOC api. Default: 65535
+		// nfr send quries to AlphaSOC Engine. Default: 65535
 		BufferSize int `yaml:"buffer_size,omitempty"`
-		// Interval for flushing dns queries to AlphaSOC api. Default: 30s
+		// Interval for flushing dns queries to AlphaSOC Engine. Default: 30s
 		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
 
-		// Queries that were unable to send to AlphaSOC api.
+		// Queries that were unable to send to AlphaSOC Engine.
 		// If file is set, then unsent queries will be saved on disk and send again.
 		// Pcap format is used to store queries. You can view it in
 		// programs like tcpdump or whireshark.
@@ -161,12 +162,12 @@ type Config struct {
 	// IP events configuration.
 	IPEvents struct {
 		// Buffer size for ip events queue. If the size will be exceded then
-		// nfr send quries to AlphaSOC api. Default: 65535
+		// nfr send quries to AlphaSOC Engine. Default: 65535
 		BufferSize int `yaml:"buffer_size,omitempty"`
-		// Interval for flushing ip events to AlphaSOC api. Default: 30s
+		// Interval for flushing ip events to AlphaSOC Engine. Default: 30s
 		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
 
-		// Events that were unable to send to AlphaSOC api.
+		// Events that were unable to send to AlphaSOC Engine.
 		// If file is set, then unsent events will be saved on disk and send again.
 		// Pcap format is used to store events. You can view it in
 		// programs like tcpdump or whireshark.
@@ -248,13 +249,18 @@ func newDefaultConfig() *Config {
 	cfg.Alphasoc.Analyze.IP = true
 	cfg.Network.DNS.Protocols = []string{"udp"}
 	cfg.Network.DNS.Port = 53
+	cfg.Data.File = "/run/nfr.data"
+	if runtime.GOOS == "windows" {
+		appData := os.Getenv("AppData")
+		cfg.Data.File = path.Join(appData, "nfr.data")
+	}
 	cfg.Alerts.Graylog.Level = 1
 	cfg.Alerts.File = "stderr"
 	cfg.Alerts.PollInterval = 5 * time.Minute
 	cfg.Log.File = "stdout"
 	cfg.Log.Level = "info"
-	cfg.DNSQueries.BufferSize = 65535
-	cfg.DNSQueries.FlushInterval = 30 * time.Second
+	cfg.DNSEvents.BufferSize = 65535
+	cfg.DNSEvents.FlushInterval = 30 * time.Second
 	cfg.IPEvents.BufferSize = 65535
 	cfg.IPEvents.FlushInterval = 30 * time.Second
 	return cfg
@@ -326,16 +332,16 @@ func (cfg *Config) validate() error {
 		return fmt.Errorf("config: events poll interval must be at least 5s")
 	}
 
-	if cfg.DNSQueries.BufferSize < 64 {
+	if cfg.DNSEvents.BufferSize < 64 {
 		return fmt.Errorf("config: queries buffer size must be at least 64")
 	}
 
-	if cfg.DNSQueries.FlushInterval < 5*time.Second {
+	if cfg.DNSEvents.FlushInterval < 5*time.Second {
 		return fmt.Errorf("config: queries flush interval must be at least 5s")
 	}
 
-	if cfg.DNSQueries.Failed.File != "" {
-		if err := validateFilename(cfg.DNSQueries.Failed.File, false); err != nil {
+	if cfg.DNSEvents.Failed.File != "" {
+		if err := validateFilename(cfg.DNSEvents.Failed.File, false); err != nil {
 			return fmt.Errorf("config: %s", err)
 		}
 	}

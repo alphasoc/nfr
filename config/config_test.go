@@ -36,11 +36,11 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.Log.Level != "info" {
 		t.Fatalf("invalid log level - got %s; expected %s", cfg.Log.Level, "info")
 	}
-	if cfg.DNSQueries.BufferSize != 65535 {
-		t.Fatalf("invalid dns queries buffer size - got %d; expected %d", cfg.DNSQueries.BufferSize, 65535)
+	if cfg.DNSEvents.BufferSize != 65535 {
+		t.Fatalf("invalid dns queries buffer size - got %d; expected %d", cfg.DNSEvents.BufferSize, 65535)
 	}
-	if cfg.DNSQueries.FlushInterval != 30*time.Second {
-		t.Fatalf("invalid dns queries flush interval - got %s; expected %s", cfg.DNSQueries.FlushInterval, 30*time.Second)
+	if cfg.DNSEvents.FlushInterval != 30*time.Second {
+		t.Fatalf("invalid dns queries flush interval - got %s; expected %s", cfg.DNSEvents.FlushInterval, 30*time.Second)
 	}
 	if cfg.IPEvents.BufferSize != 65535 {
 		t.Fatalf("invalid ip events buffer size - got %d; expected %d", cfg.IPEvents.BufferSize, 65535)

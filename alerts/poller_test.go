@@ -1,4 +1,4 @@
-// Package alerts polls and writes alerts from AlphaSOC api.
+// Package alerts polls and writes alerts from AlphaSOC Engine.
 package alerts
 
 import (
@@ -18,7 +18,8 @@ func TestPollerDo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	p := NewPoller(client.NewMock(), w)
+	p := NewPoller(client.NewMock())
+	p.AddWriter(w)
 	p.follow = "1"
 	p.do(1, 1)
 

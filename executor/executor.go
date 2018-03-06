@@ -26,9 +26,8 @@ import (
 	"github.com/hpcloud/tail"
 )
 
-// Executor executes main nfr loop.
-// It's respnsible for start the sniffer, send dns queries to the server
-// and poll alerts from the server.
+// Executor executes main nfr loop. It's respnsible for start the sniffer,
+// send ip/dns events to AlphaSOC Engine and poll alerts from it.
 type Executor struct {
 	c   client.Client
 	cfg *config.Config
@@ -107,14 +106,14 @@ func (e *Executor) Start() (err error) {
 		return err
 	}
 
-	if e.cfg.DNSQueries.Failed.File != "" {
-		if e.dnsWriter, err = packet.NewWriter(e.cfg.DNSQueries.Failed.File); err != nil {
-			return fmt.Errorf("can't open file %s for writing dns queries: %s", e.cfg.DNSQueries.Failed.File, err.(*net.OpError).Err)
+	if e.cfg.DNSEvents.Failed.File != "" {
+		if e.dnsWriter, err = packet.NewWriter(e.cfg.DNSEvents.Failed.File); err != nil {
+			return fmt.Errorf("can't open file %s for writing dns events: %s", e.cfg.DNSEvents.Failed.File, err.(*net.OpError).Err)
 		}
 	}
 	if e.cfg.IPEvents.Failed.File != "" {
 		if e.ipWriter, err = packet.NewWriter(e.cfg.IPEvents.Failed.File); err != nil {
-			return fmt.Errorf("can't open file %s fro writing ip alerts: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
+			return fmt.Errorf("can't open file %s for writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
 		}
 	}
 
@@ -122,7 +121,7 @@ func (e *Executor) Start() (err error) {
 	return e.do()
 }
 
-// Send sends dns queries from given format file to api.
+// Send sends dns events from given format file to engine.
 func (e *Executor) Send(file string, fileFomrat string, fileType string) (err error) {
 	switch fileFomrat {
 	case "bro":
@@ -245,7 +244,7 @@ func (e *Executor) processDNSReader() error {
 		}
 
 		e.dnsbuf.Write(dnspacket)
-		if e.dnsbuf.Len() >= e.cfg.DNSQueries.BufferSize {
+		if e.dnsbuf.Len() >= e.cfg.DNSEvents.BufferSize {
 			if err := e.sendDNSPackets(); err != nil {
 				return err
 			}
@@ -283,7 +282,7 @@ func (e *Executor) processIPReader() error {
 func (e *Executor) startPacketSender() {
 	if e.cfg.Alphasoc.Analyze.DNS {
 		go func() {
-			for range time.NewTicker(e.cfg.DNSQueries.FlushInterval).C {
+			for range time.NewTicker(e.cfg.DNSEvents.FlushInterval).C {
 				e.sendDNSPackets()
 			}
 		}()
@@ -309,7 +308,7 @@ func (e *Executor) sendDNSPackets() error {
 		return nil
 	}
 
-	log.Infof("sending %d dns queries to analyze", len(packets))
+	log.Infof("sending %d dns events to analyze", len(packets))
 	resp, err := e.c.EventsDNS(dnsPacketsToRequest(packets))
 	if err != nil {
 		log.Errorln(err)
@@ -322,9 +321,9 @@ func (e *Executor) sendDNSPackets() error {
 	}
 
 	if resp.Received == resp.Accepted {
-		log.Infof("%d dns queries were successfully send", resp.Accepted)
+		log.Infof("%d dns events were successfully send", resp.Accepted)
 	} else {
-		log.Infof("%d of %d dns queries were send - rejected reason %v",
+		log.Infof("%d of %d dns events were send - rejected reason %v",
 			resp.Accepted, resp.Received, resp.Rejected)
 	}
 	return nil
@@ -398,7 +397,7 @@ func (e *Executor) do() error {
 				e.dnsbuf.Write(dnspacket)
 				l := e.dnsbuf.Len()
 				e.mx.Unlock()
-				if l >= e.cfg.DNSQueries.BufferSize {
+				if l >= e.cfg.DNSEvents.BufferSize {
 					// do not wait for sending packets
 					go e.sendDNSPackets()
 				}
@@ -480,7 +479,7 @@ func (e *Executor) installSignalHandler() {
 				}
 			}
 
-			log.Infof("%d queries wrote to file", len(dnspackets))
+			log.Infof("%d dns events wrote to file", len(dnspackets))
 		}
 
 		ippackets := e.ipbuf.Packets()
@@ -492,7 +491,7 @@ func (e *Executor) installSignalHandler() {
 				}
 			}
 
-			log.Infof("%d queries wrote to file", len(ippackets))
+			log.Infof("%d ip events wrote to file", len(ippackets))
 		}
 
 		os.Exit(1)

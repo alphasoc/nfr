@@ -28,8 +28,8 @@ func init() {
 func NewRootCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "nfr account|listen|read|version",
-		Short: "nfr is main command used to send dns queries to AlphaSOC API",
-		Long: `nfr is an application which captures DNS requests and provides deep analysis
+		Short: "nfr is main command used to send dns and ip events to AlphaSOC Engine",
+		Long: `nfr is an application which captures IP/DNS traffic and provides deep analysis
 and alerting of suspicious events, identifying gaps in your security controls and
 highlighting targeted attacks.`,
 		SilenceErrors: true,
