@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+
+	"github.com/Jeffail/gabs"
 )
 
 // Gelf client.
@@ -20,6 +22,8 @@ type Message struct {
 	FullMessage  string `json:"full_message"`
 	Timestamp    int64  `json:"timestamp"`
 	Level        int    `json:"level"`
+
+	Extra map[string]interface{} `json:"-"`
 }
 
 // New returns GELF client.
@@ -57,6 +61,18 @@ func (g *Gelf) Send(m *Message) error {
 		return err
 	}
 
-	_, err = g.conn.Write(append(b, '\n', 0))
+	c, err := gabs.ParseJSON(b)
+	if err != nil {
+		return err
+	}
+
+	for k, v := range m.Extra {
+		_, err = c.Set(v, fmt.Sprintf("_%s", k))
+		if err != nil {
+			return err
+		}
+	}
+
+	_, err = g.conn.Write(append(c.Bytes(), '\n', 0))
 	return err
 }
