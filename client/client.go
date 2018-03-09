@@ -42,8 +42,8 @@ var ErrNoRequest = errors.New("request is empty")
 // DefaultVersion for AlphaSOC API.
 const DefaultVersion = "v1"
 
-// default user agent for nfr.
-var defaultUserAgent = "AlphaSOC NFR/" + version.Version
+// DefaultUserAgent for nfr.
+var DefaultUserAgent = "AlphaSOC NFR/" + version.Version
 
 // AlphaSOCClient handles connection to AlphaSOC server.
 type AlphaSOCClient struct {
@@ -114,7 +114,7 @@ func (c *AlphaSOCClient) do(ctx context.Context, method, path string, query url.
 	if c.key != "" {
 		req.SetBasicAuth(c.key, "")
 	}
-	req.Header.Set("User-Agent", defaultUserAgent)
+	req.Header.Set("User-Agent", DefaultUserAgent)
 	for key, value := range headers {
 		req.Header[key] = value
 	}
