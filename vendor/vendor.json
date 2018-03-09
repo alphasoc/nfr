@@ -3,6 +3,12 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "0wdHgfg/Zj50H6FMbN2MnuR6YXA=",
+			"path": "github.com/Jeffail/gabs",
+			"revision": "44cbc27138518b15305cb3eef220d04f2d641b9b",
+			"revisionTime": "2017-10-15T11:14:30Z"
+		},
+		{
 			"checksumSHA1": "qk6ae8jJ9YkwdiOxZ/YeywKmy+A=",
 			"path": "github.com/Sirupsen/logrus",
 			"revision": "62f94013e5862ca79b0622b72f2442457ed1de31",
