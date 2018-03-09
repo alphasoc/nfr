@@ -1,8 +1,8 @@
 package alerts
 
 import (
-	"encoding/json"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/alphasoc/nfr/client"
@@ -25,10 +25,6 @@ func NewGraylogWriter(uri string, level int) (*GraylogWriter, error) {
 	}
 
 	hostname, _ := os.Hostname()
-	if hostname == "" {
-		hostname = "unknown"
-	}
-
 	return &GraylogWriter{
 		g:        g,
 		level:    level,
@@ -43,22 +39,49 @@ func (w *GraylogWriter) Write(resp *client.AlertsResponse) error {
 		return nil
 	}
 
-	b, err := json.Marshal(resp)
-	if err != nil {
-		return err
+	// send each alert as separate message.
+	for _, alert := range resp.Alerts {
+		severity, threat := highestThreatsSeverity(resp, alert.Threats)
+		if err := w.g.Send(&gelf.Message{
+			Version:      "1.1",
+			Host:         w.hostname,
+			ShortMessage: resp.Threats[threat].Title,
+			Timestamp:    time.Now().Unix(),
+			Level:        w.level,
+			Extra: map[string]interface{}{
+				"ts":           alert.Event.Timestamp.String(),
+				"src_ip":       alert.Event.SrcIP,
+				"dest_ip":      alert.Event.DestIP,
+				"dest_port":    alert.Event.DestPort,
+				"severity":     severity,
+				"flags":        strings.Join(alert.Wisdom.Flags, ","),
+				"threats":      strings.Join(alert.Threats, ","),
+				"engine_agent": client.DefaultUserAgent,
+			},
+		}); err != nil {
+			return err
+		}
 	}
-
-	return w.g.Send(&gelf.Message{
-		Version:      "1.1",
-		Host:         w.hostname,
-		ShortMessage: "Alert about suspicious traffic from AlphaSOC",
-		FullMessage:  string(b),
-		Timestamp:    time.Now().Unix(),
-		Level:        w.level,
-	})
+	return nil
 }
 
-// Close closes the File. It returns an error, if any.
+// Close closes the connecion with graylog server.
 func (w *GraylogWriter) Close() error {
 	return w.g.Close()
+}
+
+// find theats with highest severity.
+func highestThreatsSeverity(resp *client.AlertsResponse, threats []string) (int, string) {
+	severity := 1
+	threat := ""
+
+	for _, t := range threats {
+		if _, ok := resp.Threats[t]; ok {
+			if severity < resp.Threats[t].Severity {
+				severity = resp.Threats[t].Severity
+				threat = t
+			}
+		}
+	}
+	return severity, threat
 }
