@@ -340,10 +340,7 @@ func (e *Executor) sendIPPackets() error {
 		return nil
 	}
 
-	log.Infof("sending %d ip alerts to analyze", len(packets))
-	for i := range packets {
-		log.Infof("packet has byte count %d", packets[i].BytesCount)
-	}
+	log.Infof("sending %d ip events to analyze", len(packets))
 	resp, err := e.c.EventsIP(ipPacketsToRequest(packets))
 	if err != nil {
 		log.Errorln(err)
@@ -356,9 +353,9 @@ func (e *Executor) sendIPPackets() error {
 	}
 
 	if resp.Received == resp.Accepted {
-		log.Infof("%d ip alerts were successfully send", resp.Accepted)
+		log.Infof("%d ip events were successfully send", resp.Accepted)
 	} else {
-		log.Infof("%d of %d ip alerts were send - rejected reason %v",
+		log.Infof("%d of %d ip events were send - rejected reason %v",
 			resp.Accepted, resp.Received, resp.Rejected)
 	}
 	return nil
