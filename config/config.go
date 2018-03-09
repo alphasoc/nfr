@@ -139,7 +139,7 @@ type Config struct {
 
 		// Interval for polling alerts from AlphaSOC Engine. Default: 5m
 		PollInterval time.Duration `yaml:"poll_interval,omitempty"`
-	} `yaml:"events,omitempty"`
+	} `yaml:"alerts,omitempty"`
 
 	// DNS queries configuration.
 	DNSEvents struct {
