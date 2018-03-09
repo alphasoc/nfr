@@ -7,13 +7,12 @@ import (
 	"github.com/alphasoc/nfr/client"
 )
 
-// JSONFileWriter implements Writer interface and write
-// api alerts in JSON format.
+// JSONFileWriter implements Writer interface and writes alerts in json format.
 type JSONFileWriter struct {
 	f *os.File
 }
 
-// NewJSONFileWriter creates new json file logger.
+// NewJSONFileWriter creates new json file writer.
 func NewJSONFileWriter(file string) (*JSONFileWriter, error) {
 	switch file {
 	case "stdout":
@@ -29,7 +28,7 @@ func NewJSONFileWriter(file string) (*JSONFileWriter, error) {
 	}
 }
 
-// Write writes alerts response to file in json format
+// Write writes alerts response to the file in json format.
 func (l *JSONFileWriter) Write(e *client.AlertsResponse) error {
 	// do not log if there is no alerts
 	if len(e.Alerts) == 0 {
@@ -48,7 +47,7 @@ func (l *JSONFileWriter) Write(e *client.AlertsResponse) error {
 	return err
 }
 
-// Close closes the File. It returns an error, if any.
+// Close closes the file.
 func (l *JSONFileWriter) Close() error {
 	return l.f.Close()
 }
