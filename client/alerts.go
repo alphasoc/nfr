@@ -3,7 +3,9 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"net/url"
+	"time"
 )
 
 // AlertsResponse represents response for /events call.
@@ -19,9 +21,18 @@ type AlertsResponse struct {
 
 // Alert provides result of AlphaSOC Engine analysis, which was found to be threat.
 type Alert struct {
-	Type    string          `json:"type"`
-	Event   json.RawMessage `json:"event"`
-	Threats []string        `json:"threats"`
+	Type  string `json:"type"`
+	Event struct {
+		Protocol  string    `json:"proto"`
+		DestIP    net.IP    `json:"destIP"`
+		DestPort  int       `json:"destPort"`
+		SrcIP     net.IP    `json:"srcIP"`
+		SrcPort   int       `json:"srcPort"`
+		BytesIn   int       `json:"bytesIn"`
+		BytesOut  int       `json:"bytesOut"`
+		Timestamp time.Time `json:"ts"`
+	} `json:"event"`
+	Threats []string `json:"threats"`
 	Wisdom  struct {
 		Flags []string `json:"flags"`
 	} `json:"wisdom"`
