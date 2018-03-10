@@ -84,7 +84,7 @@ log:
   level: info
 data:
   file: nfr.data
-events:
+alerts:
   file: stderr
   poll_interval: 5m
 dns_queries:
