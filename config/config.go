@@ -367,6 +367,9 @@ func (cfg *Config) validate() error {
 		if monitor.Type != "dns" && monitor.Type != "ip" {
 			return fmt.Errorf("config: unknown type %s for monitoring", monitor.Type)
 		}
+		if monitor.Type == "ip" && monitor.Format != "bro" {
+			return fmt.Errorf("config: unsupported type %s for %s format", monitor.Type, monitor.Format)
+		}
 	}
 
 	return nil
