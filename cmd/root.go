@@ -17,11 +17,11 @@ var (
 )
 
 func init() {
+	base := "/etc/"
 	if runtime.GOOS == "windows" {
-		configDefaultLocation = path.Join(os.Getenv("APPDATA"), "nfr.data")
-	} else {
-		configDefaultLocation = "/etc/nfr/config.yml"
+		base = os.Getenv("APPDATA")
 	}
+	configDefaultLocation = path.Join(base, "nfr", "config.yml")
 }
 
 // NewRootCommand represents the base command when called without any subcommands
