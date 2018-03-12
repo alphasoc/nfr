@@ -1,5 +1,10 @@
 package utils
 
+import (
+	"errors"
+	"net"
+)
+
 // IsDomainName checks if a string is a presentation-format domain name
 // (currently restricted to hostname-compatible "preferred name" LDH labels and
 // SRV-like "underscore labels"; see golang.org/issue/12421).
@@ -55,4 +60,48 @@ func IsDomainName(s string) bool {
 	}
 
 	return ok
+}
+
+// InterfaceWithPublicIP finds first interface with public ip.
+// If interface is not found then error is returned.
+func InterfaceWithPublicIP() (*net.Interface, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 ||
+			iface.Flags&net.FlagLoopback != 0 {
+			continue
+		}
+		ip, err := publicIPFromInterface(&iface)
+		if err != nil {
+			return nil, err
+		}
+		if ip != nil {
+			return &iface, nil
+		}
+	}
+	return nil, errors.New("no interfaces with public ip")
+}
+
+func publicIPFromInterface(iface *net.Interface) (net.IP, error) {
+	addrs, err := iface.Addrs()
+	if err != nil {
+		return nil, err
+	}
+	for _, addr := range addrs {
+		var ip net.IP
+		switch v := addr.(type) {
+		case *net.IPAddr:
+			ip = v.IP
+		case *net.IPNet:
+			ip = v.IP
+		}
+		if ip == nil || ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			continue
+		}
+		return ip, nil
+	}
+	return nil, nil
 }

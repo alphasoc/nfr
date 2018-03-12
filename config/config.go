@@ -273,6 +273,13 @@ func (cfg *Config) validate() error {
 			return fmt.Errorf("config: can't open interface %s: %s", cfg.Network.Interface, err)
 		}
 		cfg.Network.HardwareAddr = iface.HardwareAddr
+	} else {
+		iface, err := utils.InterfaceWithPublicIP()
+		if err != nil {
+			return fmt.Errorf("config: %s", err)
+		}
+		cfg.Network.Interface = iface.Name
+		cfg.Network.HardwareAddr = iface.HardwareAddr
 	}
 
 	if len(cfg.Network.DNS.Protocols) == 0 {
