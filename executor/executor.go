@@ -51,12 +51,10 @@ type Executor struct {
 
 // New creates new executor.
 func New(c client.Client, cfg *config.Config) (*Executor, error) {
-	groups, err := createGroups(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	var jsonWriter, graylogWriter alerts.Writer
+	var (
+		jsonWriter, graylogWriter alerts.Writer
+		err                       error
+	)
 
 	if cfg.Alerts.File != "" {
 		jsonWriter, err = alerts.NewJSONFileWriter(cfg.Alerts.File)
@@ -80,6 +78,11 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		alertsPoller.AddWriter(graylogWriter)
 	}
 	if err = alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
+		return nil, err
+	}
+
+	groups, err := createGroups(cfg)
+	if err != nil {
 		return nil, err
 	}
 
