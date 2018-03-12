@@ -1,6 +1,7 @@
 package alerts
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -21,7 +22,7 @@ type GraylogWriter struct {
 func NewGraylogWriter(uri string, level int) (*GraylogWriter, error) {
 	g, err := gelf.New(uri)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("connect to graylog send input failed: %s", err)
 	}
 
 	hostname, _ := os.Hostname()
