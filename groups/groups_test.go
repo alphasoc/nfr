@@ -5,24 +5,26 @@ import (
 	"testing"
 )
 
-func TestGroups(t *testing.T) {
+func TestIsDNSQueryWhitelisted(t *testing.T) {
 	var testsGroups = []struct {
 		name   string
 		groups []*Group
 
 		domains  []string
-		ips      []net.IP
+		srcIps   []net.IP
+		dstIps   []net.IP
 		expected []bool
 	}{
 		{
 			"allow any ips",
 			[]*Group{
 				{
-					Name:     "allow any",
-					Includes: []string{"0.0.0.0/0"},
+					Name:        "allow any",
+					SrcIncludes: []string{"0.0.0.0/0"},
 				},
 			},
 			[]string{"a"},
+			[]net.IP{net.IPv4(10, 0, 0, 0)},
 			[]net.IP{net.IPv4(10, 0, 0, 0)},
 			[]bool{true},
 		},
@@ -30,33 +32,35 @@ func TestGroups(t *testing.T) {
 			"allow private networks",
 			[]*Group{
 				{
-					Name:     "private network 1",
-					Includes: []string{"10.0.0.0/8"},
+					Name:        "private network 1",
+					SrcIncludes: []string{"10.0.0.0/8"},
 				},
 				{
-					Name:     "private network 2",
-					Includes: []string{"192.168.0.0/16"},
+					Name:        "private network 2",
+					SrcIncludes: []string{"192.168.0.0/16"},
 				},
 			},
 			[]string{"a", "a", "a"},
 			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(192, 168, 0, 0), net.IPv4(11, 0, 0, 0)},
+			[]net.IP{net.IPv4(0, 0, 0, 0), net.IPv4(0, 0, 0, 0), net.IPv4(0, 0, 0, 0)},
 			[]bool{true, true, false},
 		},
 		{
 			"allow private networks with excludes",
 			[]*Group{
 				{
-					Name:     "private network 1",
-					Includes: []string{"10.0.0.0/8"},
-					Excludes: []string{"10.1.0.0/16"},
+					Name:        "private network 1",
+					SrcIncludes: []string{"10.0.0.0/8"},
+					SrcExcludes: []string{"10.1.0.0/16"},
 				},
 				{
-					Name:     "private network 2",
-					Includes: []string{"192.168.0.0/16"},
-					Excludes: []string{"10.2.0.0/16"},
+					Name:        "private network 2",
+					SrcIncludes: []string{"192.168.0.0/16"},
+					SrcExcludes: []string{"10.2.0.0/16"},
 				},
 			},
 			[]string{"a", "a", "a", "a"},
+			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(192, 168, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 2, 0, 0)},
 			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(192, 168, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 2, 0, 0)},
 			[]bool{true, true, false, true},
 		},
@@ -64,16 +68,17 @@ func TestGroups(t *testing.T) {
 			"include in one group then exclude in next group",
 			[]*Group{
 				{
-					Name:     "private network 1",
-					Includes: []string{"10.0.0.0/8"},
+					Name:        "private network 1",
+					SrcIncludes: []string{"10.0.0.0/8"},
 				},
 				{
-					Name:     "private network 2",
-					Includes: []string{"10.1.0.0/16"},
-					Excludes: []string{"10.1.1.0/24"},
+					Name:        "private network 2",
+					SrcIncludes: []string{"10.1.0.0/16"},
+					SrcExcludes: []string{"10.1.1.0/24"},
 				},
 			},
 			[]string{"a", "a"},
+			[]net.IP{net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 1, 0)},
 			[]net.IP{net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 1, 0)},
 			[]bool{true, false},
 		},
@@ -81,19 +86,78 @@ func TestGroups(t *testing.T) {
 			"exclude domain in multiple groups",
 			[]*Group{
 				{
-					Name:     "private network 1",
-					Includes: []string{"10.0.0.0/16"},
-					Domains:  []string{"a"},
+					Name:            "private network 1",
+					SrcIncludes:     []string{"10.0.0.0/16"},
+					ExcludedDomains: []string{"a"},
 				},
 				{
-					Name:     "private network 2",
-					Includes: []string{"10.1.0.0/16"},
-					Domains:  []string{"b"},
+					Name:            "private network 2",
+					SrcIncludes:     []string{"10.1.0.0/16"},
+					ExcludedDomains: []string{"b"},
 				},
 			},
 			[]string{"a", "b", "a", "b"},
 			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 0)},
+			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 0)},
 			[]bool{false, true, true, false},
+		},
+		{
+			"mix",
+			[]*Group{
+				{
+					Name:        "private network",
+					SrcIncludes: []string{"10.0.0.0/24", "10.1.0.0/24"},
+					SrcExcludes: []string{"10.0.0.1", "10.1.0.1"},
+					DstIncludes: []string{"11.0.0.0/24", "11.1.0.0/24"},
+					DstExcludes: []string{"11.0.0.1", "11.1.0.1"},
+				},
+			},
+			[]string{"a", "a", "a", "a", "a", "a"},
+			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 1), net.IPv4(10, 1, 0, 0)},
+			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(11, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(11, 1, 0, 0), net.IPv4(11, 0, 0, 0), net.IPv4(11, 1, 0, 1)},
+			[]bool{false, true, false, true, false, false},
+		},
+	}
+
+	for _, tt := range testsGroups {
+		g := New()
+		for _, group := range tt.groups {
+			if err := g.Add(group); err != nil {
+				t.Fatal(tt.name, err)
+			}
+		}
+		for i := range tt.domains {
+			if name, b := g.IsDNSQueryWhitelisted(tt.domains[i], tt.srcIps[i], tt.dstIps[i]); b != tt.expected[i] {
+				t.Fatalf("%s IsDNSQueryWhitelisted(%s, %s, %s) %s %t; expected %t", tt.name,
+					tt.domains[i], tt.srcIps[i], tt.dstIps[i], name, b, tt.expected[i])
+			}
+		}
+	}
+}
+
+func TestIsIPWhitelisted(t *testing.T) {
+	var testsGroups = []struct {
+		name   string
+		groups []*Group
+
+		srcIps   []net.IP
+		dstIps   []net.IP
+		expected []bool
+	}{
+		{
+			"mix",
+			[]*Group{
+				{
+					Name:        "private network",
+					SrcIncludes: []string{"10.0.0.0/24", "10.1.0.0/24"},
+					SrcExcludes: []string{"10.0.0.1", "10.1.0.1"},
+					DstIncludes: []string{"11.0.0.0/24", "11.1.0.0/24"},
+					DstExcludes: []string{"11.0.0.1", "11.1.0.1"},
+				},
+			},
+			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 1), net.IPv4(10, 1, 0, 0)},
+			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(11, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(11, 1, 0, 0), net.IPv4(11, 0, 0, 0), net.IPv4(11, 1, 0, 1)},
+			[]bool{false, true, false, true, false, false},
 		},
 	}
 
@@ -104,10 +168,9 @@ func TestGroups(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		for i := range tt.domains {
-			if _, b := g.IsDNSQueryWhitelisted(tt.domains[i], tt.ips[i]); b != tt.expected[i] {
-				t.Fatalf("IsDNSQueryWhitelisted(%s, %s) got %t; expected %t",
-					tt.domains[i], tt.ips[i], !tt.expected[i], tt.expected[i])
+		for i := range tt.srcIps {
+			if _, b := g.IsIPWhitelisted(tt.srcIps[i], tt.dstIps[i]); b != tt.expected[i] {
+				t.Fatalf("IsIPWhitelisted(%s, %s) got %t; expected %t", tt.srcIps[i], tt.dstIps[i], b, tt.expected[i])
 			}
 		}
 	}
@@ -115,11 +178,11 @@ func TestGroups(t *testing.T) {
 
 func TestEmptyGroup(t *testing.T) {
 	var g *Groups
-	if _, b := g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0)); !b {
+	if _, b := g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0)); !b {
 		t.Fatalf("nil groups must whitelist domain")
 	}
 	g = New()
-	if _, b := g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0)); !b {
+	if _, b := g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0)); !b {
 		t.Fatalf("no groups must whitelist domain")
 	}
 }

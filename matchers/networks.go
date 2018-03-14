@@ -1,104 +1,149 @@
 package matchers
 
 import (
-	"errors"
 	"fmt"
 	"net"
 )
 
-// Network matches network on give list.
-// Checks if the ip is included and not excluded from list
-// at the same time.
+// Network matches network based on src and dst IP.
+// Checks if the ip is included and not excluded from list at the same time.
 type Network struct {
-	includes []*net.IPNet
-	excludes []*net.IPNet
-	ips      map[string]bool // compare ip as string
+	srcIncludes    []*net.IPNet
+	srcExcludes    []*net.IPNet
+	srcExcludesIps map[string]bool // compare ip as string
+
+	dstIncludes    []*net.IPNet
+	dstExcludes    []*net.IPNet
+	dstExcludesIps map[string]bool // compare ip as string
 }
 
 // NewNetwork creates Network matcher for given includes and excludes netowrks.
 // The excludes network acceptable format is cidr and ip.
-func NewNetwork(includes []string, excludes []string) (*Network, error) {
-	if len(includes) == 0 {
-		return nil, errors.New("no network includes")
+func NewNetwork(srcIncludes, srcExcludes, dstIncludes, dstExcludes []string) (*Network, error) {
+	if len(srcIncludes) == 0 {
+		srcIncludes = []string{"0.0.0.0/0", "::/0"}
+	}
+	if len(dstIncludes) == 0 {
+		dstIncludes = []string{"0.0.0.0/0", "::/0"}
 	}
 
-	m := &Network{ips: make(map[string]bool)}
+	m := &Network{
+		srcExcludesIps: make(map[string]bool),
+		dstExcludesIps: make(map[string]bool),
+	}
 
-	for i := range includes {
-		_, ipnet, err := net.ParseCIDR(includes[i])
+	for i := range srcIncludes {
+		_, ipnet, err := net.ParseCIDR(srcIncludes[i])
 		if err != nil {
 			return nil, err
 		}
-
-		m.includes = append(m.includes, ipnet)
+		m.srcIncludes = append(m.srcIncludes, ipnet)
 	}
 
-	for i := range excludes {
-		ip := net.ParseIP(excludes[i])
-		_, ipnet, err := net.ParseCIDR(excludes[i])
+	for i := range dstIncludes {
+		_, ipnet, err := net.ParseCIDR(dstIncludes[i])
+		if err != nil {
+			return nil, err
+		}
+		m.dstIncludes = append(m.dstIncludes, ipnet)
+	}
+
+	for i := range srcExcludes {
+		ip := net.ParseIP(srcExcludes[i])
+		_, ipnet, err := net.ParseCIDR(srcExcludes[i])
 		if ip == nil && err != nil {
-			return nil, fmt.Errorf("%s is not cidr nor ip", excludes[i])
+			return nil, fmt.Errorf("%s is not cidr nor ip", srcExcludes[i])
 		}
 
 		if ip != nil {
-			m.ips[excludes[i]] = true
+			m.srcExcludesIps[srcExcludes[i]] = true
 		} else {
-
-			// check if ipnet is ipv4 with /32 or ipv6 with /128
-			// if it is then put this into ips maps.
-			if ipnet.IP.To4() != nil {
-				if once, _ := ipnet.Mask.Size(); once == 32 {
-					m.ips[ipnet.IP.String()] = true
-					continue
-				}
-			} else {
-				if once, _ := ipnet.Mask.Size(); once == 128 {
-					m.ips[ipnet.IP.String()] = true
-					continue
-				}
+			if isIpnetIP(ipnet) {
+				m.srcExcludesIps[ipnet.IP.String()] = true
+				continue
 			}
-			m.excludes = append(m.excludes, ipnet)
+			m.srcExcludes = append(m.srcExcludes, ipnet)
+		}
+	}
+
+	for i := range dstExcludes {
+		ip := net.ParseIP(dstExcludes[i])
+		_, ipnet, err := net.ParseCIDR(dstExcludes[i])
+		if ip == nil && err != nil {
+			return nil, fmt.Errorf("%s is not cidr nor ip", dstExcludes[i])
+		}
+
+		if ip != nil {
+			m.dstExcludesIps[dstExcludes[i]] = true
+		} else {
+			if isIpnetIP(ipnet) {
+				m.dstExcludesIps[ipnet.IP.String()] = true
+				continue
+			}
+			m.dstExcludes = append(m.dstExcludes, ipnet)
 		}
 	}
 
 	return m, nil
 }
 
-// Match matches ip and check if it's on networks included list
+// Match matches src and dest ips and check if it's on networks included list
 // at the same time checking if it's not in any excluded list.
-// It returns if the ip was matched by this groups and if was matched
-// by excluded networks
-func (m *Network) Match(ip net.IP) (bool, bool) {
-	if ip == nil {
+func (m *Network) Match(srcIP, dstIP net.IP) (bool, bool) {
+	if srcIP == nil || dstIP == nil {
 		return false, false
 	}
 
-	// check if the ip is included in some networks
-	ok := true
-	for _, n := range m.includes {
-		if n.Contains(ip) {
-			ok = false
+	// check if the ip is included in source networks
+	ok := false
+	for _, n := range m.srcIncludes {
+		if n.Contains(srcIP) {
+			ok = true
 			break
 		}
 	}
 
-	// if the ip is not in any networks,
-	// it means that ip is not matched
-	if ok {
+	// if the ip is not in any networks, it means that ip is not matched
+	if !ok {
 		return false, false
 	}
 
-	// if this ip is excluded
-	if m.ips[ip.String()] {
+	// check if the ip is included in destination networks
+	ok = false
+	for _, n := range m.dstIncludes {
+		if n.Contains(dstIP) {
+			ok = true
+			break
+		}
+	}
+
+	if !ok {
+		return false, false
+	}
+
+	// check ip exclusion
+	if m.srcExcludesIps[srcIP.String()] || m.dstExcludesIps[dstIP.String()] {
 		return true, true
 	}
 
-	// if the ip is within any excluded network
-	for _, n := range m.excludes {
-		if n.Contains(ip) {
+	// if the ip is within any excluded source network
+	for _, n := range m.srcExcludes {
+		if n.Contains(srcIP) {
+			return true, true
+		}
+	}
+
+	// if the ip is within any excluded destination network
+	for _, n := range m.dstExcludes {
+		if n.Contains(dstIP) {
 			return true, true
 		}
 	}
 
 	return true, false
+}
+
+func isIpnetIP(ipnet *net.IPNet) bool {
+	once, _ := ipnet.Mask.Size()
+	return (ipnet.IP.To4() != nil && once == 32) || once == 128
 }

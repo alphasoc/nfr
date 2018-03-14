@@ -67,7 +67,7 @@ func TestBasicAuth(t *testing.T) {
 
 func TestUserAgent(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, defaultUserAgent, r.UserAgent(), "invalid user agent")
+		require.Equal(t, DefaultUserAgent, r.UserAgent(), "invalid user agent")
 	}))
 	defer ts.Close()
 

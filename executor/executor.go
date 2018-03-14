@@ -34,7 +34,8 @@ type Executor struct {
 
 	alertsPoller *alerts.Poller
 
-	groups *groups.Groups
+	dnsgroups *groups.Groups
+	ipgroups  *groups.Groups
 
 	dnsbuf    *packet.DNSPacketBuffer
 	dnsWriter *packet.Writer
@@ -81,7 +82,7 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		return nil, err
 	}
 
-	groups, err := createGroups(cfg)
+	dnsgroups, ipgroups, err := createGroups(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +91,8 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		c:            c,
 		cfg:          cfg,
 		alertsPoller: alertsPoller,
-		groups:       groups,
+		dnsgroups:    dnsgroups,
+		ipgroups:     ipgroups,
 		dnsbuf:       packet.NewDNSPacketBuffer(),
 		ipbuf:        packet.NewIPPacketBuffer(),
 	}, nil
@@ -419,7 +421,15 @@ func (e *Executor) shouldSendIPPacket(p *packet.IPPacket) bool {
 		(p.Direction == packet.DirectionIn && utils.IsSpecialIP(p.SrcIP)) {
 		return false
 	}
-	return true
+	// no scope groups configured
+	if e.ipgroups == nil {
+		return true
+	}
+	name, t := e.ipgroups.IsIPWhitelisted(p.SrcIP, p.DstIP)
+	if !t {
+		log.Debugf("ip packet from %s to %s excluded by %s group", p.SrcIP, p.DstIP, name)
+	}
+	return t
 }
 
 // shouldSendDNSPackets tests if dns packet should be send to channel
@@ -432,10 +442,10 @@ func (e *Executor) shouldSendDNSPacket(p *packet.DNSPacket) bool {
 	}
 
 	// no scope groups configured
-	if e.groups == nil {
+	if e.dnsgroups == nil {
 		return true
 	}
-	name, t := e.groups.IsDNSQueryWhitelisted(p.FQDN, p.SrcIP)
+	name, t := e.dnsgroups.IsDNSQueryWhitelisted(p.FQDN, p.SrcIP, p.DstIP)
 	if !t {
 		log.Debugf("dns query %s excluded by %s group", p, name)
 	}
@@ -499,25 +509,43 @@ func (e *Executor) installSignalHandler() {
 }
 
 // createGroups creates groups for matching dns packets.
-func createGroups(cfg *config.Config) (*groups.Groups, error) {
-	if len(cfg.ScopeConfig.Groups) == 0 {
-		return nil, nil
+func createGroups(cfg *config.Config) (dns *groups.Groups, ip *groups.Groups, err error) {
+
+	log.Infof("found %d whiltelist dns groups", len(cfg.ScopeConfig.DNS.Groups))
+	if len(cfg.ScopeConfig.DNS.Groups) > 0 {
+		dns = groups.New()
+		for name, group := range cfg.ScopeConfig.DNS.Groups {
+			g := &groups.Group{
+				Name:            name,
+				SrcIncludes:     group.Networks.Source.Include,
+				SrcExcludes:     group.Networks.Source.Exclude,
+				DstIncludes:     group.Networks.Destination.Include,
+				DstExcludes:     group.Networks.Destination.Exclude,
+				ExcludedDomains: group.Domains.Exclude,
+			}
+			if err = dns.Add(g); err != nil {
+				return nil, nil, err
+			}
+		}
 	}
 
-	log.Infof("found %d whiltelist groups", len(cfg.ScopeConfig.Groups))
-	gs := groups.New()
-	for name, group := range cfg.ScopeConfig.Groups {
-		g := &groups.Group{
-			Name:     name,
-			Includes: group.Networks,
-			Excludes: group.Exclude.Networks,
-			Domains:  group.Exclude.Domains,
-		}
-		if err := gs.Add(g); err != nil {
-			return nil, err
+	log.Infof("found %d whiltelist ip groups", len(cfg.ScopeConfig.IP.Groups))
+	if len(cfg.ScopeConfig.IP.Groups) > 0 {
+		ip = groups.New()
+		for name, group := range cfg.ScopeConfig.IP.Groups {
+			g := &groups.Group{
+				Name:        name,
+				SrcIncludes: group.Networks.Source.Include,
+				SrcExcludes: group.Networks.Source.Exclude,
+				DstIncludes: group.Networks.Destination.Include,
+				DstExcludes: group.Networks.Destination.Exclude,
+			}
+			if err = ip.Add(g); err != nil {
+				return nil, nil, err
+			}
 		}
 	}
-	return gs, nil
+	return
 }
 
 // ipPacketsToRequest changes ip packets to client ip request.

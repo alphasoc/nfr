@@ -6,12 +6,19 @@ import (
 	"github.com/alphasoc/nfr/matchers"
 )
 
-// Group is a definition used for whitelising dns traffic.
+// Group is a definition used for whitelising ip and dns traffic.
 type Group struct {
-	Name     string
-	Includes []string
-	Excludes []string
-	Domains  []string
+	Name string
+
+	// source ip/cidr
+	SrcIncludes []string
+	SrcExcludes []string
+	// destination ip/cidr
+	DstIncludes []string
+	DstExcludes []string
+
+	// only used for dns query whitelist
+	ExcludedDomains []string
 }
 
 // matcher type for single group
@@ -20,7 +27,7 @@ type matcher struct {
 	nm *matchers.Network
 }
 
-// Groups is a set of group definition used for whitelisting dns traffic.
+// Groups is a set of group definition used for whitelisting ip and dns traffic.
 type Groups struct {
 	groups map[string]matcher
 }
@@ -32,12 +39,12 @@ func New() *Groups {
 
 // Add adds whitelist group.
 func (g *Groups) Add(group *Group) error {
-	dm, err := matchers.NewDomain(group.Domains)
+	dm, err := matchers.NewDomain(group.ExcludedDomains)
 	if err != nil {
 		return err
 	}
 
-	nm, err := matchers.NewNetwork(group.Includes, group.Excludes)
+	nm, err := matchers.NewNetwork(group.SrcIncludes, group.SrcExcludes, group.DstIncludes, group.DstExcludes)
 	if err != nil {
 		return err
 	}
@@ -46,24 +53,52 @@ func (g *Groups) Add(group *Group) error {
 	return nil
 }
 
-// IsDNSQueryWhitelisted returns true if dns query is not match any of groups.
-func (g *Groups) IsDNSQueryWhitelisted(domain string, ip net.IP) (string, bool) {
+// IsIPWhitelisted returns true if ip packet doesn't match any of a groups.
+func (g *Groups) IsIPWhitelisted(srcIP, dstIP net.IP) (string, bool) {
 	// if there is no groups, then every query is whitelisted
 	if g == nil || len(g.groups) == 0 {
 		return "<no-whitelist>", true
 	}
 
-	if domain == "" || ip == nil {
+	if srcIP == nil || dstIP == nil {
 		return "<no-data>", false
 	}
 
-	ok, groupName := false, ""
+	// ip must be included in at least 1 group, while
+	// being not excluded from others groups.
+	ok := false
+	for name, group := range g.groups {
+		matched, excluded := group.nm.Match(srcIP, dstIP)
+		if !matched {
+			continue
+		}
+		if excluded {
+			return name, false
+		}
+		ok = true
+	}
+
+	return "<no-match>", ok
+}
+
+// IsDNSQueryWhitelisted returns true if dns query doesn't match any of groups.
+func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (string, bool) {
+	// if there is no groups, then every query is whitelisted
+	if g == nil || len(g.groups) == 0 {
+		return "<no-whitelist>", true
+	}
+
+	if domain == "" || srcIP == nil || dstIP == nil {
+		return "<no-data>", false
+	}
+
 	// ip must be included in at least 1 group, while
 	// being not excluded from others groups.
 	// At the same time domain can't be included in
 	// groups' excluded domains.
+	ok := false
 	for name, group := range g.groups {
-		matched, excluded := group.nm.Match(ip)
+		matched, excluded := group.nm.Match(srcIP, dstIP)
 		if !matched {
 			continue
 		}
@@ -78,8 +113,8 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, ip net.IP) (string, bool) 
 
 		// in case of success do not break, because the ip/domain
 		// could be on other lists.
-		ok, groupName = true, name
+		ok = true
 	}
 
-	return groupName, ok
+	return "", ok
 }

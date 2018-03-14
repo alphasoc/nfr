@@ -97,32 +97,45 @@ type Config struct {
 		File string `yaml:"file,omitempty"`
 	} `yaml:"scope,omitempty"`
 
-	// ScopeConfig is loaded when Scope.File is not empty or the default one is used:
-	// groups:
-	//   default:
-	//     networks:
-	//     - 10.0.0.0/8
-	//     - 192.168.0.0/16
-	//     - 172.16.0.0/12
-	//     exclude:
-	//       domains:
-	//        - "*.arpa"
-	//        - "*.lan"
-	//        - "*.local"
-	//        - "*.internal"
+	// ScopeConfig is loaded when Scope.File is not empty or the default one is used.
 	ScopeConfig struct {
-		Groups map[string]struct {
-			// If packet source ip match this network, then the packet will be send to analyze.
-			Networks []string `yaml:"networks,omitempty"`
-			Exclude  struct {
-				// Exclueds is list of network address excludes from monitoring networks.
-				// This list has higher priority then networks list
-				Networks []string `yaml:"networks,omitempty"`
-				// Domains is list of fqdn. If dns packet fqdn match any
-				// of this domains , then the packet will not be send to analyze.
-				Domains []string `yaml:"domains,omitempty"`
-			} `yaml:"exclude,omitempty"`
-		} `yaml:"groups,omitempty"`
+		DNS struct {
+			Groups map[string]struct {
+				Networks struct {
+					// If packet source ip match the network, then the packet will be send to analyze.
+					Source struct {
+						Include []string `yaml:"include"`
+						Exclude []string `yaml:"exclude"`
+					} `yaml:"source"`
+					// If packet destination ip match the network, then the packet will be send to analyze.
+					Destination struct {
+						Include []string `yaml:"include"`
+						Exclude []string `yaml:"exclude"`
+					} `yaml:"destination"`
+				} `yaml:"networks"`
+
+				Domains struct {
+					Exclude []string `yaml:"exclude"`
+				} `yaml:"domains"`
+			} `yaml:"groups,omitempty"`
+		} `yaml:"dns"`
+
+		IP struct {
+			Groups map[string]struct {
+				Networks struct {
+					// If packet source ip match the network, then the packet will be send to analyze.
+					Source struct {
+						Exclude []string `yaml:"exclude"`
+						Include []string `yaml:"include"`
+					} `yaml:"source"`
+					// If packet destination ip match the network, then the packet will be send to analyze.
+					Destination struct {
+						Exclude []string `yaml:"exclude"`
+						Include []string `yaml:"include"`
+					} `yaml:"destination"`
+				} `yaml:"networks"`
+			} `yaml:"groups,omitempty"`
+		} `yaml:"ip"`
 	} `yaml:"-"`
 
 	// AlphaSOC alerts configuration.
@@ -408,20 +421,42 @@ func validateFilename(file string, noFileOutput bool) error {
 }
 
 const defaultScope = `
-groups:
-  default:
-    networks:
-    - 10.0.0.0/8
-    - 192.168.0.0/16
-    - 172.16.0.0/12
-    - fc00::/7
-    exclude:
-      domains:
-       - "*.arpa"
-       - "*.lan"
-       - "*.local"
-       - "*.internal"
+dns:
+  groups:
+    default:
       networks:
+        source:
+          include:
+            - 10.0.0.0/8
+            - 192.168.0.0/16
+            - 172.16.0.0/12
+            - fc00::/7
+        destination:
+          include:
+            - 0.0.0.0/0
+            - ::/0
+      domains:
+        exclude:
+         - "*.arpa"
+         - "*.lan"
+         - "*.local"
+         - "*.internal"
+ip:
+  groups:
+    default:
+      networks:
+        source:
+          include:
+            - 0.0.0.0/0
+        destination:
+          include:
+            - 0.0.0.0/0
+            - ::/0
+          exclude:
+            - 10.0.0.0/8
+            - 192.168.0.0/16
+            - 172.16.0.0/12
+            - fc00::/7
 `
 
 // load scope config from yaml file, or use default one.
@@ -434,7 +469,7 @@ func (cfg *Config) loadScopeConfig() (err error) {
 		}
 	}
 
-	if err := yaml.Unmarshal(content, &cfg.ScopeConfig); err != nil {
+	if err := yaml.UnmarshalStrict(content, &cfg.ScopeConfig); err != nil {
 		return fmt.Errorf("parse scope config: %s ", err)
 	}
 
@@ -442,27 +477,60 @@ func (cfg *Config) loadScopeConfig() (err error) {
 }
 
 func (cfg *Config) validateScopeConfig() error {
-	for _, group := range cfg.ScopeConfig.Groups {
-		for _, n := range group.Networks {
-			if _, _, err := net.ParseCIDR(n); err != nil {
-				return fmt.Errorf("parse scope config: %s is not cidr", n)
+	testCidr := func(cidrs []string) error {
+		for _, cidr := range cidrs {
+			if _, _, err := net.ParseCIDR(cidr); err != nil {
+				return fmt.Errorf("parse scope config: %s is not cidr", cidr)
 			}
 		}
-
-		for _, n := range group.Exclude.Networks {
-			_, _, err := net.ParseCIDR(n)
-			ip := net.ParseIP(n)
+		return nil
+	}
+	testCidrOrIP := func(s []string) error {
+		for _, v := range s {
+			_, _, err := net.ParseCIDR(v)
+			ip := net.ParseIP(v)
 			if err != nil && ip == nil {
-				return fmt.Errorf("parse scope config: %s is not cidr nor ip", n)
+				return fmt.Errorf("parse scope config: %s is not cidr nor ip", v)
 			}
 		}
+		return nil
+	}
 
-		for _, domain := range group.Exclude.Domains {
+	for _, group := range cfg.ScopeConfig.DNS.Groups {
+		if err := testCidr(group.Networks.Source.Include); err != nil {
+			return err
+		}
+		if err := testCidrOrIP(group.Networks.Source.Exclude); err != nil {
+			return err
+		}
+		if err := testCidr(group.Networks.Destination.Include); err != nil {
+			return err
+		}
+		if err := testCidrOrIP(group.Networks.Destination.Exclude); err != nil {
+			return err
+		}
+
+		for _, domain := range group.Domains.Exclude {
 			// TrimPrefix *. for multimatch domain
 			if !utils.IsDomainName(domain) &&
 				!utils.IsDomainName(strings.TrimPrefix(domain, "*.")) {
 				return fmt.Errorf("parse scope config: %s is not valid domain name", domain)
 			}
+		}
+	}
+
+	for _, group := range cfg.ScopeConfig.IP.Groups {
+		if err := testCidr(group.Networks.Source.Include); err != nil {
+			return err
+		}
+		if err := testCidrOrIP(group.Networks.Source.Exclude); err != nil {
+			return err
+		}
+		if err := testCidr(group.Networks.Destination.Include); err != nil {
+			return err
+		}
+		if err := testCidrOrIP(group.Networks.Destination.Exclude); err != nil {
+			return err
 		}
 	}
 	return nil

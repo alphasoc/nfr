@@ -113,6 +113,7 @@ type DNSPacket struct {
 	SrcPort    int
 	DstPort    int
 	SrcIP      net.IP
+	DstIP      net.IP
 	FQDN       string
 	RecordType string
 }
@@ -144,8 +145,10 @@ func NewDNSPacket(raw gopacket.Packet) *DNSPacket {
 
 	if lipv4, ok := networkLayer.(gopacket.Layer).(*layers.IPv4); ok {
 		dnspacket.SrcIP = lipv4.SrcIP
+		dnspacket.DstIP = lipv4.DstIP
 	} else if lipv6, ok := networkLayer.(gopacket.Layer).(*layers.IPv6); ok {
 		dnspacket.SrcIP = lipv6.SrcIP
+		dnspacket.DstIP = lipv6.DstIP
 	} else {
 		return nil
 	}
@@ -166,7 +169,7 @@ func NewDNSPacket(raw gopacket.Packet) *DNSPacket {
 }
 
 func (p *DNSPacket) String() string {
-	return fmt.Sprintf("%s %s from %s", p.FQDN, p.RecordType, p.SrcIP.String())
+	return fmt.Sprintf("%s %s from %s to %s", p.FQDN, p.RecordType, p.SrcIP, p.DstIP)
 }
 
 // Equal checks if two packets are equal.
@@ -175,6 +178,7 @@ func (p *DNSPacket) Equal(p1 *DNSPacket) bool {
 		return false
 	}
 	return p.SrcIP.Equal(p1.SrcIP) &&
+		p.DstIP.Equal(p1.DstIP) &&
 		p.RecordType == p1.RecordType &&
 		p.FQDN == p1.FQDN
 }
