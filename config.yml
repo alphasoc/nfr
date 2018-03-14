@@ -1,15 +1,15 @@
-# This is the Network Flight Recorder (NFR) configuration file. Here you define the location of the
-# DNS Analytics API and key, and the way in which the NFR application will
-# monitor network traffic, store data, and submit events to the API for scoring.
+# This is the Network Flight Recorder (NFR) configuration file. Here you define
+# the location of the AlphaSOC Analytics Engine, API key,, and the way in which
+# NFR will monitor network traffic and score data.
 # Please contact support@alphasoc.com if you have any questions.
 
 ################################################################################
-# AlphaSOC DNS Analytics server location and API key
+# AlphaSOC Analytics Engine location and API key
 ################################################################################
 
 alphasoc:
 
-  # Location of the server (e.g. cloud or on-premise operation)
+  # Location of the server
   # Default: https://api.alphasoc.net
   host: https://api.alphasoc.net
 
@@ -51,7 +51,7 @@ network:
 
 log:
 
-  # File to which nfr should log
+  # File to which NFR should log
   # To print log to console use two special outputs: stderr or stdout
   # Default: stdout
   file: stdout
@@ -71,7 +71,7 @@ data:
   file: /run/nfr.data
 
 ################################################################################
-# Monitoring scope file location
+# Monitoring scope file location (inputs)
 ################################################################################
 
 scope:
@@ -81,15 +81,14 @@ scope:
   file:
 
 ################################################################################
-# AlphaSOC alerts configuration
+# AlphaSOC alert configuration (outputs)
 ################################################################################
 
 alerts:
 
-  # Graylog server where AlphaSOC alers will be sent. Nfr asssumes
-  #  that uri points to GELF input.
+  # Graylog server URI where AlphaSOC alerts will be sent in GELF format
   graylog:
-    # Uri to the server (for example tcp://127.0.0.1:12201)
+    # URI to the server (for example tcp://127.0.0.1:12201)
     # Default: (none)
     uri:
     # Message level.
@@ -101,12 +100,12 @@ alerts:
   # Default: stderr
   file: stderr
 
-  # Interval for polling events from the DNS Analytics API
+  # Interval for polling events from the Analytics Engine
   # Default: 5m
   poll_interval: 5m
 
 ################################################################################
-# DNS events (data queuing and processing) configuration
+# DNS data processing and queueing configuration
 ################################################################################
 
 dns_events:
@@ -115,11 +114,11 @@ dns_events:
   # Default: 65535
   buffer_size: 65535
 
-  # Interval for flushing data to DNS Analytics API for scoring
+  # Interval for flushing data to Analytics Engine for scoring
   # Default: 30s
   flush_interval: 30s
 
-  # If NFR is unable to send DNS events to the API for processing, it can
+  # If NFR is unable to send DNS events to the Analytics Engine, it can
   # write the events to disk (in PCAP format) and attempt to send them again
   failed:
     # File in which to store unprocessed DNS events on disk
@@ -127,7 +126,7 @@ dns_events:
     file:
 
 ################################################################################
-# DNS events (data queuing and processing) configuration
+# IP data processing and queueing configuration
 ################################################################################
 
 ip_events:
@@ -136,11 +135,11 @@ ip_events:
   # Default: 65535
   buffer_size: 65535
 
-  # Interval for flushing data to IP Analytics API for scoring
+  # Interval for flushing data to Analytics Engine for scoring
   # Default: 30s
   flush_interval: 30s
 
-  # If NFR is unable to send IP events to the API for processing, it can
+  # If NFR is unable to send IP events to the Analytics Engine, it can
   # write the events to disk (in PCAP format) and attempt to send them again
   failed:
     # File in which to store unprocessed IP events on disk

@@ -1,5 +1,5 @@
 # Network Flight Recorder
-**NFR** is a lightweight Linux client used to submit DNS events to _api.alphasoc.net_ for processing and retrieve alerts. The AlphaSOC DNS Analytics Engine quickly identifies security threats within DNS material (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use). NFR can be run as a sniffer, or can read pcap, bro and Suricata logs from disk.
+**NFR** is a lightweight client used to submit network data and retrieve alerts from the AlphaSOC Analytics Engine at _api.alphasoc.net_. AlphaSOC identifies security threats (e.g. C2 traffic, DNS tunneling, ransomware, and policy violations such as cryptocurrency mining and third-party VPN use) by processing IP and DNS traffic. NFR can be run as a sniffer or read data from disk in formats such as PCAP, Bro, and Suricata.
 
 Alert data is returned in JSON format upon processing, describing the threats and policy violations.
 
@@ -27,9 +27,9 @@ Use the following command to install NFR:
 Upon installation, test NFR as follows:
 ```
 # nfr --help
-Network Flight Recorder (NFR) is an application which captures DNS requests and
-provides deep analysis and alerting of suspicious events, identifying gaps in
-your security controls and highlighting targeted attacks and policy violations.
+Network Flight Recorder (NFR) is an application which captures network traffic
+and provides deep analysis and alerting of suspicious events, identifying gaps
+in your security controls, highlighting targeted attacks, and policy violations.
 
 Usage:
   nfr [command] [argument]
@@ -38,8 +38,8 @@ Available Commands:
   account register       Generate an API key via the licensing server
   account reset [email]  Reset the API key associated with a given email address
   account status         Show the status of your AlphaSOC API key and license
-  listen                 Start the sniffer and score live DNS events
-  read [file]            Process DNS events stored on disk in known formats
+  listen                 Start the sniffer and score live network traffic
+  read [file]            Process events stored on disk in known formats
   version                Show the NFR binary version
   help                   Provides help and usage instructions
 
@@ -47,7 +47,7 @@ Use "nfr [command] --help" for more information about a given command.
 ```
 
 ## Configuration
-NFR expects to find its configuration file in `/etc/nfr/config.yml`. You can find an example [`config.yml`](https://github.com/alphasoc/nfr/blob/master/config.yml) file in the repository's root directory. The file defines the network interface to monitor for DNS traffic, output preferences, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/nfr/` directory.
+NFR expects to find its configuration file in `/etc/nfr/config.yml`. You can find an example [`config.yml`](https://github.com/alphasoc/nfr/blob/master/config.yml) file in the repository's root directory. The file defines the network interface to process traffic from, input preferences (e.g. IDS log files to monitor), output preferences, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/nfr/` directory.
 
 If you are a new user, simply run `nfr account register` to create the file and generate an API key, e.g.
 
@@ -66,8 +66,32 @@ Success! The configuration has been written to /etc/nfr/config.yml
 Next, check your email and click the verification link to activate your API key.
 ```
 
+## Processing events from Bro and Suricata
+Use the `monitor` directive within `/etc/nfr/config.yml` to actively read log files from disk. Bro IDS logs both DNS and IP traffic, whereas Suricata only logs DNS traffic. To monitor both Bro `conn.log` and `dns.log` output you can use this configuration:
+
+```
+monitor:
+  - format: bro
+    type: dns
+    file: /path/to/dns.log
+  - format: bro
+    type: ip
+    file: /path/to/conn.log
+```
+
+To process Suricata DNS output you would use:
+
+```
+monitor:
+  - format: suricata
+    type: dns
+    file: /path/to/eve.json
+```
+
+Microsoft DNS (`format: msdns`) is also supported, and support for other log types is coming. Please contact support@alphasoc.com if you have a particular use case and wish to monitor a file format that is not listed here.
+
 ## Monitoring scope
-Use directives within `/etc/nfr/scope.yml` to define the monitoring scope. You can find an example [`scope.yml`](https://github.com/alphasoc/nfr/blob/master/scope.yml) file in the repository's root directory. DNS requests from the IP ranges within scope will be processed by the AlphaSOC DNS Analytics API, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
+Use directives within `/etc/nfr/scope.yml` to define the monitoring scope. You can find an example [`scope.yml`](https://github.com/alphasoc/nfr/blob/master/scope.yml) file in the repository's root directory. Network traffic from the IP ranges within scope will be processed by the AlphaSOC Analytics Engine, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
 
 ```
 groups:
