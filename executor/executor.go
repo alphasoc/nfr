@@ -556,8 +556,8 @@ func ipPacketsToRequest(packets []*packet.IPPacket) *client.EventsIPRequest {
 			Timestamp: ippacket.Timestamp,
 			SrcIP:     ippacket.SrcIP,
 			SrcPort:   ippacket.SrcPort,
-			DestIP:    ippacket.DstIP,
-			DestPort:  ippacket.DstPort,
+			DstIP:     ippacket.DstIP,
+			DstPort:   ippacket.DstPort,
 			Protocol:  ippacket.Protocol,
 		}
 		switch ippacket.Direction {

@@ -13,8 +13,8 @@ type IPEntry struct {
 	Timestamp time.Time `json:"ts"`
 	SrcIP     net.IP    `json:"srcIp"`
 	SrcPort   int       `json:"srcPort"`
-	DestIP    net.IP    `json:"destIp"`
-	DestPort  int       `json:"destPort"`
+	DstIP     net.IP    `json:"destIp"`
+	DstPort   int       `json:"destPort"`
 	Protocol  string    `json:"proto"`
 	BytesIn   int       `json:"bytesIn"`
 	BytesOut  int       `json:"bytesOut"`
