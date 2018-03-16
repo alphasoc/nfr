@@ -448,6 +448,7 @@ ip:
         source:
           include:
             - 0.0.0.0/0
+            - ::/0
         destination:
           include:
             - 0.0.0.0/0
