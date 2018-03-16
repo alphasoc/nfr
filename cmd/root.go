@@ -36,7 +36,7 @@ highlighting targeted attacks.`,
 		SilenceUsage:  true,
 	}
 
-	cmd.Flags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
+	cmd.PersistentFlags().StringVarP(&configPath, "config", "c", configDefaultLocation, "Config path for nfr")
 
 	cmd.AddCommand(newVersionCommand())
 	cmd.AddCommand(newAccountCommand())
