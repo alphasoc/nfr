@@ -3,6 +3,7 @@ package alerts
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -51,6 +52,7 @@ func (w *GraylogWriter) Write(resp *client.AlertsResponse) error {
 				Level:        w.level,
 				Extra: map[string]interface{}{
 					"severity":     resp.Threats[threat].Severity,
+					"policy":       strconv.FormatBool(resp.Threats[threat].Policy),
 					"flags":        strings.Join(alert.Wisdom.Flags, ","),
 					"threat":       threat,
 					"engine_agent": client.DefaultUserAgent,
