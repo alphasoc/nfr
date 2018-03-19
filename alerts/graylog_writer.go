@@ -42,38 +42,39 @@ func (w *GraylogWriter) Write(resp *client.AlertsResponse) error {
 
 	// send each alert as separate message.
 	for _, alert := range resp.Alerts {
-		severity, threat := highestThreatsSeverity(resp, alert.Threats)
-		m := &gelf.Message{
-			Version:      "1.1",
-			Host:         w.hostname,
-			ShortMessage: resp.Threats[threat].Title,
-			Timestamp:    time.Now().Unix(),
-			Level:        w.level,
-			Extra: map[string]interface{}{
-				"severity":     severity,
-				"flags":        strings.Join(alert.Wisdom.Flags, ","),
-				"threats":      strings.Join(alert.Threats, ","),
-				"engine_agent": client.DefaultUserAgent,
-			},
-		}
-		switch alert.EventType {
-		case "dns":
-			m.Extra["ts"] = alert.DNSEvent.Timestamp.String()
-			m.Extra["src_ip"] = alert.DNSEvent.SrcIP
-			m.Extra["query"] = alert.DNSEvent.Query
-			m.Extra["qtype"] = alert.DNSEvent.QType
-		case "ip":
-			m.Extra["ts"] = alert.IPEvent.Timestamp.String()
-			m.Extra["protocol"] = alert.IPEvent.Protocol
-			m.Extra["src_ip"] = alert.IPEvent.SrcIP
-			m.Extra["src_port"] = alert.IPEvent.SrcPort
-			m.Extra["dest_ip"] = alert.IPEvent.DstIP
-			m.Extra["dest_port"] = alert.IPEvent.DstPort
-			m.Extra["bytes_in"] = alert.IPEvent.BytesIn
-			m.Extra["bytes_out"] = alert.IPEvent.BytesOut
-		}
-		if err := w.g.Send(m); err != nil {
-			return err
+		for _, threat := range alert.Threats {
+			m := &gelf.Message{
+				Version:      "1.1",
+				Host:         w.hostname,
+				ShortMessage: resp.Threats[threat].Title,
+				Timestamp:    time.Now().Unix(),
+				Level:        w.level,
+				Extra: map[string]interface{}{
+					"severity":     resp.Threats[threat].Severity,
+					"flags":        strings.Join(alert.Wisdom.Flags, ","),
+					"threat":       threat,
+					"engine_agent": client.DefaultUserAgent,
+				},
+			}
+			switch alert.EventType {
+			case "dns":
+				m.Extra["original_event"] = alert.DNSEvent.Timestamp.String()
+				m.Extra["src_ip"] = alert.DNSEvent.SrcIP
+				m.Extra["query"] = alert.DNSEvent.Query
+				m.Extra["record_type"] = alert.DNSEvent.QType
+			case "ip":
+				m.Extra["original_event"] = alert.IPEvent.Timestamp.String()
+				m.Extra["protocol"] = alert.IPEvent.Protocol
+				m.Extra["src_ip"] = alert.IPEvent.SrcIP
+				m.Extra["src_port"] = alert.IPEvent.SrcPort
+				m.Extra["dest_ip"] = alert.IPEvent.DstIP
+				m.Extra["dest_port"] = alert.IPEvent.DstPort
+				m.Extra["bytes_in"] = alert.IPEvent.BytesIn
+				m.Extra["bytes_out"] = alert.IPEvent.BytesOut
+			}
+			if err := w.g.Send(m); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -82,20 +83,4 @@ func (w *GraylogWriter) Write(resp *client.AlertsResponse) error {
 // Close closes the connecion with graylog server.
 func (w *GraylogWriter) Close() error {
 	return w.g.Close()
-}
-
-// find theats with highest severity.
-func highestThreatsSeverity(resp *client.AlertsResponse, threats []string) (int, string) {
-	severity := 1
-	threat := ""
-
-	for _, t := range threats {
-		if _, ok := resp.Threats[t]; ok {
-			if severity < resp.Threats[t].Severity {
-				severity = resp.Threats[t].Severity
-				threat = t
-			}
-		}
-	}
-	return severity, threat
 }
