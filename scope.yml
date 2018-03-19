@@ -1,34 +1,56 @@
-# This configuration file sets the NFR monitoring scope
-# Groups can be used to assign labels to different networks (e.g. default, pci_zone, etc.)
 #
-# Within each group, you can define:
-# - IP address space to monitor DNS traffic from
-# - IP address space to exclude (e.g. mail servers and systems repeating requests)
-# - Whitelisted domains (e.g. internal trusted domains that don't need to be scored)
+# This is the Network Flight Recorder (NFR) monitoring scope file. Here you create
+# arbitrary groups of systems to monitor. For each group you should then define:
 #
-# DNS traffic from addresses within scope and for non-whitelisted domains will be sent to
-# the AlphaSOC DNS Analytics API for scoring. You can use this configuration file to limit
-# and control data sent to the API.
+# - Source IP address ranges to monitor events from
+# - Source IP address ranges to exclude from scoring (if any)
+# - Trusted destination domains to whitelist (e.g. internal domains)
+# - Trusted destination IP ranges to whitelist (e.g. known good destinations)
 #
-# If you have any questions, please contact support@alphasoc.com for assistance.
+# Only network events from the source addresses within scope to non-whitelisted
+# destinations are sent to the AlphaSOC Analytics Engine for scoring.
+#
+# Please contact support@alphasoc.com if you have any questions
+#
 
 groups:
-  # name of group
+
+  # Short arbitrary label for the group (e.g. default:, pci_zone:, guest_wifi:)
   default:
-    # networks to monitor, only CIDR format is allowed
-    networks:
+
+    # Long label describing the group, for use in alerts and UI elements
+    label: "Default"
+
+    # Source IP ranges of networks in scope, in CIDR slash-notation format
+    # We default to internal private ranges here, but you can use 0.0.0.0/0 to
+    # monitor all of the things.
+    in_scope:
     - 10.0.0.0/8
     - 192.168.0.0/16
     - 172.16.0.0/12
     - fc00::/7
-    # excluded (whitelisted) domains and networks
-    exclude:
-      # excluded domains, supporting both wilcards (starting with '*') and strict domains
-      domains:
-       - "*.arpa"
-       - "*.lan"
-       - "*.local"
-       - "*.internal"
-      # excluded networks, used to drop data from noisy sources (e.g. mail servers)
-      # CIDR and single IP address formats are supported
-      networks:
+
+    # Source IP ranges of systems to exclude from monitoring in CIDR
+    # slash-notation format (i.e. use "- 1.2.3.4/32" to suppress a single system),
+    # written as a list in the same format as the in_scope section above.
+    # This exclusion list is intended to suppress scoring of events from
+    # recursive resolvers, mail servers, proxies, and other systems that
+    # generating noise or repeating queries that are being captured elsewhere.
+    out_scope:
+
+    # Trusted destination domains which are whitelisted and ignored by the
+    # DNS analytics module. Use this list to whitelist your internal domains, etc.
+    trusted_domains:
+    - "*.arpa"
+    - "*.lan"
+    - "*.local"
+    - "*.internal"
+
+    # Trusted destination IP ranges (in CIDR slash-notation format) which are
+    # whitelisted and ignored by the IP analytics module. By default these are
+    # private networks, so that we process Internet-bound traffic to flag anomalies.
+    trusted_ips:
+    - 10.0.0.0/8
+    - 192.168.0.0/16
+    - 172.16.0.0/12
+    - fc00::/7

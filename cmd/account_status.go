@@ -11,7 +11,7 @@ import (
 func newAccountStatusCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "status",
-		Short: "Show status of AlphaSOC account",
+		Short: "Show the status of your AlphaSOC API key and license",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_, c, err := createConfigAndClient(false)
 			if err != nil {
