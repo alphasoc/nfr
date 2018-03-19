@@ -4,6 +4,16 @@
 # Please contact support@alphasoc.com if you have any questions.
 
 ################################################################################
+# General settings
+################################################################################
+
+# Module to run
+# default: [events_sender, alerts_collector]
+modules:
+  - events_sender
+    alerts_collector
+
+################################################################################
 # AlphaSOC Analytics Engine location and API key
 ################################################################################
 

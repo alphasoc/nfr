@@ -23,8 +23,26 @@ type Monitor struct {
 	File   string `yaml:"file"`
 }
 
+// Module for nfr.
+type Module string
+
+// Available nfr modules.
+const (
+	EventsSenderModule    Module = "events_sender"
+	AlertsCollectorModule Module = "alerts_collector"
+)
+
+var moduleMap = map[Module]bool{
+	EventsSenderModule:    true,
+	AlertsCollectorModule: true,
+}
+
 // Config for nfr
 type Config struct {
+	// NFR enable modules list.
+	// default: [events_sender, alerts_collector]
+	Modules []Module `yaml:"modules"`
+
 	// AlphaSOC server configuration
 	Alphasoc struct {
 		// AlphaSOC host server. Default: https://api.alpahsoc.net
@@ -235,28 +253,10 @@ func New(file ...string) (*Config, error) {
 	return cfg, cfg.validate()
 }
 
-// load config from content.
-func (cfg *Config) load(content []byte) error {
-	return yaml.UnmarshalStrict(content, cfg)
-}
-
-// Save saves config to file.
-func (cfg *Config) Save(file string) error {
-	if err := os.MkdirAll(filepath.Dir(file), os.ModeDir); err != nil {
-		return err
-	}
-
-	content, err := yaml.Marshal(cfg)
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(file, content, 0666)
-}
-
 // newDefaultConfig returns config with set defaults.
 func newDefaultConfig() *Config {
 	cfg := &Config{}
+	cfg.Modules = []Module{EventsSenderModule, AlertsCollectorModule}
 	cfg.Alphasoc.Host = "https://api.alphasoc.net"
 	cfg.Alphasoc.Analyze.DNS = true
 	cfg.Alphasoc.Analyze.IP = true
@@ -279,7 +279,46 @@ func newDefaultConfig() *Config {
 	return cfg
 }
 
+// ModuleExist returns true if given module was found in the config.
+func (cfg *Config) ModuleExist(m Module) bool {
+	for i := range cfg.Modules {
+		if cfg.Modules[i] == m {
+			return true
+		}
+	}
+	return false
+}
+
+// Save saves config to file.
+func (cfg *Config) Save(file string) error {
+	if err := os.MkdirAll(filepath.Dir(file), os.ModeDir); err != nil {
+		return err
+	}
+
+	content, err := yaml.Marshal(cfg)
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(file, content, 0666)
+}
+
+// load config from content.
+func (cfg *Config) load(content []byte) error {
+	return yaml.UnmarshalStrict(content, cfg)
+}
+
 func (cfg *Config) validate() error {
+	if len(cfg.Modules) == 0 {
+		return fmt.Errorf("config: no module to run")
+	}
+
+	for _, m := range cfg.Modules {
+		if !moduleMap[m] {
+			return fmt.Errorf("config: unknown module %s", m)
+		}
+	}
+
 	if cfg.Network.Interface != "" {
 		iface, err := net.InterfaceByName(cfg.Network.Interface)
 		if err != nil {

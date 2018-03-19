@@ -57,68 +57,68 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		err                       error
 	)
 
-	if cfg.Alerts.File != "" {
-		jsonWriter, err = alerts.NewJSONFileWriter(cfg.Alerts.File)
+	e := &Executor{
+		c:   c,
+		cfg: cfg,
+	}
+
+	if cfg.ModuleExist(config.AlertsCollectorModule) {
+		e.alertsPoller = alerts.NewPoller(c)
+		if err = e.alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
+			return nil, err
+		}
+
+		if cfg.Alerts.File != "" {
+			jsonWriter, err = alerts.NewJSONFileWriter(cfg.Alerts.File)
+			if err != nil {
+				return nil, err
+			}
+			e.alertsPoller.AddWriter(jsonWriter)
+		}
+
+		if cfg.Alerts.Graylog.URI != "" {
+			graylogWriter, err = alerts.NewGraylogWriter(cfg.Alerts.Graylog.URI, cfg.Alerts.Graylog.Level)
+			if err != nil {
+				return nil, err
+			}
+			e.alertsPoller.AddWriter(graylogWriter)
+		}
+	}
+
+	if cfg.ModuleExist(config.EventsSenderModule) {
+		e.dnsbuf = packet.NewDNSPacketBuffer()
+		e.ipbuf = packet.NewIPPacketBuffer()
+		e.dnsgroups, e.ipgroups, err = createGroups(cfg)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	if cfg.Alerts.Graylog.URI != "" {
-		graylogWriter, err = alerts.NewGraylogWriter(cfg.Alerts.Graylog.URI, cfg.Alerts.Graylog.Level)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	alertsPoller := alerts.NewPoller(c)
-	if jsonWriter != nil {
-		alertsPoller.AddWriter(jsonWriter)
-	}
-	if graylogWriter != nil {
-		alertsPoller.AddWriter(graylogWriter)
-	}
-	if err = alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
-		return nil, err
-	}
-
-	dnsgroups, ipgroups, err := createGroups(cfg)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Executor{
-		c:            c,
-		cfg:          cfg,
-		alertsPoller: alertsPoller,
-		dnsgroups:    dnsgroups,
-		ipgroups:     ipgroups,
-		dnsbuf:       packet.NewDNSPacketBuffer(),
-		ipbuf:        packet.NewIPPacketBuffer(),
-	}, nil
+	return e, nil
 }
 
 // Start starts sniffer in online mode, where network alerts are sent to api.
 func (e *Executor) Start() (err error) {
-	log.Infof("creating sniffer for %s interface", e.cfg.Network.Interface)
-	e.sniffer, err = sniffer.NewLivePcapSniffer(e.cfg.Network.Interface, &sniffer.Config{
-		EnableDNSAnalitics: e.cfg.Alphasoc.Analyze.DNS,
-		EnableIPAnalitics:  e.cfg.Alphasoc.Analyze.IP,
-		Protocols:          e.cfg.Network.DNS.Protocols,
-		Port:               e.cfg.Network.DNS.Port,
-	})
-	if err != nil {
-		return err
-	}
-
-	if e.cfg.DNSEvents.Failed.File != "" {
-		if e.dnsWriter, err = packet.NewWriter(e.cfg.DNSEvents.Failed.File); err != nil {
-			return fmt.Errorf("can't open file %s for writing dns events: %s", e.cfg.DNSEvents.Failed.File, err.(*net.OpError).Err)
+	if e.cfg.ModuleExist(config.EventsSenderModule) {
+		log.Infof("creating sniffer for %s interface", e.cfg.Network.Interface)
+		e.sniffer, err = sniffer.NewLivePcapSniffer(e.cfg.Network.Interface, &sniffer.Config{
+			EnableDNSAnalitics: e.cfg.Alphasoc.Analyze.DNS,
+			EnableIPAnalitics:  e.cfg.Alphasoc.Analyze.IP,
+			Protocols:          e.cfg.Network.DNS.Protocols,
+			Port:               e.cfg.Network.DNS.Port,
+		})
+		if err != nil {
+			return err
 		}
-	}
-	if e.cfg.IPEvents.Failed.File != "" {
-		if e.ipWriter, err = packet.NewWriter(e.cfg.IPEvents.Failed.File); err != nil {
-			return fmt.Errorf("can't open file %s for writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
+
+		if e.cfg.DNSEvents.Failed.File != "" {
+			if e.dnsWriter, err = packet.NewWriter(e.cfg.DNSEvents.Failed.File); err != nil {
+				return fmt.Errorf("can't open file %s for writing dns events: %s", e.cfg.DNSEvents.Failed.File, err.(*net.OpError).Err)
+			}
+		}
+		if e.cfg.IPEvents.Failed.File != "" {
+			if e.ipWriter, err = packet.NewWriter(e.cfg.IPEvents.Failed.File); err != nil {
+				return fmt.Errorf("can't open file %s for writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
+			}
 		}
 	}
 
@@ -229,8 +229,12 @@ func (e *Executor) Monitor() error {
 // init initialize executor.
 func (e *Executor) init() {
 	e.installSignalHandler()
-	e.startAlertPoller()
-	e.startPacketSender()
+	if e.cfg.ModuleExist(config.AlertsCollectorModule) {
+		e.startAlertPoller()
+	}
+	if e.cfg.ModuleExist(config.EventsSenderModule) {
+		e.startPacketSender()
+	}
 }
 
 func (e *Executor) processDNSReader() error {
@@ -510,7 +514,6 @@ func (e *Executor) installSignalHandler() {
 
 // createGroups creates groups for matching dns packets.
 func createGroups(cfg *config.Config) (dns *groups.Groups, ip *groups.Groups, err error) {
-
 	log.Infof("found %d whiltelist dns groups", len(cfg.ScopeConfig.DNS.Groups))
 	if len(cfg.ScopeConfig.DNS.Groups) > 0 {
 		dns = groups.New()
