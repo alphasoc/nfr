@@ -15,7 +15,6 @@ jobs:
           name: build
           command: |
             GOARCH=amd64 GOOS=linux go build -o nfr-linux-amd64 -ldflags "-X github.com/alphasoc/nfr/version.Version=$(git describe)"
-            GOARCH=amd64 GOOS=darwin go build -o nfr-darwin-amd6 -ldflags "-X github.com/alphasoc/nfr/version.Version=$(git describe)"
       - persist_to_workspace:
           root: .
           paths:
