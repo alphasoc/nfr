@@ -96,27 +96,28 @@ Use directives within `/etc/nfr/scope.yml` to define the monitoring scope. You c
 ```
 groups:
   private_network:
-    networks:
+    label: "Private network"
+    in_scope:
       - 10.0.0.0/8
       - 192.168.0.0/16
-    exclude:
-      networks:
-        - 10.1.0.0/16
-        - 10.2.0.254
-      domains:
-        - "*.example.com"
-        - "*.alphasoc.net"
-        - "google.com"
+    out_scope:
+      - 10.1.0.0/16
+      - 10.2.0.254/32
+    trusted_domains:
+      - "*.example.com"
+      - "*.alphasoc.net"
+      - "google.com"
   public_network:
-    networks:
-    - 131.1.0.0/16
+    label: "Private network"
+    in_scope:
+      - 131.1.0.0/16
   my_own_group:
-    networks:
-    - 131.2.0.0/16
-    exclude:
-      domains:
-        - "site.net"
-        - "*.internal.company.org"
+    label: "Custom group"
+    in_scope:
+      - 131.2.0.0/16
+    trusted_domains:
+      - "site.net"
+      - "*.internal.company.org"
 ```
 
 ## Running NFR
