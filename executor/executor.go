@@ -34,8 +34,7 @@ type Executor struct {
 
 	alertsPoller *alerts.Poller
 
-	dnsgroups *groups.Groups
-	ipgroups  *groups.Groups
+	groups *groups.Groups
 
 	dnsbuf    *packet.DNSPacketBuffer
 	dnsWriter *packet.Writer
@@ -62,22 +61,22 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		cfg: cfg,
 	}
 
-	if cfg.ModuleExist(config.AlertsCollectorModule) {
+	if cfg.HasOutputs() {
 		e.alertsPoller = alerts.NewPoller(c)
 		if err = e.alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
 			return nil, err
 		}
 
-		if cfg.Alerts.File != "" {
-			jsonWriter, err = alerts.NewJSONFileWriter(cfg.Alerts.File)
+		if cfg.Outputs.File != "" {
+			jsonWriter, err = alerts.NewJSONFileWriter(cfg.Outputs.File)
 			if err != nil {
 				return nil, err
 			}
 			e.alertsPoller.AddWriter(jsonWriter)
 		}
 
-		if cfg.Alerts.Graylog.URI != "" {
-			graylogWriter, err = alerts.NewGraylogWriter(cfg.Alerts.Graylog.URI, cfg.Alerts.Graylog.Level)
+		if cfg.Outputs.Graylog.URI != "" {
+			graylogWriter, err = alerts.NewGraylogWriter(cfg.Outputs.Graylog.URI, cfg.Outputs.Graylog.Level)
 			if err != nil {
 				return nil, err
 			}
@@ -85,45 +84,51 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		}
 	}
 
-	if cfg.ModuleExist(config.EventsSenderModule) {
+	if cfg.HasInputs() {
 		e.dnsbuf = packet.NewDNSPacketBuffer()
 		e.ipbuf = packet.NewIPPacketBuffer()
-		e.dnsgroups, e.ipgroups, err = createGroups(cfg)
+		e.groups, err = createGroups(cfg)
 		if err != nil {
 			return nil, err
 		}
 	}
+
+	if e.cfg.Inputs.Sniffer.Enabled {
+		e.sniffer, err = sniffer.NewLivePcapSniffer(e.cfg.Inputs.Sniffer.Interface, &sniffer.Config{
+			BPFilter: "tcp or udp",
+		})
+		if err != nil {
+			return nil, fmt.Errorf("can't create sniffer: %s", err)
+		}
+
+		if e.cfg.DNSEvents.Failed.File != "" {
+			if e.dnsWriter, err = packet.NewWriter(e.cfg.DNSEvents.Failed.File); err != nil {
+				return nil, fmt.Errorf("can't open file %s for writing dns events: %s", e.cfg.DNSEvents.Failed.File, err.(*net.OpError).Err)
+			}
+		}
+		if e.cfg.IPEvents.Failed.File != "" {
+			if e.ipWriter, err = packet.NewWriter(e.cfg.IPEvents.Failed.File); err != nil {
+				return nil, fmt.Errorf("can't open file %s for writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
+			}
+		}
+	}
+
 	return e, nil
 }
 
 // Start starts sniffer in online mode, where network alerts are sent to api.
 func (e *Executor) Start() (err error) {
-	if e.cfg.ModuleExist(config.EventsSenderModule) {
-		log.Infof("creating sniffer for %s interface", e.cfg.Network.Interface)
-		e.sniffer, err = sniffer.NewLivePcapSniffer(e.cfg.Network.Interface, &sniffer.Config{
-			EnableDNSAnalitics: e.cfg.Alphasoc.Analyze.DNS,
-			EnableIPAnalitics:  e.cfg.Alphasoc.Analyze.IP,
-			Protocols:          e.cfg.Network.DNS.Protocols,
-			Port:               e.cfg.Network.DNS.Port,
-		})
-		if err != nil {
-			return err
-		}
-
-		if e.cfg.DNSEvents.Failed.File != "" {
-			if e.dnsWriter, err = packet.NewWriter(e.cfg.DNSEvents.Failed.File); err != nil {
-				return fmt.Errorf("can't open file %s for writing dns events: %s", e.cfg.DNSEvents.Failed.File, err.(*net.OpError).Err)
-			}
-		}
-		if e.cfg.IPEvents.Failed.File != "" {
-			if e.ipWriter, err = packet.NewWriter(e.cfg.IPEvents.Failed.File); err != nil {
-				return fmt.Errorf("can't open file %s for writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
-			}
-		}
+	e.init()
+	e.monitor()
+	if e.cfg.Inputs.Sniffer.Enabled {
+		log.Infof("starting sniffer for %s interface", e.cfg.Inputs.Sniffer.Interface)
+		e.do()
 	}
 
-	e.init()
-	return e.do()
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	<-c
+	return nil
 }
 
 // Send sends dns events from given format file to engine.
@@ -154,22 +159,19 @@ func (e *Executor) Send(file string, fileFomrat string, fileType string) (err er
 	}
 }
 
-// Monitor monitors log files and send data to engine.
-func (e *Executor) Monitor() error {
-	if len(e.cfg.Monitors) == 0 {
-		log.Fatalf("no files specify for monitoring")
-	}
-
-	e.init()
-	for _, monitor := range e.cfg.Monitors {
+// monitor monitors log files and send data to engine.
+func (e *Executor) monitor() {
+	for _, monitor := range e.cfg.Inputs.Monitors {
 		t, err := tail.TailFile(monitor.File, tail.Config{
 			Follow: true,
 			ReOpen: true,
 			Logger: log.StandardLogger(),
 		})
 		if err != nil {
-			return err
+			log.Errorf("can't caputre log in file %s: %s", monitor.File, err)
+			continue
 		}
+		log.Infof("monitoring %s file", monitor.File)
 
 		go func(monitor config.Monitor) {
 			var parser logs.Parser
@@ -220,25 +222,22 @@ func (e *Executor) Monitor() error {
 			}
 		}(monitor)
 	}
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	<-c
-	return nil
 }
 
 // init initialize executor.
 func (e *Executor) init() {
 	e.installSignalHandler()
-	if e.cfg.ModuleExist(config.AlertsCollectorModule) {
+	log.Info("DODODODO ", e.cfg.HasOutputs())
+	if e.cfg.HasOutputs() {
 		e.startAlertPoller()
 	}
-	if e.cfg.ModuleExist(config.EventsSenderModule) {
+	if e.cfg.HasInputs() {
 		e.startPacketSender()
 	}
 }
 
 func (e *Executor) processDNSReader() error {
-	if !e.cfg.Alphasoc.Analyze.DNS {
+	if !e.cfg.Engine.Analyze.DNS {
 		return nil
 	}
 
@@ -263,7 +262,7 @@ func (e *Executor) processDNSReader() error {
 }
 
 func (e *Executor) processIPReader() error {
-	if !e.cfg.Alphasoc.Analyze.IP {
+	if !e.cfg.Engine.Analyze.IP {
 		return nil
 	}
 
@@ -289,7 +288,7 @@ func (e *Executor) processIPReader() error {
 
 // startPacketSender periodcly send dns and ip packets to api.
 func (e *Executor) startPacketSender() {
-	if e.cfg.Alphasoc.Analyze.DNS {
+	if e.cfg.Engine.Analyze.DNS {
 		go func() {
 			for range time.NewTicker(e.cfg.DNSEvents.FlushInterval).C {
 				e.sendDNSPackets()
@@ -297,7 +296,7 @@ func (e *Executor) startPacketSender() {
 		}()
 	}
 
-	if e.cfg.Alphasoc.Analyze.IP {
+	if e.cfg.Engine.Analyze.IP {
 		go func() {
 			for range time.NewTicker(e.cfg.IPEvents.FlushInterval).C {
 				e.sendIPPackets()
@@ -373,13 +372,13 @@ func (e *Executor) sendIPPackets() error {
 // do retrives packets from sniffer, filter it and send to api.
 func (e *Executor) do() error {
 	for rawpacket := range e.sniffer.Packets() {
-		if e.cfg.Alphasoc.Analyze.IP {
+		if e.cfg.Engine.Analyze.IP {
 			ippacket := packet.NewIPPacket(rawpacket)
 			if ippacket == nil {
 				// continue because if packet isn't ip packet, then it can't be dns packet
 				continue
 			}
-			ippacket.DetermineDirection(e.cfg.Network.HardwareAddr)
+			ippacket.DetermineDirection(e.cfg.Inputs.Sniffer.HardwareAddr)
 
 			if e.shouldSendIPPacket(ippacket) {
 				e.mx.Lock()
@@ -392,7 +391,7 @@ func (e *Executor) do() error {
 			}
 		}
 
-		if e.cfg.Alphasoc.Analyze.DNS {
+		if e.cfg.Engine.Analyze.DNS {
 			dnspacket := packet.NewDNSPacket(rawpacket)
 			if dnspacket == nil {
 				continue
@@ -426,10 +425,10 @@ func (e *Executor) shouldSendIPPacket(p *packet.IPPacket) bool {
 		return false
 	}
 	// no scope groups configured
-	if e.ipgroups == nil {
+	if e.groups == nil {
 		return true
 	}
-	name, t := e.ipgroups.IsIPWhitelisted(p.SrcIP, p.DstIP)
+	name, t := e.groups.IsIPWhitelisted(p.SrcIP, p.DstIP)
 	if !t {
 		log.Debugf("ip packet from %s to %s excluded by %s group", p.SrcIP, p.DstIP, name)
 	}
@@ -438,18 +437,11 @@ func (e *Executor) shouldSendIPPacket(p *packet.IPPacket) bool {
 
 // shouldSendDNSPackets tests if dns packet should be send to channel
 func (e *Executor) shouldSendDNSPacket(p *packet.DNSPacket) bool {
-	if e.cfg.Network.DNS.Port != 0 && e.cfg.Network.DNS.Port != p.DstPort {
-		return false
-	}
-	if !utils.StringsContains(e.cfg.Network.DNS.Protocols, p.Protocol) {
-		return false
-	}
-
 	// no scope groups configured
-	if e.dnsgroups == nil {
+	if e.groups == nil {
 		return true
 	}
-	name, t := e.dnsgroups.IsDNSQueryWhitelisted(p.FQDN, p.SrcIP, p.DstIP)
+	name, t := e.groups.IsDNSQueryWhitelisted(p.FQDN, p.SrcIP, p.DstIP)
 	if !t {
 		log.Debugf("dns query %s excluded by %s group", p, name)
 	}
@@ -458,21 +450,21 @@ func (e *Executor) shouldSendDNSPacket(p *packet.DNSPacket) bool {
 
 // startAlertPoller periodcly checks for new alerts.
 func (e *Executor) startAlertPoller() {
+	log.Info("starting do poller")
 	// event poller will return error on api call or writing to disk.
 	// In both cases log the error and try again in a moment.
 	go func() {
 		for {
-			if err := e.alertsPoller.Do(e.cfg.Alerts.PollInterval); err != nil {
+			if err := e.alertsPoller.Do(e.cfg.Engine.Alerts.PollInterval); err != nil {
 				log.Errorln(err)
 			}
 		}
 	}()
 }
 
-// installSignalHandler install os.Interrupt handler
-// for writing network alerts into file if there some in the buffer.
-// If the dns writer is not configured, signal handler
-// is not installed.
+// installSignalHandler install os.Interrupt handler for writing alerts
+// into file if there are some in the buffer. If the dns/ip writer is
+// not configured, signal handler is not installed.
 func (e *Executor) installSignalHandler() {
 	// Unless writer is set, then no handler is needed
 	if e.dnsWriter == nil && e.ipWriter == nil {
@@ -512,43 +504,27 @@ func (e *Executor) installSignalHandler() {
 	}()
 }
 
-// createGroups creates groups for matching dns packets.
-func createGroups(cfg *config.Config) (dns *groups.Groups, ip *groups.Groups, err error) {
-	log.Infof("found %d whiltelist dns groups", len(cfg.ScopeConfig.DNS.Groups))
-	if len(cfg.ScopeConfig.DNS.Groups) > 0 {
-		dns = groups.New()
-		for name, group := range cfg.ScopeConfig.DNS.Groups {
-			g := &groups.Group{
-				Name:            name,
-				SrcIncludes:     group.Networks.Source.Include,
-				SrcExcludes:     group.Networks.Source.Exclude,
-				DstIncludes:     group.Networks.Destination.Include,
-				DstExcludes:     group.Networks.Destination.Exclude,
-				ExcludedDomains: group.Domains.Exclude,
-			}
-			if err = dns.Add(g); err != nil {
-				return nil, nil, err
-			}
+// createGroups creates groups for matching packets.
+func createGroups(cfg *config.Config) (*groups.Groups, error) {
+	log.Infof("found %d whiltelist groups", len(cfg.ScopeConfig.Groups))
+	if len(cfg.ScopeConfig.Groups) == 0 {
+		return nil, nil
+	}
+	gr := groups.New()
+	for name, group := range cfg.ScopeConfig.Groups {
+		g := &groups.Group{
+			Name:            name,
+			SrcIncludes:     group.InScope,
+			SrcExcludes:     group.OutScope,
+			DstIncludes:     []string{"0.0.0.0/0", "::/0"},
+			DstExcludes:     group.TrustedIps,
+			ExcludedDomains: group.TrustedDomains,
+		}
+		if err := gr.Add(g); err != nil {
+			return nil, err
 		}
 	}
-
-	log.Infof("found %d whiltelist ip groups", len(cfg.ScopeConfig.IP.Groups))
-	if len(cfg.ScopeConfig.IP.Groups) > 0 {
-		ip = groups.New()
-		for name, group := range cfg.ScopeConfig.IP.Groups {
-			g := &groups.Group{
-				Name:        name,
-				SrcIncludes: group.Networks.Source.Include,
-				SrcExcludes: group.Networks.Source.Exclude,
-				DstIncludes: group.Networks.Destination.Include,
-				DstExcludes: group.Networks.Destination.Exclude,
-			}
-			if err = ip.Add(g); err != nil {
-				return nil, nil, err
-			}
-		}
-	}
-	return
+	return gr, nil
 }
 
 // ipPacketsToRequest changes ip packets to client ip request.

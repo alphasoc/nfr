@@ -7,27 +7,26 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func newMonitorCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "monitor",
-		Short: "Start the DNS sniffer and score live events",
-		Long: `Captures DNS traffic and provides analysis of them.
-API key must be set before calling this mode.`,
+func newStartCommand() *cobra.Command {
+	var cmd = &cobra.Command{
+		Use:   "start",
+		Short: "Start processing network events (inputs defined in config)",
+		Long:  `Start processing network events. API key must be set before calling this mode.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg, c, err := createConfigAndClient(true)
 			if err != nil {
 				return err
 			}
-			return monitor(c, cfg)
+			return start(c, cfg)
 		},
 	}
+	return cmd
 }
 
-func monitor(c client.Client, cfg *config.Config) error {
+func start(c client.Client, cfg *config.Config) error {
 	e, err := executor.New(c, cfg)
 	if err != nil {
 		return err
 	}
-
-	return e.Monitor()
+	return e.Start()
 }

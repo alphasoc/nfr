@@ -39,9 +39,9 @@ func register(cfg *config.Config, c *client.AlphaSOCClient, configPath, key stri
 	if key != "" {
 		c.SetKey(key)
 		fmt.Printf("Using key %s for registration\n", utils.ShadowKey(key))
-	} else if cfg.Alphasoc.APIKey != "" {
-		c.SetKey(cfg.Alphasoc.APIKey)
-		fmt.Printf("Using key %s for registration\n", utils.ShadowKey(cfg.Alphasoc.APIKey))
+	} else if cfg.Engine.APIKey != "" {
+		c.SetKey(cfg.Engine.APIKey)
+		fmt.Printf("Using key %s for registration\n", utils.ShadowKey(cfg.Engine.APIKey))
 	}
 
 	if status, err := c.AccountStatus(); err == nil && status.Registered {
@@ -59,14 +59,14 @@ By performing this request you agree to our Terms of Service and Privacy Policy
 		return err
 	}
 
-	if key == "" && cfg.Alphasoc.APIKey == "" {
+	if key == "" && cfg.Engine.APIKey == "" {
 		keyReq, err := c.KeyRequest()
 		if err != nil {
 			fmt.Fprintln(os.Stderr)
 			return err
 		}
 		c.SetKey(keyReq.Key)
-		cfg.Alphasoc.APIKey = keyReq.Key
+		cfg.Engine.APIKey = keyReq.Key
 	}
 
 	var errSave error
@@ -82,7 +82,7 @@ Unable to create /etc/nfr/config.yml. Please manually set up the directory and c
 alphasoc:
   api_key: %s
 
-`, cfg.Alphasoc.APIKey)
+`, cfg.Engine.APIKey)
 	} else {
 		fmt.Println("\nSuccess! The configuration has been written to /etc/nfr/config.yml")
 	}
@@ -99,7 +99,7 @@ alphasoc:
 			fmt.Fprintf(os.Stderr, `We were unable to register your account. Please run nfr again with following command:
 
 $ nfr account register --key %s
-`, cfg.Alphasoc.APIKey)
+`, cfg.Engine.APIKey)
 			return err
 		}
 

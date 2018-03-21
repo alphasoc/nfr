@@ -1,8 +1,6 @@
 package sniffer
 
 import (
-	"fmt"
-
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
 )
@@ -20,11 +18,7 @@ type PcapSniffer struct {
 
 // Config options for sniffer.
 type Config struct {
-	EnableDNSAnalitics bool
-	Protocols          []string
-	Port               int
-
-	EnableIPAnalitics bool
+	BPFilter string
 }
 
 // NewLivePcapSniffer creates sniffer that capture packets from interface.
@@ -47,13 +41,7 @@ func NewOfflinePcapSniffer(file string, cfg *Config) (*PcapSniffer, error) {
 
 // newsniffer creates new sniffer and sets pcap filter for it.
 func newsniffer(handle *pcap.Handle, cfg *Config) (*PcapSniffer, error) {
-	filter, err := sprintBPFFilter(cfg)
-	if err != nil {
-		handle.Close()
-		return nil, err
-	}
-
-	if err := handle.SetBPFFilter(filter); err != nil {
+	if err := handle.SetBPFFilter(cfg.BPFilter); err != nil {
 		handle.Close()
 		return nil, err
 	}
@@ -72,38 +60,4 @@ func (s *PcapSniffer) Packets() chan gopacket.Packet {
 // Close closes underlying handle and stops sniffer.
 func (s *PcapSniffer) Close() {
 	s.handle.Close()
-}
-
-// print pcap format filter based on given config
-func sprintBPFFilter(cfg *Config) (string, error) {
-	expr := ""
-
-	// set expresion only when dns is turn on and ip is turn off.
-	// in other cases just filter tcp and udp traffic.
-	if cfg.EnableDNSAnalitics && !cfg.EnableIPAnalitics {
-		if len(cfg.Protocols) > 2 {
-			return "", fmt.Errorf("too many protocols in list")
-		}
-
-		for _, proto := range cfg.Protocols {
-			if proto != "udp" && proto != "tcp" {
-				return "", fmt.Errorf("invalid protocol %q name", proto)
-			}
-		}
-
-		if cfg.Port <= 0 || cfg.Port > 65355 {
-			return "", fmt.Errorf("invalid %d port number", cfg.Port)
-		}
-
-		switch len(cfg.Protocols) {
-		case 1:
-			expr = fmt.Sprintf("(%s dst port %d)", cfg.Protocols[0], cfg.Port)
-		default:
-			expr = fmt.Sprintf("(tcp or udp dst port %d)", cfg.Port)
-		}
-	} else {
-		expr = "tcp or udp"
-	}
-
-	return expr, nil
 }

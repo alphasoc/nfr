@@ -9,26 +9,20 @@ import (
 )
 
 func checkDefaults(t *testing.T, cfg *Config) {
-	if cfg.Alphasoc.Host != "https://api.alphasoc.net" {
-		t.Fatalf("invalid alphasoc host - got %v; expected %v", cfg.Alphasoc.Host, "https://api.alphasoc.net")
+	if cfg.Engine.Host != "https://api.alphasoc.net" {
+		t.Fatalf("invalid alphasoc host - got %v; expected %v", cfg.Engine.Host, "https://api.alphasoc.net")
 	}
-	if !cfg.Alphasoc.Analyze.DNS {
+	if !cfg.Engine.Analyze.DNS {
 		t.Fatalf("analyze dns set to false")
 	}
-	if !cfg.Alphasoc.Analyze.IP {
+	if !cfg.Engine.Analyze.IP {
 		t.Fatalf("analyze ip set to false")
 	}
-	if len(cfg.Network.DNS.Protocols) != 1 && cfg.Network.DNS.Protocols[0] != "udp" {
-		t.Fatalf("invalid network protocols - got %v; expected %v", cfg.Network.DNS.Protocols, []string{"udp"})
+	if cfg.Outputs.File != "stderr" {
+		t.Fatalf("invalid events file - got %s; expected %s", cfg.Outputs.File, "stderr")
 	}
-	if cfg.Network.DNS.Port != 53 {
-		t.Fatalf("invalid network port - got %d; expected %d", cfg.Network.DNS.Port, 53)
-	}
-	if cfg.Alerts.File != "stderr" {
-		t.Fatalf("invalid events file - got %s; expected %s", cfg.Alerts.File, "stderr")
-	}
-	if cfg.Alerts.PollInterval != 5*time.Minute {
-		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Alerts.PollInterval, 5*time.Minute)
+	if cfg.Engine.Alerts.PollInterval != 5*time.Minute {
+		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Engine.Alerts.PollInterval, 5*time.Minute)
 	}
 	if cfg.Log.File != "stdout" {
 		t.Fatalf("invalid log file - got %s; expected %s", cfg.Log.File, "stdout")
@@ -48,22 +42,20 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if cfg.IPEvents.FlushInterval != 30*time.Second {
 		t.Fatalf("invalid ip events flush interval - got %s; expected %s", cfg.IPEvents.FlushInterval, 30*time.Second)
 	}
-
-	if l := len(cfg.ScopeConfig.DNS.Groups); l != 1 {
+	if l := len(cfg.ScopeConfig.Groups); l != 1 {
 		t.Fatalf("invalid number of scope groups - got %d; expected %d", l, 1)
 	}
-	group, ok := cfg.ScopeConfig.DNS.Groups["default"]
+	group, ok := cfg.ScopeConfig.Groups["default"]
 	if !ok {
 		t.Fatalf("no default scope group")
 	}
-
-	if l := len(group.Networks.Source.Include); l != 4 {
+	if l := len(group.InScope); l != 4 {
 		t.Fatalf("invalid number of source networks in default scope group - got %d; expected %d", l, 4)
 	}
-	if l := len(group.Networks.Destination.Include); l != 2 {
-		t.Fatalf("invalid number of destination networks in default scope group - got %d; expected %d", l, 2)
+	if l := len(group.TrustedIps); l != 4 {
+		t.Fatalf("invalid number of trusted ips in default scope group - got %d; expected %d", l, 4)
 	}
-	if l := len(group.Domains.Exclude); l != 4 {
+	if l := len(group.TrustedDomains); l != 4 {
 		t.Fatalf("invalid number of excluded domains in default scope group - got %d; expected %d", l, 4)
 	}
 }
@@ -76,22 +68,19 @@ func TestDefaultConfig(t *testing.T) {
 
 func TestReadConfig(t *testing.T) {
 	var content = []byte(`
-alphasoc:
+engine:
   host: https://api.alphasoc.net
   api_key: test-api-key
-network:
-  dns:
-    protocols:
-      - udp
-    port: 53
+  alerts:
+    poll_interval: 5m
 log:
   file: stdout
   level: info
 data:
   file: nfr.data
-alerts:
+outputs:
+  enabled: true
   file: stderr
-  poll_interval: 5m
 dns_queries:
   buffer_size: 65535
   flush_interval: 30s
@@ -113,41 +102,28 @@ dns_queries:
 		t.Fatal(err)
 	}
 	checkDefaults(t, cfg)
-	if cfg.Alphasoc.APIKey != "test-api-key" {
-		t.Fatalf("invalid alphasoc api key - got %s; expected %s", cfg.Alphasoc.APIKey, "test-api-key")
+	if cfg.Engine.APIKey != "test-api-key" {
+		t.Fatalf("invalid alphasoc api key - got %s; expected %s", cfg.Engine.APIKey, "test-api-key")
 	}
 }
 
 func TestReadScope(t *testing.T) {
 	var content = []byte(`
-dns:
-  groups:
-    private:
-      networks:
-        source:
-          include:
-            - 10.0.0.0/8
-          exclude:
-            - 10.1.0.0/16
-        destination:
-          include:
-            - 11.0.0.0/8
-          exclude:
-            - 11.1.0.0/16
-      domains:
-        exclude:
-         - alphasoc.com
-    public:
-      networks:
-        source:
-          include:
-            - 0.0.0.0/0
-          exclude:
-            - 120.0.0.0/8
-            - 8.8.8.8
-      domains:
-        exclude:
-         - "*.io"`)
+groups:
+  private:
+    in_scope:
+      - 10.0.0.0/8
+    out_scope:
+      - 10.1.0.0/16
+    trusted_ips:
+      - 11.0.0.0/8
+    trusted_domains:
+      - alphasoc.com
+  public:
+    in_scope:
+      - 0.0.0.0/0
+    trusted_domains:
+      - "*.io"`)
 	f, err := ioutil.TempFile("", "nfr-scope")
 	if err != nil {
 		log.Fatal(err)
@@ -165,7 +141,7 @@ dns:
 		t.Fatal(err)
 	}
 
-	groups := cfg.ScopeConfig.DNS.Groups
+	groups := cfg.ScopeConfig.Groups
 	if l := len(groups); l != 2 {
 		t.Fatalf("invalid groups length - got %d; exptected %d", l, 2)
 	}
@@ -177,19 +153,16 @@ dns:
 	}
 
 	private := groups["private"]
-	if len(private.Networks.Source.Include) != 1 {
+	if len(private.InScope) != 1 {
 		t.Fatal("invalid private group source network include")
 	}
-	if len(private.Networks.Source.Exclude) != 1 {
+	if len(private.OutScope) != 1 {
 		t.Fatal("invalid private group source network exclude")
 	}
-	if len(private.Networks.Destination.Include) != 1 {
+	if len(private.TrustedIps) != 1 {
 		t.Fatal("invalid private group destination network include")
 	}
-	if len(private.Networks.Destination.Exclude) != 1 {
-		t.Fatal("invalid private group destinatio network exclude")
-	}
-	if len(private.Domains.Exclude) != 1 {
+	if len(private.TrustedDomains) != 1 {
 		t.Fatal("invalid private group domains exclude")
 	}
 }

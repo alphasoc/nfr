@@ -40,9 +40,8 @@ highlighting targeted attacks.`,
 
 	cmd.AddCommand(newVersionCommand())
 	cmd.AddCommand(newAccountCommand())
-	cmd.AddCommand(newListenCommand())
+	cmd.AddCommand(newStartCommand())
 	cmd.AddCommand(newReadCommand())
-	cmd.AddCommand(newMonitorCommand())
 	return cmd
 }
 
@@ -58,7 +57,7 @@ func createConfigAndClient(checkKey bool) (*config.Config, *client.AlphaSOCClien
 	}
 	logger.SetLevel(cfg.Log.Level)
 
-	c := client.New(cfg.Alphasoc.Host, cfg.Alphasoc.APIKey)
+	c := client.New(cfg.Engine.Host, cfg.Engine.APIKey)
 	if checkKey {
 		if err := c.CheckKey(); err != nil {
 			return nil, nil, err
