@@ -32,7 +32,6 @@ build_script:
   - ps: |
       $version = git describe
       go build -o nfr-windows-amd64.exe -ldflags "-X github.com/alphasoc/nfr/version.Version=$version"
-      Push-AppveyorArtifact nfr-windows-amd64.exe
 
 artifacts:
   - path: nfr-windows-amd64.exe
@@ -42,7 +41,7 @@ deploy:
   - release: $(APPVEYOR_REPO_TAG_NAME)
     provider: GitHub
     auth_token:
-      secure: M5vPi6Su4YYq6Y2w1ZJ+LD1L06vRkRyGrx2rnLT8zr6XEoPXhendZVKJHtpMTs2G
+      secure: EjLxBojyCRGndhLcI/FWddpdjCjCzZdJctIIG/hXC6zqXg7VrpyJlfZHsTjEB6Xk
     artifact: exe
     force_update: true
     draft: false
