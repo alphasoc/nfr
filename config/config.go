@@ -219,10 +219,13 @@ func newDefaultConfig() *Config {
 	cfg.Engine.Analyze.IP = true
 	cfg.Engine.Alerts.PollInterval = 5 * time.Minute
 
+	cfg.Inputs.Sniffer.Enabled = true
 	cfg.Data.File = "/run/nfr.data"
 	if runtime.GOOS == "windows" {
 		cfg.Data.File = path.Join(os.Getenv("AppData"), "nfr.data")
 	}
+
+	cfg.Outputs.Enabled = true
 	cfg.Outputs.Graylog.Level = 1
 	cfg.Outputs.File = "stderr"
 	cfg.Log.File = "stdout"
@@ -279,7 +282,7 @@ func (cfg *Config) validate() error {
 		} else {
 			iface, err := utils.InterfaceWithPublicIP()
 			if err != nil {
-				return fmt.Errorf("config: %s", err)
+				return fmt.Errorf("config: can't find an interface for sniffing: %s", err)
 			}
 			cfg.Inputs.Sniffer.Interface = iface.Name
 			cfg.Inputs.Sniffer.HardwareAddr = iface.HardwareAddr
