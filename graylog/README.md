@@ -2,6 +2,10 @@
 
 This content pack establishes a GELF input by which AlphaSOC alerts can be sent to Graylog by [Network Flight Recorder (NFR)](https://github.com/alphasoc/nfr), and a dashboard to summarize infected hosts and anomalies within the environment. NFR performs scoring of network traffic (DNS and IP events) which can be collected on the wire, or loaded via Bro IDS, Suricata, or other sources.
 
+## Screenshot
+
+![AlphaSOC dashboard](https://github.com/alphasoc/nfr/blob/master/graylog/dashboard.png)
+
 ## Provided Content
 
 * A GELF input on TCP port 12201 to receive alerts from NFR
@@ -23,7 +27,3 @@ The alert format and fields within Graylog are described in the table below.
 | `severity`       | Event severity (5: critical, 4: high, 3: medium, 2: low, 1: info)        |
 | `query`          | DNS request FQDN associated with the alert (e.g. badguy123.ru)           |
 | `record_type`    | DNS request record type associated with the alert (e.g. A, MX, SRV)      |
-
-## Screenshot
-
-![AlphaSOC dashboard](https://github.com/alphasoc/nfr/blob/master/graylog/dashboard.png)
