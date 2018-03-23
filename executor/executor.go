@@ -85,13 +85,11 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		}
 	}
 
-	if cfg.HasInputs() {
-		e.dnsbuf = packet.NewDNSPacketBuffer()
-		e.ipbuf = packet.NewIPPacketBuffer()
-		e.groups, err = createGroups(cfg)
-		if err != nil {
-			return nil, err
-		}
+	e.dnsbuf = packet.NewDNSPacketBuffer()
+	e.ipbuf = packet.NewIPPacketBuffer()
+	e.groups, err = createGroups(cfg)
+	if err != nil {
+		return nil, err
 	}
 
 	if e.cfg.Inputs.Sniffer.Enabled {
