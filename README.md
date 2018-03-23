@@ -88,7 +88,7 @@ monitor:
     file: /path/to/eve.json
 ```
 
-Microsoft DNS (`format: msdns`) is also supported, and support for other log types is coming. Please contact support@alphasoc.com if you have a particular use case and wish to monitor a file format that is not listed here. If you wish to process events from a PCAP file on disk, please use the `read` command when running NFR.
+Microsoft DNS (`format: msdns`) and BIND over syslog (`format: syslog-named`) are also supported at this time. Please contact support@alphasoc.com if you have a particular use case and wish to monitor a file format that is not listed here. If you wish to process events from a given PCAP file on disk, please use the `read` command when running NFR.
 
 ## Monitoring scope
 Use directives within `/etc/nfr/scope.yml` to define the monitoring scope. You can find an example [`scope.yml`](https://github.com/alphasoc/nfr/blob/master/scope.yml) file in the repository's root directory. Network traffic from the IP ranges within scope will be processed by the AlphaSOC Analytics Engine, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
