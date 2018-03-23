@@ -3,9 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
 	"strings"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/alphasoc/nfr/client"
@@ -65,9 +63,6 @@ func send(cfg *config.Config, c client.Client, fileFormat, fileType string, file
 
 	for i := range files {
 		if err := e.Send(files[i], fileFormat, fileType); err != nil {
-			return err
-		}
-		if err := os.Rename(files[i], files[i]+"."+time.Now().Format(time.RFC3339)); err != nil {
 			return err
 		}
 		log.Infof("file %s processed\n", files[i])
