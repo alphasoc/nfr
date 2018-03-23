@@ -87,10 +87,10 @@ func NewNetwork(srcIncludes, srcExcludes, dstIncludes, dstExcludes []string) (*N
 	return m, nil
 }
 
-// Match matches src and dest ips and check if it's on networks included list
+// MatchSrcIP matches sr cips and check if it's on networks included list
 // at the same time checking if it's not in any excluded list.
-func (m *Network) Match(srcIP, dstIP net.IP) (bool, bool) {
-	if srcIP == nil || dstIP == nil {
+func (m *Network) MatchSrcIP(srcIP net.IP) (bool, bool) {
+	if srcIP == nil {
 		return false, false
 	}
 
@@ -108,8 +108,30 @@ func (m *Network) Match(srcIP, dstIP net.IP) (bool, bool) {
 		return false, false
 	}
 
+	// check ip exclusion
+	if m.srcExcludesIps[srcIP.String()] {
+		return true, true
+	}
+
+	// if the ip is within any excluded source network
+	for _, n := range m.srcExcludes {
+		if n.Contains(srcIP) {
+			return true, true
+		}
+	}
+
+	return true, false
+}
+
+// MatchDstIP matches dest ips and check if it's on networks included list
+// at the same time checking if it's not in any excluded list.
+func (m *Network) MatchDstIP(dstIP net.IP) (bool, bool) {
+	if dstIP == nil {
+		return false, false
+	}
+
 	// check if the ip is included in destination networks
-	ok = false
+	ok := false
 	for _, n := range m.dstIncludes {
 		if n.Contains(dstIP) {
 			ok = true
@@ -122,15 +144,8 @@ func (m *Network) Match(srcIP, dstIP net.IP) (bool, bool) {
 	}
 
 	// check ip exclusion
-	if m.srcExcludesIps[srcIP.String()] || m.dstExcludesIps[dstIP.String()] {
+	if m.dstExcludesIps[dstIP.String()] {
 		return true, true
-	}
-
-	// if the ip is within any excluded source network
-	for _, n := range m.srcExcludes {
-		if n.Contains(srcIP) {
-			return true, true
-		}
 	}
 
 	// if the ip is within any excluded destination network
@@ -141,6 +156,17 @@ func (m *Network) Match(srcIP, dstIP net.IP) (bool, bool) {
 	}
 
 	return true, false
+}
+
+// Match matches src and dest ips and check if it's on networks included list
+// at the same time checking if it's not in any excluded list.
+func (m *Network) Match(srcIP, dstIP net.IP) (bool, bool) {
+	matched, excluded := m.MatchSrcIP(srcIP)
+	if !matched || (matched && excluded) {
+		return matched, excluded
+	}
+
+	return m.MatchDstIP(dstIP)
 }
 
 func isIpnetIP(ipnet *net.IPNet) bool {

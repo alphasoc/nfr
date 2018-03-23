@@ -88,7 +88,7 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (stri
 		return "<no-whitelist>", true
 	}
 
-	if domain == "" || srcIP == nil || dstIP == nil {
+	if domain == "" || srcIP == nil {
 		return "<no-data>", false
 	}
 
@@ -96,9 +96,17 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (stri
 	// being not excluded from others groups.
 	// At the same time domain can't be included in
 	// groups' excluded domains.
-	ok := false
+	var (
+		ok                = false
+		matched, excluded bool
+	)
 	for name, group := range g.groups {
-		matched, excluded := group.nm.Match(srcIP, dstIP)
+		// allow dstIP to be null, some logs format dosen't track dst ip.
+		if dstIP != nil {
+			matched, excluded = group.nm.Match(srcIP, dstIP)
+		} else {
+			matched, excluded = group.nm.MatchSrcIP(srcIP)
+		}
 		if !matched {
 			continue
 		}
