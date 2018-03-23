@@ -18,10 +18,12 @@ func newAccountRegisterCommand() *cobra.Command {
 			Short: "Generate an API key via the licensing server",
 			Long:  "This command provides interactive API key generation and registration.",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				cfg, c, err := createConfigAndClient(false)
+				cfg, err := config.New()
 				if err != nil {
 					return err
 				}
+				c := client.New(cfg.Engine.Host, cfg.Engine.APIKey)
+
 				// do not send error to log output, print on console for user
 				if err := register(cfg, c, configPath, key); err != nil {
 					fmt.Fprintf(os.Stderr, "%s\n", err)
