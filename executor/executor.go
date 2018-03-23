@@ -204,7 +204,14 @@ func (e *Executor) monitor() {
 						if !e.shouldSendIPPacket(ippacket) {
 							continue
 						}
+
+						e.mx.Lock()
 						e.ipbuf.Write(ippacket)
+						l := e.ipbuf.Len()
+						e.mx.Unlock()
+						if l >= e.cfg.IPEvents.BufferSize {
+							go e.sendIPPackets()
+						}
 					}
 				case "dns":
 					if e.cfg.Engine.Analyze.DNS {
@@ -222,7 +229,14 @@ func (e *Executor) monitor() {
 						if !e.shouldSendDNSPacket(dnspacket) {
 							continue
 						}
+						e.mx.Lock()
 						e.dnsbuf.Write(dnspacket)
+						l := e.dnsbuf.Len()
+						e.mx.Unlock()
+						if l >= e.cfg.DNSEvents.BufferSize {
+							// do not wait for sending packets
+							go e.sendDNSPackets()
+						}
 					}
 				}
 			}
