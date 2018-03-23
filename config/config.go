@@ -272,6 +272,11 @@ func (cfg *Config) validate() error {
 		return fmt.Errorf("config: at least one input or output must be enabledt")
 	}
 
+	// special case if there are only inputs and analyze set to false.
+	if !cfg.HasOutputs() && cfg.HasInputs() && !(cfg.Engine.Analyze.DNS || cfg.Engine.Analyze.IP) {
+		return fmt.Errorf("config: only inputs is configured but all analyze events is not set to false")
+	}
+
 	if cfg.Inputs.Sniffer.Enabled {
 		if cfg.Inputs.Sniffer.Interface != "" {
 			iface, err := net.InterfaceByName(cfg.Inputs.Sniffer.Interface)

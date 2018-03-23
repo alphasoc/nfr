@@ -120,10 +120,12 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 // Start starts sniffer in online mode, where network alerts are sent to api.
 func (e *Executor) Start() (err error) {
 	e.init()
-	e.monitor()
-	if e.cfg.Inputs.Sniffer.Enabled {
-		log.Infof("starting sniffer for %s interface", e.cfg.Inputs.Sniffer.Interface)
-		e.do()
+	if e.cfg.Engine.Analyze.DNS || e.cfg.Engine.Analyze.IP {
+		e.monitor()
+		if e.cfg.Inputs.Sniffer.Enabled {
+			log.Infof("starting sniffer for %s interface", e.cfg.Inputs.Sniffer.Interface)
+			e.do()
+		}
 	}
 
 	c := make(chan os.Signal, 1)
@@ -192,37 +194,41 @@ func (e *Executor) monitor() {
 			for line := range t.Lines {
 				switch monitor.Type {
 				case "ip":
-					ippacket, err := parser.ParseLineIP(line.Text)
-					if err != nil {
-						log.Errorf("file %s: %s", monitor.File, err)
-						continue
-					}
+					if e.cfg.Engine.Analyze.IP {
+						ippacket, err := parser.ParseLineIP(line.Text)
+						if err != nil {
+							log.Errorf("file %s: %s", monitor.File, err)
+							continue
+						}
 
-					// some formats have metadata and it returns no error and no packet either
-					if ippacket == nil {
-						continue
-					}
+						// some formats have metadata and it returns no error and no packet either
+						if ippacket == nil {
+							continue
+						}
 
-					if !e.shouldSendIPPacket(ippacket) {
-						continue
+						if !e.shouldSendIPPacket(ippacket) {
+							continue
+						}
+						e.ipbuf.Write(ippacket)
 					}
-					e.ipbuf.Write(ippacket)
 				case "dns":
-					dnspacket, err := parser.ParseLineDNS(line.Text)
-					if err != nil {
-						log.Errorf("file %s: %s", monitor.File, err)
-						continue
-					}
+					if e.cfg.Engine.Analyze.DNS {
+						dnspacket, err := parser.ParseLineDNS(line.Text)
+						if err != nil {
+							log.Errorf("file %s: %s", monitor.File, err)
+							continue
+						}
 
-					// some formats have metadata and it returns no error and no packet either
-					if dnspacket == nil {
-						continue
-					}
+						// some formats have metadata and it returns no error and no packet either
+						if dnspacket == nil {
+							continue
+						}
 
-					if !e.shouldSendDNSPacket(dnspacket) {
-						continue
+						if !e.shouldSendDNSPacket(dnspacket) {
+							continue
+						}
+						e.dnsbuf.Write(dnspacket)
 					}
-					e.dnsbuf.Write(dnspacket)
 				}
 			}
 		}(monitor)
@@ -323,7 +329,7 @@ func (e *Executor) sendDNSPackets() error {
 	log.Infof("sending %d dns events to analyze", len(packets))
 	resp, err := e.c.EventsDNS(dnsPacketsToRequest(packets))
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("seding %d dns events to analyze failed: %s", len(packets), err)
 
 		// write unsaved packets back to buffer
 		e.mx.Lock()
@@ -355,7 +361,7 @@ func (e *Executor) sendIPPackets() error {
 	log.Infof("sending %d ip events to analyze", len(packets))
 	resp, err := e.c.EventsIP(ipPacketsToRequest(packets))
 	if err != nil {
-		log.Errorln(err)
+		log.Errorf("seding %d ip events to analyze failed: %s", len(packets), err)
 
 		// write unsaved packets back to buffer
 		e.mx.Lock()
