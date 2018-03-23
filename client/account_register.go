@@ -26,7 +26,7 @@ func (c *AlphaSOCClient) AccountRegister(req *AccountRegisterRequest) error {
 
 	email, err := mail.ParseAddress(req.Details.Email)
 	if err != nil {
-		return fmt.Errorf("invalid email for register account: %s", err)
+		return fmt.Errorf("invalid email: %s", err)
 	}
 	req.Details.Email = email.Address
 

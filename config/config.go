@@ -269,12 +269,12 @@ func (cfg *Config) load(content []byte) error {
 
 func (cfg *Config) validate() error {
 	if !(cfg.HasInputs() || cfg.HasOutputs()) {
-		return fmt.Errorf("config: at least one input or output must be enabledt")
+		return fmt.Errorf("config: at least one input or output must be enable")
 	}
 
 	// special case if there are only inputs and analyze set to false.
 	if !cfg.HasOutputs() && cfg.HasInputs() && !(cfg.Engine.Analyze.DNS || cfg.Engine.Analyze.IP) {
-		return fmt.Errorf("config: only inputs is configured but all analyze events is not set to false")
+		return fmt.Errorf("config: inputs are configured but analysis of dns and ip are set to false")
 	}
 
 	if cfg.Inputs.Sniffer.Enabled {
@@ -431,7 +431,7 @@ func (cfg *Config) validateScopeConfig() error {
 	testCidr := func(cidrs []string) error {
 		for _, cidr := range cidrs {
 			if _, _, err := net.ParseCIDR(cidr); err != nil {
-				return fmt.Errorf("parse scope config: %s is not cidr", cidr)
+				return fmt.Errorf("parse scope config: %s is not a cidr", cidr)
 			}
 		}
 		return nil

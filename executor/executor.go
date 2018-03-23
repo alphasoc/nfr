@@ -123,7 +123,7 @@ func (e *Executor) Start() (err error) {
 	if e.cfg.Engine.Analyze.DNS || e.cfg.Engine.Analyze.IP {
 		e.monitor()
 		if e.cfg.Inputs.Sniffer.Enabled {
-			log.Infof("starting sniffer for %s interface", e.cfg.Inputs.Sniffer.Interface)
+			log.Infof("starting the network sniffer on %s", e.cfg.Inputs.Sniffer.Interface)
 			e.do()
 		}
 	}
@@ -173,10 +173,10 @@ func (e *Executor) monitor() {
 			Logger: log.StandardLogger(),
 		})
 		if err != nil {
-			log.Errorf("can't caputre log in file %s: %s", monitor.File, err)
+			log.Errorf("can't caputre log file %s: %s", monitor.File, err)
 			continue
 		}
-		log.Infof("monitoring %s file", monitor.File)
+		log.Infof("monitoring %s", monitor.File)
 
 		go func(monitor config.Monitor) {
 			var parser logs.Parser
@@ -326,10 +326,10 @@ func (e *Executor) sendDNSPackets() error {
 		return nil
 	}
 
-	log.Infof("sending %d dns events to analyze", len(packets))
+	log.Infof("sending %d dns events for analysis", len(packets))
 	resp, err := e.c.EventsDNS(dnsPacketsToRequest(packets))
 	if err != nil {
-		log.Errorf("seding %d dns events to analyze failed: %s", len(packets), err)
+		log.Errorf("sending of %d dns events for analysis failed: %s", len(packets), err)
 
 		// write unsaved packets back to buffer
 		e.mx.Lock()
@@ -338,12 +338,7 @@ func (e *Executor) sendDNSPackets() error {
 		return err
 	}
 
-	if resp.Received == resp.Accepted {
-		log.Infof("%d dns events were successfully send", resp.Accepted)
-	} else {
-		log.Infof("%d of %d dns events were send - rejected reason %v",
-			resp.Accepted, resp.Received, resp.Rejected)
-	}
+	log.Infof("%d of %d total dns events were successfully sent for analysis", resp.Accepted, resp.Received)
 	return nil
 }
 
@@ -358,10 +353,10 @@ func (e *Executor) sendIPPackets() error {
 		return nil
 	}
 
-	log.Infof("sending %d ip events to analyze", len(packets))
+	log.Infof("sending %d ip events for analysis", len(packets))
 	resp, err := e.c.EventsIP(ipPacketsToRequest(packets))
 	if err != nil {
-		log.Errorf("seding %d ip events to analyze failed: %s", len(packets), err)
+		log.Errorf("sending %d ip events for analysis failed: %s", len(packets), err)
 
 		// write unsaved packets back to buffer
 		e.mx.Lock()
@@ -370,12 +365,7 @@ func (e *Executor) sendIPPackets() error {
 		return err
 	}
 
-	if resp.Received == resp.Accepted {
-		log.Infof("%d ip events were successfully send", resp.Accepted)
-	} else {
-		log.Infof("%d of %d ip events were send - rejected reason %v",
-			resp.Accepted, resp.Received, resp.Rejected)
-	}
+	log.Infof("%d of %d total ip events were successfully sent for analysis", resp.Accepted, resp.Received)
 	return nil
 }
 
@@ -462,13 +452,13 @@ func (e *Executor) shouldSendDNSPacket(p *packet.DNSPacket) bool {
 
 // startAlertPoller periodcly checks for new alerts.
 func (e *Executor) startAlertPoller() {
-	log.Info("starting do poller")
+	log.Info("starting the polling mechanism to check for new alerts")
 	// event poller will return error on api call or writing to disk.
 	// In both cases log the error and try again in a moment.
 	go func() {
 		for {
 			if err := e.alertsPoller.Do(e.cfg.Engine.Alerts.PollInterval); err != nil {
-				log.Errorln(err)
+				log.Errorf("polling alerts failed: %s", err)
 			}
 		}
 	}()
@@ -492,24 +482,24 @@ func (e *Executor) installSignalHandler() {
 		if e.dnsWriter != nil && len(dnspackets) > 0 {
 			for i := range dnspackets {
 				if err := e.dnsWriter.Write(dnspackets[i]); err != nil {
-					log.Warnln(err)
+					log.Warnf("writing dns events to file failed: %s", err)
 					break
 				}
 			}
 
-			log.Infof("%d dns events wrote to file", len(dnspackets))
+			log.Infof("%d dns events written to file", len(dnspackets))
 		}
 
 		ippackets := e.ipbuf.Packets()
 		if e.ipWriter != nil && len(ippackets) > 0 {
 			for i := range ippackets {
 				if err := e.ipWriter.Write(ippackets[i]); err != nil {
-					log.Warnln(err)
+					log.Warnf("writing ip events to file failed: %s", err)
 					break
 				}
 			}
 
-			log.Infof("%d ip events wrote to file", len(ippackets))
+			log.Infof("%d ip events written to file", len(ippackets))
 		}
 
 		os.Exit(1)
@@ -518,7 +508,7 @@ func (e *Executor) installSignalHandler() {
 
 // createGroups creates groups for matching packets.
 func createGroups(cfg *config.Config) (*groups.Groups, error) {
-	log.Infof("found %d whiltelist groups", len(cfg.ScopeConfig.Groups))
+	log.Infof("loaded %d groups containing monitoring scope data", len(cfg.ScopeConfig.Groups))
 	if len(cfg.ScopeConfig.Groups) == 0 {
 		return nil, nil
 	}

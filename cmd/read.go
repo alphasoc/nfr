@@ -70,7 +70,7 @@ func send(cfg *config.Config, c client.Client, fileFormat, fileType string, file
 		if err := os.Rename(files[i], files[i]+"."+time.Now().Format(time.RFC3339)); err != nil {
 			return err
 		}
-		log.Infof("file %s sent\n", files[i])
+		log.Infof("file %s processed\n", files[i])
 	}
 	return nil
 }

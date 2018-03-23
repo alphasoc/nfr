@@ -52,7 +52,7 @@ func NewNetwork(srcIncludes, srcExcludes, dstIncludes, dstExcludes []string) (*N
 		ip := net.ParseIP(srcExcludes[i])
 		_, ipnet, err := net.ParseCIDR(srcExcludes[i])
 		if ip == nil && err != nil {
-			return nil, fmt.Errorf("%s is not cidr nor ip", srcExcludes[i])
+			return nil, fmt.Errorf("%s is not cidr or ip", srcExcludes[i])
 		}
 
 		if ip != nil {
@@ -70,7 +70,7 @@ func NewNetwork(srcIncludes, srcExcludes, dstIncludes, dstExcludes []string) (*N
 		ip := net.ParseIP(dstExcludes[i])
 		_, ipnet, err := net.ParseCIDR(dstExcludes[i])
 		if ip == nil && err != nil {
-			return nil, fmt.Errorf("%s is not cidr nor ip", dstExcludes[i])
+			return nil, fmt.Errorf("%s is not cidr or ip", dstExcludes[i])
 		}
 
 		if ip != nil {
