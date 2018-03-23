@@ -12,20 +12,19 @@ import (
 
 func newAccountRegisterCommand() *cobra.Command {
 	var (
-		key string
-		cmd = &cobra.Command{
+		key  string
+		host string
+		cmd  = &cobra.Command{
 			Use:   "register",
 			Short: "Generate an API key via the licensing server",
 			Long:  "This command provides interactive API key generation and registration.",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				cfg, err := config.New()
-				if err != nil {
-					return err
-				}
-				c := client.New(cfg.Engine.Host, cfg.Engine.APIKey)
+				cfg := config.NewDefault()
+				cfg.Engine.Host, cfg.Engine.APIKey = host, key
+				c := client.New(host, key)
 
 				// do not send error to log output, print on console for user
-				if err := register(cfg, c, configPath, key); err != nil {
+				if err := register(cfg, c); err != nil {
 					fmt.Fprintf(os.Stderr, "%s\n", err)
 					os.Exit(1)
 				}
@@ -33,15 +32,13 @@ func newAccountRegisterCommand() *cobra.Command {
 			},
 		}
 	)
+	cmd.Flags().StringVar(&host, "host", "https://api.alphasoc.net", "AlphaSOC Engine host")
 	cmd.Flags().StringVar(&key, "key", "", "AlphaSOC API key")
 	return cmd
 }
 
-func register(cfg *config.Config, c *client.AlphaSOCClient, configPath, key string) error {
-	if key != "" {
-		c.SetKey(key)
-		fmt.Printf("Using key %s for registration\n", utils.ShadowKey(key))
-	} else if cfg.Engine.APIKey != "" {
+func register(cfg *config.Config, c *client.AlphaSOCClient) error {
+	if cfg.Engine.APIKey != "" {
 		c.SetKey(cfg.Engine.APIKey)
 		fmt.Printf("Using key %s for registration\n", utils.ShadowKey(cfg.Engine.APIKey))
 	}
@@ -61,23 +58,18 @@ By performing this request you agree to our Terms of Service and Privacy Policy
 		return err
 	}
 
-	if key == "" && cfg.Engine.APIKey == "" {
-		keyReq, err := c.KeyRequest()
-		if err != nil {
+	if cfg.Engine.APIKey == "" {
+		keyReq, err2 := c.KeyRequest()
+		if err2 != nil {
 			fmt.Fprintln(os.Stderr)
-			return err
+			return err2
 		}
 		c.SetKey(keyReq.Key)
 		cfg.Engine.APIKey = keyReq.Key
 	}
 
-	var errSave error
-	if configPath == "" {
-		errSave = cfg.Save(configDefaultLocation)
-	} else {
-		errSave = cfg.Save(configPath)
-	}
-	if errSave != nil {
+	var errSave = cfg.Save(configPath)
+	if err != nil {
 		fmt.Fprintf(os.Stderr, `
 Unable to create /etc/nfr/config.yml. Please manually set up the directory and configuration file.
 

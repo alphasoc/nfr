@@ -61,7 +61,7 @@ func checkDefaults(t *testing.T, cfg *Config) {
 }
 
 func TestDefaultConfig(t *testing.T) {
-	cfg := newDefaultConfig()
+	cfg := NewDefault()
 	cfg.loadScopeConfig()
 	checkDefaults(t, cfg)
 }

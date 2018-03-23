@@ -174,7 +174,7 @@ type Config struct {
 // default config is returned.
 func New(file ...string) (*Config, error) {
 	var (
-		cfg     = newDefaultConfig()
+		cfg     = NewDefault()
 		content []byte
 		err     error
 	)
@@ -211,8 +211,8 @@ func New(file ...string) (*Config, error) {
 	return cfg, cfg.validate()
 }
 
-// newDefaultConfig returns config with set defaults.
-func newDefaultConfig() *Config {
+// NewDefault returns config with set defaults.
+func NewDefault() *Config {
 	cfg := &Config{}
 	cfg.Engine.Host = "https://api.alphasoc.net"
 	cfg.Engine.Analyze.DNS = true
