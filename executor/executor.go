@@ -232,7 +232,6 @@ func (e *Executor) monitor() {
 // init initialize executor.
 func (e *Executor) init() {
 	e.installSignalHandler()
-	log.Info("DODODODO ", e.cfg.HasOutputs())
 	if e.cfg.HasOutputs() {
 		e.startAlertPoller()
 	}
