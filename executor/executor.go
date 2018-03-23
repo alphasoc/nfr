@@ -451,7 +451,9 @@ func (e *Executor) shouldSendDNSPacket(p *packet.DNSPacket) bool {
 	if e.groups == nil {
 		return true
 	}
-	name, t := e.groups.IsDNSQueryWhitelisted(p.FQDN, p.SrcIP, p.DstIP)
+
+	// do not consider to what server dns packets was sent, thus dst ip == nil
+	name, t := e.groups.IsDNSQueryWhitelisted(p.FQDN, p.SrcIP, nil)
 	if !t {
 		log.Debugf("dns query %s excluded by %s group", p, name)
 	}
