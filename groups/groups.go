@@ -2,6 +2,7 @@ package groups
 
 import (
 	"net"
+	"strings"
 
 	"github.com/alphasoc/nfr/matchers"
 )
@@ -115,7 +116,7 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (stri
 		}
 
 		// ip is matched, now check if domain is not excluded
-		if group.dm.Match(domain) {
+		if group.dm.Match(strings.ToLower(domain)) {
 			return name, false
 		}
 

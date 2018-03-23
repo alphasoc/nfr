@@ -96,7 +96,7 @@ func TestIsDNSQueryWhitelisted(t *testing.T) {
 					ExcludedDomains: []string{"b"},
 				},
 			},
-			[]string{"a", "b", "a", "b"},
+			[]string{"a", "b", "a", "B"},
 			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 0)},
 			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 0)},
 			[]bool{false, true, true, false},
