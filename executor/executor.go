@@ -92,26 +92,6 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		return nil, err
 	}
 
-	if e.cfg.Inputs.Sniffer.Enabled {
-		e.sniffer, err = sniffer.NewLivePcapSniffer(e.cfg.Inputs.Sniffer.Interface, &sniffer.Config{
-			BPFilter: "tcp or udp",
-		})
-		if err != nil {
-			return nil, fmt.Errorf("can't create sniffer: %s", err)
-		}
-
-		if e.cfg.DNSEvents.Failed.File != "" {
-			if e.dnsWriter, err = packet.NewWriter(e.cfg.DNSEvents.Failed.File); err != nil {
-				return nil, fmt.Errorf("can't open file %s for writing dns events: %s", e.cfg.DNSEvents.Failed.File, err.(*net.OpError).Err)
-			}
-		}
-		if e.cfg.IPEvents.Failed.File != "" {
-			if e.ipWriter, err = packet.NewWriter(e.cfg.IPEvents.Failed.File); err != nil {
-				return nil, fmt.Errorf("can't open file %s for writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
-			}
-		}
-	}
-
 	return e, nil
 }
 
@@ -120,7 +100,24 @@ func (e *Executor) Start() (err error) {
 	e.init()
 	if e.cfg.Engine.Analyze.DNS || e.cfg.Engine.Analyze.IP {
 		e.monitor()
+
 		if e.cfg.Inputs.Sniffer.Enabled {
+			if e.cfg.DNSEvents.Failed.File != "" {
+				if e.dnsWriter, err = packet.NewWriter(e.cfg.DNSEvents.Failed.File); err != nil {
+					return fmt.Errorf("can't open file %s for writing dns events: %s", e.cfg.DNSEvents.Failed.File, err.(*net.OpError).Err)
+				}
+			}
+			if e.cfg.IPEvents.Failed.File != "" {
+				if e.ipWriter, err = packet.NewWriter(e.cfg.IPEvents.Failed.File); err != nil {
+					return fmt.Errorf("can't open file %s for writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
+				}
+			}
+			e.sniffer, err = sniffer.NewLivePcapSniffer(e.cfg.Inputs.Sniffer.Interface, &sniffer.Config{
+				BPFilter: "tcp or udp",
+			})
+			if err != nil {
+				return fmt.Errorf("can't create sniffer: %s", err)
+			}
 			log.Infof("starting the network sniffer on %s", e.cfg.Inputs.Sniffer.Interface)
 			e.do()
 		}
