@@ -20,6 +20,7 @@ import (
 	"github.com/alphasoc/nfr/logs/msdns"
 	"github.com/alphasoc/nfr/logs/pcap"
 	"github.com/alphasoc/nfr/logs/suricata"
+	"github.com/alphasoc/nfr/logs/syslognamed"
 	"github.com/alphasoc/nfr/packet"
 	"github.com/alphasoc/nfr/sniffer"
 	"github.com/alphasoc/nfr/utils"
@@ -142,6 +143,8 @@ func (e *Executor) Send(file string, fileFomrat string, fileType string) (err er
 		e.lr, err = suricata.NewFileParser(file)
 	case "msdns":
 		e.lr, err = msdns.NewFileParser(file)
+	case "syslog-named":
+		e.lr, err = syslognamed.NewFileParser(file)
 	default:
 		return errors.New("file format not supported")
 	}
@@ -182,6 +185,8 @@ func (e *Executor) monitor() {
 				parser = suricata.NewParser()
 			case "msdns":
 				parser = msdns.NewParser()
+			case "syslog-named":
+				parser = syslognamed.NewParser()
 			}
 
 			for line := range t.Lines {
