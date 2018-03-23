@@ -148,7 +148,7 @@ type Config struct {
 			// File to store DNS Queries. Default: (none)
 			File string `yaml:"file,omitempty"`
 		} `yaml:"failed,omitempty"`
-	} `yaml:"dns_queries,omitempty"`
+	} `yaml:"dns_events,omitempty"`
 
 	// IP events configuration.
 	IPEvents struct {

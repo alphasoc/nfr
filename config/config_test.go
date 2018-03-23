@@ -81,7 +81,7 @@ data:
 outputs:
   enabled: true
   file: stderr
-dns_queries:
+dns_events:
   buffer_size: 65535
   flush_interval: 30s
   failed:
