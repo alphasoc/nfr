@@ -19,7 +19,10 @@ func checkDefaults(t *testing.T, cfg *Config) {
 		t.Fatalf("analyze ip set to false")
 	}
 	if cfg.Outputs.File != "stderr" {
-		t.Fatalf("invalid events file - got %s; expected %s", cfg.Outputs.File, "stderr")
+		t.Fatalf("invalid output file - got %s; expected %s", cfg.Outputs.File, "stderr")
+	}
+	if cfg.Outputs.QRadar.Port != 514 {
+		t.Fatalf("invalid output qradar port - got %d; expected %d", cfg.Outputs.QRadar.Port, 514)
 	}
 	if cfg.Engine.Alerts.PollInterval != 5*time.Minute {
 		t.Fatalf("invalid events poll interval - got %s; expected %s", cfg.Engine.Alerts.PollInterval, 5*time.Minute)

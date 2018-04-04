@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"sync"
 	"time"
 
@@ -52,11 +53,6 @@ type Executor struct {
 
 // New creates new executor.
 func New(c client.Client, cfg *config.Config) (*Executor, error) {
-	var (
-		jsonWriter, graylogWriter alerts.Writer
-		err                       error
-	)
-
 	e := &Executor{
 		c:   c,
 		cfg: cfg,
@@ -64,12 +60,12 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 
 	if cfg.HasOutputs() {
 		e.alertsPoller = alerts.NewPoller(c)
-		if err = e.alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
+		if err := e.alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
 			return nil, err
 		}
 
 		if cfg.Outputs.File != "" {
-			jsonWriter, err = alerts.NewJSONFileWriter(cfg.Outputs.File)
+			jsonWriter, err := alerts.NewJSONFileWriter(cfg.Outputs.File)
 			if err != nil {
 				return nil, err
 			}
@@ -77,20 +73,30 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		}
 
 		if cfg.Outputs.Graylog.URI != "" {
-			graylogWriter, err = alerts.NewGraylogWriter(cfg.Outputs.Graylog.URI, cfg.Outputs.Graylog.Level)
+			graylogWriter, err := alerts.NewGraylogWriter(cfg.Outputs.Graylog.URI, cfg.Outputs.Graylog.Level)
 			if err != nil {
 				return nil, err
 			}
 			e.alertsPoller.AddWriter(graylogWriter)
 		}
+
+		if cfg.Outputs.QRadar.IP != "" {
+			addr := net.JoinHostPort(cfg.Outputs.QRadar.IP, strconv.FormatInt(int64(cfg.Outputs.QRadar.Port), 10))
+			qradarWriter, err := alerts.NewQRadarWriter(addr)
+			if err != nil {
+				return nil, err
+			}
+			e.alertsPoller.AddWriter(qradarWriter)
+		}
 	}
 
 	e.dnsbuf = packet.NewDNSPacketBuffer()
 	e.ipbuf = packet.NewIPPacketBuffer()
-	e.groups, err = createGroups(cfg)
+	groups, err := createGroups(cfg)
 	if err != nil {
 		return nil, err
 	}
+	e.groups = groups
 
 	return e, nil
 }
@@ -394,9 +400,9 @@ func (e *Executor) do() error {
 		if e.cfg.Engine.Analyze.IP {
 			ippacket := packet.NewIPPacket(rawpacket)
 			if ippacket == nil {
-				// continue because if packet isn't ip packet, then it can't be dns packet
 				continue
 			}
+
 			ippacket.DetermineDirection(e.cfg.Inputs.Sniffer.HardwareAddr)
 
 			if e.shouldSendIPPacket(ippacket) {
@@ -429,9 +435,8 @@ func (e *Executor) do() error {
 		}
 	}
 
-	// send what left in the buffer
-	// and wait for other gorutines to finish
-	// thanks to mutex lock in sendDNSPackets
+	// send what left in the buffer and
+	// wait for other gorutines to finish
 	e.sendDNSPackets()
 	e.sendIPPackets()
 	return nil

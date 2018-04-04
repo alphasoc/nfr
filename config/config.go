@@ -88,6 +88,14 @@ type Config struct {
 			Level int    `yaml:"level"`
 		} `yaml:"graylog"`
 
+		// IBM QRadar Syslog server
+		QRadar struct {
+			// Default: (none)
+			IP string `yaml:"ip"`
+			// Default: 514
+			Port int `yaml:"port"`
+		} `yaml:"qradar"`
+
 		// File where to store alerts. If not set then none alerts will be retrieved.
 		// To print alerts to console use two special outputs: stderr or stdout
 		// Default: "stderr"
@@ -224,16 +232,19 @@ func NewDefault() *Config {
 	cfg.Engine.Alerts.PollInterval = 5 * time.Minute
 
 	cfg.Inputs.Sniffer.Enabled = true
+
+	cfg.Outputs.Enabled = true
+	cfg.Outputs.File = "stderr"
+	cfg.Outputs.Graylog.Level = 1
+	cfg.Outputs.QRadar.Port = 514
+
+	cfg.Log.File = "stdout"
+	cfg.Log.Level = "info"
+
 	cfg.Data.File = "/run/nfr.data"
 	if runtime.GOOS == "windows" {
 		cfg.Data.File = path.Join(os.Getenv("AppData"), "nfr.data")
 	}
-
-	cfg.Outputs.Enabled = true
-	cfg.Outputs.Graylog.Level = 1
-	cfg.Outputs.File = "stderr"
-	cfg.Log.File = "stdout"
-	cfg.Log.Level = "info"
 
 	cfg.DNSEvents.BufferSize = 65535
 	cfg.DNSEvents.FlushInterval = 30 * time.Second
@@ -325,6 +336,10 @@ func (cfg *Config) validate() error {
 
 	if cfg.Outputs.Graylog.Level < 0 || cfg.Outputs.Graylog.Level > 7 {
 		return fmt.Errorf("invalid graylog alert level %d", cfg.Outputs.Graylog.Level)
+	}
+
+	if cfg.Outputs.QRadar.Port <= 0 && cfg.Outputs.QRadar.Port > 65535 {
+		return fmt.Errorf("config: invalid qradar port number %d", cfg.Outputs.QRadar.Port)
 	}
 
 	if cfg.Outputs.File != "" {
