@@ -162,6 +162,11 @@ func (e *Executor) Send(file string, fileFomrat string, fileType string) (err er
 // monitor monitors log files and send data to engine.
 func (e *Executor) monitor() {
 	for _, monitor := range e.cfg.Inputs.Monitors {
+		// skip empty items
+		if monitor.File == "" && monitor.Type == "" && monitor.Format == "" {
+			continue
+		}
+
 		t, err := tail.TailFile(monitor.File, tail.Config{
 			Follow: true,
 			ReOpen: true,

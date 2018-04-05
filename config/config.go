@@ -208,7 +208,11 @@ func New(file ...string) (*Config, error) {
 		return cfg, nil
 	}
 
-	return cfg, cfg.validate()
+	if err := cfg.validate(); err != nil {
+		return nil, fmt.Errorf("config: %s", err)
+	}
+
+	return cfg, nil
 }
 
 // NewDefault returns config with set defaults.
@@ -269,25 +273,25 @@ func (cfg *Config) load(content []byte) error {
 
 func (cfg *Config) validate() error {
 	if !(cfg.HasInputs() || cfg.HasOutputs()) {
-		return fmt.Errorf("config: at least one input or output must be enable")
+		return fmt.Errorf("at least one input or output must be enable")
 	}
 
 	// special case if there are only inputs and analyze set to false.
 	if !cfg.HasOutputs() && cfg.HasInputs() && !(cfg.Engine.Analyze.DNS || cfg.Engine.Analyze.IP) {
-		return fmt.Errorf("config: inputs are configured but analysis of dns and ip are set to false")
+		return fmt.Errorf("inputs are configured but analysis of dns and ip are set to false")
 	}
 
 	if cfg.Inputs.Sniffer.Enabled {
 		if cfg.Inputs.Sniffer.Interface != "" {
 			iface, err := net.InterfaceByName(cfg.Inputs.Sniffer.Interface)
 			if err != nil {
-				return fmt.Errorf("config: can't open interface %s: %s", cfg.Inputs.Sniffer.Interface, err)
+				return fmt.Errorf("can't open interface %s: %s", cfg.Inputs.Sniffer.Interface, err)
 			}
 			cfg.Inputs.Sniffer.HardwareAddr = iface.HardwareAddr
 		} else {
 			iface, err := utils.InterfaceWithPublicIP()
 			if err != nil {
-				return fmt.Errorf("config: can't find an interface for sniffing: %s", err)
+				return fmt.Errorf("can't find an interface for sniffing: %s", err)
 			}
 			cfg.Inputs.Sniffer.Interface = iface.Name
 			cfg.Inputs.Sniffer.HardwareAddr = iface.HardwareAddr
@@ -295,13 +299,13 @@ func (cfg *Config) validate() error {
 	}
 
 	if err := validateFilename(cfg.Log.File, true); err != nil {
-		return fmt.Errorf("config: %s", err)
+		return err
 	}
 	if cfg.Log.Level != "debug" &&
 		cfg.Log.Level != "info" &&
 		cfg.Log.Level != "warn" &&
 		cfg.Log.Level != "error" {
-		return fmt.Errorf("config: invalid %s log level", cfg.Log.Level)
+		return fmt.Errorf("invalid %s log level", cfg.Log.Level)
 	}
 
 	if err := validateFilename(cfg.Data.File, false); err != nil {
@@ -311,66 +315,81 @@ func (cfg *Config) validate() error {
 	if cfg.Outputs.Graylog.URI != "" {
 		parsedURI, err := url.Parse(cfg.Outputs.Graylog.URI)
 		if err != nil {
-			return fmt.Errorf("config: invalid graylog uri %s", err)
+			return fmt.Errorf("invalid graylog uri %s", err)
 		}
 
 		if _, _, err := net.SplitHostPort(parsedURI.Host); err != nil {
-			return fmt.Errorf("config: missing port in graylog uri %s", cfg.Outputs.Graylog.URI)
+			return fmt.Errorf("missing port in graylog uri %s", cfg.Outputs.Graylog.URI)
 		}
 	}
 
 	if cfg.Outputs.Graylog.Level < 0 || cfg.Outputs.Graylog.Level > 7 {
-		return fmt.Errorf("config: invalid graylog alert level %d", cfg.Outputs.Graylog.Level)
+		return fmt.Errorf("invalid graylog alert level %d", cfg.Outputs.Graylog.Level)
 	}
 
 	if cfg.Outputs.File != "" {
 		if err := validateFilename(cfg.Outputs.File, true); err != nil {
-			return fmt.Errorf("config: %s", err)
+			return err
 		}
 	}
 
 	if cfg.Engine.Alerts.PollInterval < 5*time.Second {
-		return fmt.Errorf("config: events poll interval must be at least 5s")
+		return fmt.Errorf("events poll interval must be at least 5s")
 	}
 
 	if cfg.DNSEvents.BufferSize < 64 {
-		return fmt.Errorf("config: queries buffer size must be at least 64")
+		return fmt.Errorf("queries buffer size must be at least 64")
 	}
 
 	if cfg.DNSEvents.FlushInterval < 5*time.Second {
-		return fmt.Errorf("config: queries flush interval must be at least 5s")
+		return fmt.Errorf("queries flush interval must be at least 5s")
 	}
 
 	if cfg.DNSEvents.Failed.File != "" {
 		if err := validateFilename(cfg.DNSEvents.Failed.File, false); err != nil {
-			return fmt.Errorf("config: %s", err)
+			return err
 		}
 	}
 
 	if cfg.IPEvents.BufferSize < 64 {
-		return fmt.Errorf("config: queries buffer size must be at least 64")
+		return fmt.Errorf("queries buffer size must be at least 64")
 	}
 
 	if cfg.IPEvents.FlushInterval < 5*time.Second {
-		return fmt.Errorf("config: queries flush interval must be at least 5s")
+		return fmt.Errorf("queries flush interval must be at least 5s")
 	}
 
 	if cfg.IPEvents.Failed.File != "" {
 		if err := validateFilename(cfg.IPEvents.Failed.File, false); err != nil {
-			return fmt.Errorf("config: %s", err)
+			return err
 		}
 	}
 
 	for _, monitor := range cfg.Inputs.Monitors {
+		// skip empty items
+		if monitor.File == "" && monitor.Format == "" && monitor.Type == "" {
+			continue
+		}
+		if monitor.Format == "" {
+			return fmt.Errorf("empty format for monitoring")
+		}
+		if monitor.Type == "" {
+			return fmt.Errorf("empty type for monitoring")
+		}
+		if monitor.File == "" {
+			return fmt.Errorf("empty file for monitoring")
+		}
+
 		if monitor.Format != "bro" && monitor.Format != "suricata" && monitor.Format != "msdns" &&
 			monitor.Format != "syslog-named" {
-			return fmt.Errorf("config: unknown format %s for monitoring", monitor.Format)
+			return fmt.Errorf("unknown format %s for monitoring", monitor.Format)
 		}
+
 		if monitor.Type != "dns" && monitor.Type != "ip" {
-			return fmt.Errorf("config: unknown type %s for monitoring", monitor.Type)
+			return fmt.Errorf("unknown type %s for monitoring", monitor.Type)
 		}
 		if monitor.Type == "ip" && monitor.Format != "bro" {
-			return fmt.Errorf("config: unsupported type %s for %s format", monitor.Type, monitor.Format)
+			return fmt.Errorf("unsupported type %s for %s format", monitor.Type, monitor.Format)
 		}
 	}
 
