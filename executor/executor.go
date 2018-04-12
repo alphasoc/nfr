@@ -561,7 +561,8 @@ func ipPacketsToRequest(packets []*packet.IPPacket) *client.EventsIPRequest {
 		case packet.DirectionOut:
 			entry.BytesOut = ippacket.BytesCount
 		default:
-			continue
+			// If can't be determine the assumie it bytes out
+			entry.BytesOut = ippacket.BytesCount
 		}
 		req.Entries = append(req.Entries, entry)
 	}
