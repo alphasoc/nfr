@@ -15,7 +15,7 @@ import (
 
 var (
 	fileFormats  = []string{"bro", "msdns", "pcap", "suricata", "syslog-named"}
-	analyzeTypes = []string{"dns", "ip"}
+	analyzeTypes = []string{"all", "dns", "ip"}
 )
 
 func newReadCommand() *cobra.Command {
@@ -51,7 +51,7 @@ See nfr read --help for more informations.`,
 		},
 	}
 	cmd.Flags().StringVarP(&fileFormat, "format", "f", "pcap", fmt.Sprintf("One of %s file format", sprintSlice(fileFormats)))
-	cmd.Flags().StringVar(&fileType, "type", "dns", fmt.Sprintf("One of %s type to analyze", sprintSlice(analyzeTypes)))
+	cmd.Flags().StringVar(&fileType, "type", "all", fmt.Sprintf("One of %s type to analyze", sprintSlice(analyzeTypes)))
 	return cmd
 }
 

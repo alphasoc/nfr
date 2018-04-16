@@ -130,33 +130,34 @@ func (e *Executor) Start() (err error) {
 }
 
 // Send sends dns events from given format file to engine.
-func (e *Executor) Send(file string, fileFomrat string, fileType string) (err error) {
-	switch fileFomrat {
-	case "bro":
-		e.lr, err = bro.NewFileParser(file)
-	case "pcap":
-		e.lr, err = pcap.NewReader(file)
-	case "suricata":
-		e.lr, err = suricata.NewFileParser(file)
-	case "msdns":
-		e.lr, err = msdns.NewFileParser(file)
-	case "syslog-named":
-		e.lr, err = syslognamed.NewFileParser(file)
-	default:
-		return errors.New("file format not supported")
-	}
-	if err != nil {
+func (e *Executor) Send(file, fileFomrat, fileType string) (err error) {
+	if err = e.openFileParser(file, fileFomrat); err != nil {
 		return err
 	}
 
 	switch fileType {
+	case "all":
+		if err = e.processIPReader(); err != nil {
+			return err
+		}
+
+		// some parser cannot be reset, thus they need to be reopen,
+		// but first close previous one
+		e.lr.Close()
+		if err = e.openFileParser(file, fileFomrat); err != nil {
+			return err
+		}
+
+		err = e.processDNSReader()
 	case "dns":
-		return e.processDNSReader()
+		err = e.processDNSReader()
 	case "ip":
-		return e.processIPReader()
+		err = e.processIPReader()
 	default:
 		return errors.New("file type not supported")
 	}
+	e.lr.Close()
+	return err
 }
 
 // monitor monitors log files and send data to engine.
@@ -262,6 +263,7 @@ func (e *Executor) init() {
 
 func (e *Executor) processDNSReader() error {
 	if !e.cfg.Engine.Analyze.DNS {
+		log.Warn("dns events processing disabled")
 		return nil
 	}
 
@@ -269,6 +271,7 @@ func (e *Executor) processDNSReader() error {
 	if err != nil {
 		return err
 	}
+	log.Infof("found %d dns packets", len(dnspackets))
 
 	for _, dnspacket := range dnspackets {
 		if !e.shouldSendDNSPacket(dnspacket) {
@@ -287,6 +290,7 @@ func (e *Executor) processDNSReader() error {
 
 func (e *Executor) processIPReader() error {
 	if !e.cfg.Engine.Analyze.IP {
+		log.Warn("ip events processing disabled")
 		return nil
 	}
 
@@ -294,6 +298,7 @@ func (e *Executor) processIPReader() error {
 	if err != nil {
 		return err
 	}
+	log.Infof("found %d ip packets", len(ippackets))
 
 	for _, ippacket := range ippackets {
 		if !e.shouldSendIPPacket(ippacket) {
@@ -541,6 +546,25 @@ func createGroups(cfg *config.Config) (*groups.Groups, error) {
 		}
 	}
 	return gr, nil
+}
+
+// openFileParser opens file for parse events.
+func (e *Executor) openFileParser(file, fileFomrat string) (err error) {
+	switch fileFomrat {
+	case "bro":
+		e.lr, err = bro.NewFileParser(file)
+	case "pcap":
+		e.lr, err = pcap.NewReader(file)
+	case "suricata":
+		e.lr, err = suricata.NewFileParser(file)
+	case "msdns":
+		e.lr, err = msdns.NewFileParser(file)
+	case "syslog-named":
+		e.lr, err = syslognamed.NewFileParser(file)
+	default:
+		err = errors.New("file format not supported")
+	}
+	return err
 }
 
 // ipPacketsToRequest changes ip packets to client ip request.
