@@ -23,7 +23,7 @@ type Config struct {
 
 // NewLivePcapSniffer creates sniffer that capture packets from interface.
 func NewLivePcapSniffer(iface string, cfg *Config) (*PcapSniffer, error) {
-	handle, err := pcap.OpenLive(iface, 1600, false, pcap.BlockForever)
+	handle, err := pcap.OpenLive(iface, 1600, true, pcap.BlockForever)
 	if err != nil {
 		return nil, err
 	}
