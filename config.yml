@@ -85,14 +85,14 @@ outputs:
   # Default: true
   enabled: true
 
-  # IBM QRadar server where AlphaSOC alerts will be sent in LEEF format.
-  # NFR will use TCP port 514 to send LEEF messages via syslog by default.
-  # Use the fields below to define the server IP address and syslog port.
-  qradar:
-    # IP address of the QRadar server
+  # Syslog server where AlphaSOC alerts will be sent in JSON format.
+  # NFR will use TCP port 514 to send JSON messages via syslog by default.
+  # Use the fields below to define the syslog server IP address and port.
+  syslog:
+    # IP address of the syslog server
     # Default: (none)
     ip:
-    # Port for the QRadar syslog TCP input
+    # Port for the syslog TCP input
     # Default: 514
     port: 514
 

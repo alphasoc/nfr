@@ -80,13 +80,13 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 			e.alertsPoller.AddWriter(graylogWriter)
 		}
 
-		if cfg.Outputs.QRadar.IP != "" {
-			addr := net.JoinHostPort(cfg.Outputs.QRadar.IP, strconv.FormatInt(int64(cfg.Outputs.QRadar.Port), 10))
-			qradarWriter, err := alerts.NewQRadarWriter(addr)
+		if cfg.Outputs.Syslog.IP != "" {
+			addr := net.JoinHostPort(cfg.Outputs.Syslog.IP, strconv.FormatInt(int64(cfg.Outputs.Syslog.Port), 10))
+			syslogWriter, err := alerts.NewSyslogWriter(addr)
 			if err != nil {
 				return nil, err
 			}
-			e.alertsPoller.AddWriter(qradarWriter)
+			e.alertsPoller.AddWriter(syslogWriter)
 		}
 	}
 

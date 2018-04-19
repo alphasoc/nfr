@@ -88,13 +88,13 @@ type Config struct {
 			Level int    `yaml:"level"`
 		} `yaml:"graylog"`
 
-		// IBM QRadar Syslog server
-		QRadar struct {
+		// Syslog server
+		Syslog struct {
 			// Default: (none)
 			IP string `yaml:"ip"`
 			// Default: 514
 			Port int `yaml:"port"`
-		} `yaml:"qradar"`
+		} `yaml:"syslog"`
 
 		// File where to store alerts. If not set then none alerts will be retrieved.
 		// To print alerts to console use two special outputs: stderr or stdout
@@ -236,7 +236,7 @@ func NewDefault() *Config {
 	cfg.Outputs.Enabled = true
 	cfg.Outputs.File = "stderr"
 	cfg.Outputs.Graylog.Level = 1
-	cfg.Outputs.QRadar.Port = 514
+	cfg.Outputs.Syslog.Port = 514
 
 	cfg.Log.File = "stdout"
 	cfg.Log.Level = "info"
@@ -338,8 +338,8 @@ func (cfg *Config) validate() error {
 		return fmt.Errorf("invalid graylog alert level %d", cfg.Outputs.Graylog.Level)
 	}
 
-	if cfg.Outputs.QRadar.Port <= 0 && cfg.Outputs.QRadar.Port > 65535 {
-		return fmt.Errorf("config: invalid qradar port number %d", cfg.Outputs.QRadar.Port)
+	if cfg.Outputs.Syslog.Port <= 0 && cfg.Outputs.Syslog.Port > 65535 {
+		return fmt.Errorf("config: invalid qradar port number %d", cfg.Outputs.Syslog.Port)
 	}
 
 	if cfg.Outputs.File != "" {
