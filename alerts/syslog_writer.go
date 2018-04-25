@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/syslog"
-
-	"github.com/alphasoc/nfr/client"
 )
 
 // SyslogWriter implements Writer interface and write
@@ -25,12 +23,8 @@ func NewSyslogWriter(raddr string) (*SyslogWriter, error) {
 }
 
 // Write writes alert response to the syslog input.
-func (w *SyslogWriter) Write(resp *client.AlertsResponse) error {
-	if len(resp.Alerts) == 0 {
-		return nil
-	}
-
-	b, err := json.Marshal(resp)
+func (w *SyslogWriter) Write(alert *Alert) error {
+	b, err := json.Marshal(alert)
 	if err != nil {
 		return err
 	}

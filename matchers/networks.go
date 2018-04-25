@@ -87,7 +87,7 @@ func NewNetwork(srcIncludes, srcExcludes, dstIncludes, dstExcludes []string) (*N
 	return m, nil
 }
 
-// MatchSrcIP matches sr cips and check if it's on networks included list
+// MatchSrcIP matches src ip to check if it's on networks included list
 // at the same time checking if it's not in any excluded list.
 func (m *Network) MatchSrcIP(srcIP net.IP) (bool, bool) {
 	if srcIP == nil {

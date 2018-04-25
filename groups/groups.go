@@ -9,7 +9,8 @@ import (
 
 // Group is a definition used for whitelising ip and dns traffic.
 type Group struct {
-	Name string
+	Name  string
+	Label string
 
 	// source ip/cidr
 	SrcIncludes []string
@@ -30,12 +31,17 @@ type matcher struct {
 
 // Groups is a set of group definition used for whitelisting ip and dns traffic.
 type Groups struct {
-	groups map[string]matcher
+	ms map[string]matcher
+
+	gs map[string]*Group
 }
 
 // New creates new Groups.
 func New() *Groups {
-	return &Groups{make(map[string]matcher)}
+	return &Groups{
+		ms: make(map[string]matcher),
+		gs: make(map[string]*Group),
+	}
 }
 
 // Add adds whitelist group.
@@ -50,14 +56,15 @@ func (g *Groups) Add(group *Group) error {
 		return err
 	}
 
-	g.groups[group.Name] = matcher{dm, nm}
+	g.ms[group.Name] = matcher{dm, nm}
+	g.gs[group.Name] = group
 	return nil
 }
 
 // IsIPWhitelisted returns true if ip packet doesn't match any of a groups.
 func (g *Groups) IsIPWhitelisted(srcIP, dstIP net.IP) (string, bool) {
 	// if there is no groups, then every query is whitelisted
-	if g == nil || len(g.groups) == 0 {
+	if g == nil || len(g.ms) == 0 {
 		return "<no-whitelist>", true
 	}
 
@@ -68,8 +75,8 @@ func (g *Groups) IsIPWhitelisted(srcIP, dstIP net.IP) (string, bool) {
 	// ip must be included in at least 1 group, while
 	// being not excluded from others groups.
 	ok := false
-	for name, group := range g.groups {
-		matched, excluded := group.nm.Match(srcIP, dstIP)
+	for name, matcher := range g.ms {
+		matched, excluded := matcher.nm.Match(srcIP, dstIP)
 		if !matched {
 			continue
 		}
@@ -84,8 +91,8 @@ func (g *Groups) IsIPWhitelisted(srcIP, dstIP net.IP) (string, bool) {
 
 // IsDNSQueryWhitelisted returns true if dns query doesn't match any of groups.
 func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (string, bool) {
-	// if there is no groups, then every query is whitelisted
-	if g == nil || len(g.groups) == 0 {
+	// if there is no group, then every query is whitelisted
+	if g == nil || len(g.ms) == 0 {
 		return "<no-whitelist>", true
 	}
 
@@ -93,20 +100,20 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (stri
 		return "<no-data>", false
 	}
 
-	// ip must be included in at least 1 group, while
+	// ip must be included in at least 1 matcher, while
 	// being not excluded from others groups.
 	// At the same time domain can't be included in
-	// groups' excluded domains.
+	// groups excluded domains.
 	var (
 		ok                = false
 		matched, excluded bool
 	)
-	for name, group := range g.groups {
+	for name, matcher := range g.ms {
 		// allow dstIP to be null, some logs format dosen't track dst ip.
 		if dstIP != nil {
-			matched, excluded = group.nm.Match(srcIP, dstIP)
+			matched, excluded = matcher.nm.Match(srcIP, dstIP)
 		} else {
-			matched, excluded = group.nm.MatchSrcIP(srcIP)
+			matched, excluded = matcher.nm.MatchSrcIP(srcIP)
 		}
 		if !matched {
 			continue
@@ -116,7 +123,7 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (stri
 		}
 
 		// ip is matched, now check if domain is not excluded
-		if group.dm.Match(strings.ToLower(domain)) {
+		if matcher.dm.Match(strings.ToLower(domain)) {
 			return name, false
 		}
 
@@ -126,4 +133,14 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (stri
 	}
 
 	return "", ok
+}
+
+// FindGroupsBySrcIP finds first group src ip belongs to.
+func (g *Groups) FindGroupsBySrcIP(srcIP net.IP) (groups []*Group) {
+	for name, matcher := range g.ms {
+		if matched, excluded := matcher.nm.MatchSrcIP(srcIP); matched && !excluded {
+			groups = append(groups, g.gs[name])
+		}
+	}
+	return
 }

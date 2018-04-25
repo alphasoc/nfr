@@ -58,8 +58,15 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		cfg: cfg,
 	}
 
+	groups, err := createGroups(cfg)
+	if err != nil {
+		return nil, err
+	}
+	e.groups = groups
+
 	if cfg.HasOutputs() {
-		e.alertsPoller = alerts.NewPoller(c)
+		mapper := alerts.NewAlertMapper(groups)
+		e.alertsPoller = alerts.NewPoller(c, mapper)
 		if err := e.alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
 			return nil, err
 		}
@@ -92,12 +99,6 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 
 	e.dnsbuf = packet.NewDNSPacketBuffer()
 	e.ipbuf = packet.NewIPPacketBuffer()
-	groups, err := createGroups(cfg)
-	if err != nil {
-		return nil, err
-	}
-	e.groups = groups
-
 	return e, nil
 }
 
@@ -540,6 +541,7 @@ func createGroups(cfg *config.Config) (*groups.Groups, error) {
 	for name, group := range cfg.ScopeConfig.Groups {
 		g := &groups.Group{
 			Name:            name,
+			Label:           group.Label,
 			SrcIncludes:     group.InScope,
 			SrcExcludes:     group.OutScope,
 			DstIncludes:     []string{"0.0.0.0/0", "::/0"},

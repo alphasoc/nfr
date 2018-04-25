@@ -3,8 +3,6 @@ package alerts
 import (
 	"encoding/json"
 	"os"
-
-	"github.com/alphasoc/nfr/client"
 )
 
 // JSONFileWriter implements Writer interface and writes alerts in json format.
@@ -29,13 +27,8 @@ func NewJSONFileWriter(file string) (*JSONFileWriter, error) {
 }
 
 // Write writes alerts response to the file in json format.
-func (l *JSONFileWriter) Write(e *client.AlertsResponse) error {
-	// do not log if there is no alerts
-	if len(e.Alerts) == 0 {
-		return nil
-	}
-
-	b, err := json.Marshal(e)
+func (l *JSONFileWriter) Write(alert *Alert) error {
+	b, err := json.Marshal(alert)
 	if err != nil {
 		return err
 	}

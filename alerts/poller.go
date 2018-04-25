@@ -1,4 +1,4 @@
-// Package alerts polls and writes alerts from AlphaSOC api.
+// Package alerts polls and writes alerts from AlphaSOC Engine.
 package alerts
 
 import (
@@ -17,13 +17,15 @@ type Poller struct {
 	ticker     *time.Ticker
 	follow     string
 	followFile string
+	mapper     *AlertMapper
 }
 
 // NewPoller creates new poller base on give client and writer.
-func NewPoller(c client.Client) *Poller {
+func NewPoller(c client.Client, mapper *AlertMapper) *Poller {
 	return &Poller{
 		c:       c,
 		writers: make([]Writer, 0),
+		mapper:  mapper,
 	}
 }
 
@@ -66,8 +68,14 @@ func (p *Poller) do(interval time.Duration, count int) error {
 			return err
 		}
 
+		if len(alerts.Alerts) == 0 {
+			continue
+		}
+
+		newAlerts := p.mapper.Map(alerts)
+
 		for _, w := range p.writers {
-			if err := w.Write(alerts); err != nil {
+			if err := w.Write(newAlerts); err != nil {
 				return err
 			}
 		}

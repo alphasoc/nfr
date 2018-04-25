@@ -5,7 +5,6 @@ import (
 	"log/syslog"
 	"strings"
 
-	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/leef"
 	"github.com/alphasoc/nfr/version"
 )
@@ -32,43 +31,35 @@ func NewQRadarWriter(raddr string) (*QRadarWriter, error) {
 }
 
 // Write writes alert response to the qradar syslog input.
-func (w *QRadarWriter) Write(resp *client.AlertsResponse) error {
-	if len(resp.Alerts) == 0 {
-		return nil
-	}
-
+func (w *QRadarWriter) Write(alert *Alert) error {
 	// send each alert as separate message.
-	for _, alert := range resp.Alerts {
-		for _, threat := range alert.Threats {
+	for _, event := range alert.Events {
+		for _, threat := range event.Threats {
 			e := leef.NewEvent()
-			e.SetHeader("AlphaSOC", tag, strings.TrimPrefix(version.Version, "v"), threat)
+			e.SetHeader("AlphaSOC", tag, strings.TrimPrefix(version.Version, "v"), threat.ID)
 
-			e.SetSevAttr(resp.Threats[threat].Severity * 2)
-			if resp.Threats[threat].Policy {
+			e.SetSevAttr(threat.Severity * 2)
+			if threat.Policy {
 				e.SetPolicyAttr("1")
 			} else {
 				e.SetPolicyAttr("0")
 			}
-			e.SetAttr("flags", strings.Join(alert.Wisdom.Flags, ","))
-			e.SetAttr("description", resp.Threats[threat].Title)
+			e.SetAttr("flags", strings.Join(event.Flags, ","))
+			e.SetAttr("description", threat.Description)
 
 			e.SetDevTimeFormatAttr("MMM dd yyyy HH:mm:ss")
-			switch alert.EventType {
-			case "dns":
-				e.SetDevTimeAttr(alert.DNSEvent.Timestamp.Format("Jan 02 2006 15:04:05"))
-				e.SetSrcAttr(alert.DNSEvent.SrcIP)
-				e.SetAttr("query", alert.DNSEvent.Query)
-				e.SetAttr("recordType", alert.DNSEvent.QType)
-			case "ip":
-				e.SetDevTimeAttr(alert.IPEvent.Timestamp.Format("Jan 02 2006 15:04:05"))
-				e.SetProtoAttr(alert.IPEvent.Protocol)
-				e.SetSrcAttr(alert.IPEvent.SrcIP)
-				e.SetSrcPortAttr(alert.IPEvent.SrcPort)
-				e.SetDstAttr(alert.IPEvent.DstIP)
-				e.SetDstPortAttr(alert.IPEvent.DstPort)
-				e.SetSrcBytesAttr(alert.IPEvent.BytesIn)
-				e.SetDstBytesAttr(alert.IPEvent.BytesOut)
-			}
+			e.SetDevTimeAttr(event.Timestamp.Format("Jan 02 2006 15:04:05"))
+			e.SetProtoAttr(event.Protocol)
+			e.SetSrcAttr(event.SrcIP)
+			e.SetSrcAttr(event.SrcIP)
+			e.SetSrcPortAttr(event.SrcPort)
+			e.SetDstAttr(event.DstIP)
+			e.SetDstPortAttr(event.DstPort)
+			e.SetSrcBytesAttr(event.BytesIn)
+			e.SetDstBytesAttr(event.BytesOut)
+			e.SetAttr("query", event.Query)
+			e.SetAttr("recordType", event.RecordType)
+
 			if err := w.w.Alert(e.String()); err != nil {
 				return err
 			}
