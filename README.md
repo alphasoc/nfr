@@ -126,33 +126,41 @@ You may run `nfr start` in tmux or screen, or provide a startup script to run on
 ```
 # nfr start 2>&1 >/dev/null | tee /tmp/alerts.json | jq .
 {
-  "follow": "4.9b3db",
+  "follow": "5-dc309",
   "more": false,
   "events": [
     {
       "type": "alert",
-      "ts": [
-        "2017-05-22T16:16:56+02:00"
-      ],
-      "ip": "10.0.2.15",
-      "record_type": "A",
-      "fqdn": "microsoft775.com",
-      "risk": 5,
       "flags": [
-        "c2"
+        "c2",
+        "unreachable_domain"
+      ],
+      "groups": [
+        {
+          "label": "default",
+          "desc": "Default test"
+        }
       ],
       "threats": [
-        "c2_communication"
-      ]
+        {
+          "id": "c2_communication",
+          "severity": 5,
+          "desc": "C2 communication attempt indicating infection",
+          "policy": false,
+          "deprecated": false
+        }
+      ],
+      "ts": "2018-04-26T11:03:39.724945+02:00",
+      "srcIp": "10.0.2.15",
+      "srcPort": 0,
+      "destIp": "",
+      "destPort": 0,
+      "proto": "",
+      "bytesIn": 0,
+      "bytesOut": 0,
+      "query": "microsoft775.com",
+      "recordType": "A"
     }
-  ],
-  "threats": {
-    "c2_communication": {
-      "title": "C2 communication attempt indicating infection",
-      "severity": 5,
-      "policy": false,
-      "deprecated": false
-    }
-  }
+  ]
 }
 ```
