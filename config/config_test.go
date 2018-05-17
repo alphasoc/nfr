@@ -55,8 +55,8 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if l := len(group.InScope); l != 4 {
 		t.Fatalf("invalid number of source networks in default scope group - got %d; expected %d", l, 4)
 	}
-	if l := len(group.TrustedIps); l != 4 {
-		t.Fatalf("invalid number of trusted ips in default scope group - got %d; expected %d", l, 4)
+	if l := len(group.TrustedIps); l != 10 {
+		t.Fatalf("invalid number of trusted ips in default scope group - got %d; expected %d", l, 10)
 	}
 	if l := len(group.TrustedDomains); l != 4 {
 		t.Fatalf("invalid number of excluded domains in default scope group - got %d; expected %d", l, 4)

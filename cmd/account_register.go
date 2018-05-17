@@ -47,7 +47,7 @@ func register(cfg *config.Config, c *client.AlphaSOCClient) error {
 		return fmt.Errorf("Account is already registered")
 	}
 
-	fmt.Println(`Please provide your details to generate an AlphaSOC API key.
+	fmt.Printf(`Please provide your details to generate an AlphaSOC API key.
 A valid email address is required for activation purposes.
 
 By performing this request you agree to our Terms of Service and Privacy Policy

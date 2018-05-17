@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/alphasoc/nfr/client"
+	"github.com/alphasoc/nfr/groups"
 )
 
 func TestPollerDo(t *testing.T) {
@@ -18,7 +19,7 @@ func TestPollerDo(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	p := NewPoller(client.NewMock())
+	p := NewPoller(client.NewMock(), NewAlertMapper(groups.New()))
 	p.AddWriter(w)
 	p.follow = "1"
 	p.do(1, 1)

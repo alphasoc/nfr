@@ -10,7 +10,7 @@ import (
 
 func TestReaderReadDNS(t *testing.T) {
 	const (
-		filename   = "msdns-eve.json"
+		filename   = "msdns.log"
 		logcontent = `
 DNS Server log file creation at 2017-01-01 00:00:00
 Message logging key (for packets - other items use a subset of these fields):

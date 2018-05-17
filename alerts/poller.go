@@ -56,13 +56,18 @@ func (p *Poller) Do(interval time.Duration) error {
 	return p.do(interval, 0)
 }
 
-// do pools maxiumum "count" alerts. If count <=0 then it pulls forever.
-func (p *Poller) do(interval time.Duration, count int) error {
+// do polls alerts. If maxTries <=0 then it polls forever.
+func (p *Poller) do(interval time.Duration, maxTries int) error {
 	p.ticker = time.NewTicker(interval)
 	defer p.stop()
 
-	var c = 0
+	var tries = 0
 	for range p.ticker.C {
+		if maxTries > 0 && tries >= maxTries {
+			break
+		}
+		tries++
+
 		alerts, err := p.c.Alerts(p.follow)
 		if err != nil {
 			return err
@@ -89,11 +94,6 @@ func (p *Poller) do(interval time.Duration, count int) error {
 			if err := ioutil.WriteFile(p.followFile, []byte(p.follow), 0644); err != nil {
 				return err
 			}
-		}
-
-		c++
-		if count > 0 && c >= count {
-			break
 		}
 	}
 	return nil
