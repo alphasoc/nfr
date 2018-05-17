@@ -444,7 +444,18 @@ func (cfg *Config) loadScopeConfig() (err error) {
 				Label:          "Default",
 				InScope:        []string{"10.0.0.0/8", "192.168.0.0/16", "172.16.0.0/12", "fc00::/7"},
 				TrustedDomains: []string{"*.arpa", "*.lan", "*.local", "*.internal"},
-				TrustedIps:     []string{"10.0.0.0/8", "192.168.0.0/16", "172.16.0.0/12", "fc00::/7"},
+				TrustedIps: []string{
+					"10.0.0.0/8",
+					"127.0.0.0/8",
+					"169.254.0.0/16",
+					"172.16.0.0/12",
+					"192.168.0.0/16",
+					"224.0.0.0/8",
+					"255.255.255.255/32",
+					"fc00::/7",
+					"fe80::/10",
+					"ff00::/8",
+				},
 			},
 		}
 	} else {
