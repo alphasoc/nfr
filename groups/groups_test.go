@@ -117,6 +117,23 @@ func TestIsDNSQueryWhitelisted(t *testing.T) {
 			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(11, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(11, 1, 0, 0), net.IPv4(11, 0, 0, 0), net.IPv4(11, 1, 0, 1)},
 			[]bool{false, true, false, true, false, false},
 		},
+		{
+			"public",
+			[]*Group{
+				{
+					Name:            "default",
+					SrcIncludes:     []string{"0.0.0.0/0"},
+					SrcExcludes:     []string{},
+					DstIncludes:     []string{"0.0.0.0/0", "::/0"},
+					DstExcludes:     []string{"10.0.0.0/8", "192.168.0.0/16", "172.16.0.0/12", "fc00::/7"},
+					ExcludedDomains: []string{"*.arpa", "*.lan", "*.local", "*.internal"},
+				},
+			},
+			[]string{"alphasoc.com"},
+			[]net.IP{net.IPv4(172, 31, 84, 103)},
+			[]net.IP{net.IPv4(31, 13, 65, 56)},
+			[]bool{true},
+		},
 	}
 
 	for _, tt := range testsGroups {
