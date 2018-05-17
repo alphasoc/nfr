@@ -65,6 +65,7 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 	e.groups = groups
 
 	if cfg.HasOutputs() {
+		log.Info("outputs enabled")
 		mapper := alerts.NewAlertMapper(groups)
 		e.alertsPoller = alerts.NewPoller(c, mapper)
 		if err := e.alertsPoller.SetFollowDataFile(cfg.Data.File); err != nil {
@@ -119,11 +120,12 @@ func (e *Executor) Start() (err error) {
 					return fmt.Errorf("can't open file %s for writing ip events: %s", e.cfg.IPEvents.Failed.File, err.(*net.OpError).Err)
 				}
 			}
+			log.Infof("creating the network sniffer on %s", e.cfg.Inputs.Sniffer.Interface)
 			e.sniffer, err = sniffer.NewLivePcapSniffer(e.cfg.Inputs.Sniffer.Interface, &sniffer.Config{
 				BPFilter: "tcp or udp",
 			})
 			if err != nil {
-				return fmt.Errorf("can't create sniffer: %s", err)
+				return fmt.Errorf("can't create the network sniffer: %s", err)
 			}
 			log.Infof("starting the network sniffer on %s", e.cfg.Inputs.Sniffer.Interface)
 			e.do()
