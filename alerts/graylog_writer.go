@@ -53,6 +53,7 @@ func (w *GraylogWriter) Write(alert *Alert) error {
 					"engine_agent": client.DefaultUserAgent,
 				},
 			}
+
 			m.Extra["original_event"] = event.Timestamp.String()
 			m.Extra["src_ip"] = event.SrcIP
 			m.Extra["query"] = event.Query
@@ -72,7 +73,7 @@ func (w *GraylogWriter) Write(alert *Alert) error {
 	return nil
 }
 
-// Close closes the connecion with graylog server.
+// Close closes a connecion with the graylog server.
 func (w *GraylogWriter) Close() error {
 	return w.g.Close()
 }
