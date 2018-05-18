@@ -19,7 +19,6 @@ jobs:
           root: .
           paths:
             - nfr-linux-amd64
-            - nfr-darwin-amd64
 
   lint:
     docker:
@@ -52,7 +51,6 @@ jobs:
             go get github.com/aktau/github-release
             github-release release --user alphasoc-deploy --repo nfr --tag $CIRCLE_TAG
             github-release upload --user alphasoc-deploy --repo nfr --tag $CIRCLE_TAG --name nfr-linux-amd64 --file nfr-linux-amd64
-            github-release upload --user alphasoc-deploy --repo nfr --tag $CIRCLE_TAG --name nfr-darwin-amd64 --file nfr-darwin-amd64
 
 workflows:
   version: 2
