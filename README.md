@@ -1,30 +1,9 @@
 # Network Flight Recorder
-**NFR** is a lightweight application which captures network traffic and provides alerting of suspicious events (e.g. C2 beacons, DGA traffic, ransomware, DNS tunneling, and cryptomining). The utility collects events via a network interface or processing of log files (e.g. Bro IDS or Suricata logs), scores them via the AlphaSOC Analytics Engine, and outputs alerts for escalation.
+**NFR** is a lightweight application which processes network traffic using the [AlphaSOC Analytics Engine.](https://alphasoc.com) NFR can monitor log files on disk (e.g. Microsoft DNS debug logs, Bro IDS logs) or run as a network sniffer under Linux to score traffic. Upon processing the data, alerts are presented in JSON format for escalation.
 
-Alert data is returned in JSON format upon processing, describing the threats and policy violations.
+## Installation
+[Download NFR from the releases section.](https://github.com/alphasoc/nfr/releases) Once downloaded, run NFR as follows:
 
-## Prerequisites
-NFR requires the `libpcap` development library. Installation steps are as follows.
-
-### Under Debian and Ubuntu
-```
-# sudo apt-get install libpcap-dev
-```
-
-### Under RHEL7
-```
-# sudo yum-config-manager --enable rhel-7-server-optional-rpms
-# sudo yum install libpcap-devel
-# sudo yum-config-manager --disable rhel-7-server-optional-rpms
-```
-
-## NFR installation
-Use the following command to install NFR:
-```
-# go get -u github.com/alphasoc/nfr/...
-```
-
-Upon installation, test NFR as follows:
 ```
 # nfr --help
 Network Flight Recorder (NFR) is an application which captures network traffic
@@ -66,7 +45,16 @@ Success! The configuration has been written to /etc/nfr/config.yml
 Next, check your email and click the verification link to activate your API key.
 ```
 
-## Processing events from Bro and Suricata
+## Processing events from the network
+If you are running NFR under Linux, use the `sniffer` directive within `/etc/nfr/config.yml` to specify a network interface to monitor. To monitor interface `eth1` you can use the configuration below.
+
+```
+  sniffer:
+    enabled: true
+    interface: eth1
+```
+
+## Processing events from disk
 Use the `monitor` directive within `/etc/nfr/config.yml` to actively read log files from disk. Bro IDS logs both DNS and IP traffic, whereas Suricata only logs DNS traffic. To monitor both Bro `conn.log` and `dns.log` output you can use this configuration:
 
 ```
@@ -121,7 +109,7 @@ groups:
 ```
 
 ## Running NFR
-You may run `nfr start` in tmux or screen, or provide a startup script to run on boot. NFR returns alert data in JSON format to `stderr`. Below an example in which raw the JSON is both stored on disk at `/tmp/alerts.json` and rendered via `jq` to make it human-readable in the terminal.
+You may run `nfr start` via `tmux` or `screen` under Linux, or set up a service (detailed in the following section). NFR returns alert data in JSON format to `stderr`. Below an example in which raw the JSON is both stored on disk at `/tmp/alerts.json` and rendered via `jq` to make it human-readable in the terminal.
 
 ```
 # nfr start 2>&1 >/dev/null | tee /tmp/alerts.json | jq .
@@ -163,4 +151,87 @@ You may run `nfr start` in tmux or screen, or provide a startup script to run on
     }
   ]
 }
+```
+
+## Running NFR as a service
+
+### Under Linux
+If you are using a current Linux distribution (e.g. RHEL7, Ubuntu 16), it will have [systemd](https://www.freedesktop.org/wiki/Software/systemd/) installed. Follow these steps as root to run NFR as a service:
+
+1. Create the NFR configuration directory and copy `config.yml` and `scope.yml` into it
+
+```
+mkdir /etc/nfr
+cp config.yml /etc/nfr
+cp scope.yml /etc/nfr
+```
+
+2. Copy the `nfr` binary into `/usr/local/bin` and ensure it's executable
+
+```
+cp nfr /usr/local/bin
+chmod a+x /usr/local/bin/nfr
+```
+
+3. Create the NFR service files for `systemd`
+
+```
+cat > /etc/systemd/system/nfr.service << EOF
+
+[Unit]
+Description=AlphaSOC Network Flight Recorder
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/nfr start
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+```
+
+4. Use `systemctl` to enable NFR, start the service, and review its status
+
+```
+systemctl enable nfr
+systemctl start nfr
+systemctl status nfr
+```
+
+Once NFR is installed, you can view logs and troubleshoot using `journalctl -u nfr`.
+
+To stop and remove the service, follow these steps:
+
+```
+systemctl stop nfr
+systemctl disable nfr
+rm /etc/systemd/system/nfr.service
+```
+
+### Under Microsoft Windows
+To run NFR as a service under Windows, first install [NSSM](http://nssm.cc), and follow the steps below within PowerShell as Administrator.
+
+1. Create the NFR configuration directory and copy `config.yml` and `scope.yml` into it
+
+```
+New-Item -ItemType directory -Path $Env:AppData\nfr
+Move-Item -Path config.yml -Destination $Env:AppData\nfr
+Move-Item -Path scope.yml -Destination $Env:AppData\nfr
+```
+
+2. Use NSSM to install the service, start it, and review status (__note:__ modify the path to `nfr.exe` as needed)
+
+```
+nssm.exe install nfr C:\path\to\nfr.exe start
+nssm.exe start nfr
+nssm.exe status nfr
+```
+
+To stop and remove the service, follow these steps:
+
+```
+nssm.exe stop nfr
+nssm.exe remove nfr
 ```
