@@ -43,7 +43,7 @@ var ErrNoRequest = errors.New("request is empty")
 const DefaultVersion = "v1"
 
 // DefaultUserAgent for nfr.
-var DefaultUserAgent = "AlphaSOC NFR/" + version.Version
+var DefaultUserAgent = "AlphaSOC NFR/" + strings.TrimLeft(version.Version, "v")
 
 // AlphaSOCClient handles connection to AlphaSOC server.
 type AlphaSOCClient struct {
