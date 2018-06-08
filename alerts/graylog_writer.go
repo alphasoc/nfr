@@ -65,6 +65,7 @@ func (w *GraylogWriter) Write(alert *Alert) error {
 			m.Extra["dest_port"] = event.DstPort
 			m.Extra["bytes_in"] = event.BytesIn
 			m.Extra["bytes_out"] = event.BytesOut
+			m.Extra["ja3"] = event.Ja3
 			if err := w.g.Send(m); err != nil {
 				return err
 			}

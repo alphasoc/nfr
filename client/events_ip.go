@@ -18,6 +18,7 @@ type IPEntry struct {
 	Protocol  string    `json:"proto"`
 	BytesIn   int       `json:"bytesIn"`
 	BytesOut  int       `json:"bytesOut"`
+	Ja3       string    `json:"ja3"`
 }
 
 // EventsIPRequest contains slice of ip events.

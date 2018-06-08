@@ -229,6 +229,8 @@ func (p *Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
 					ippacket.Direction = packet.DirectionIn
 				}
 			}
+		case "ja3":
+			ippacket.Ja3 = fileds[i]
 		}
 	}
 
