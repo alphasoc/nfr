@@ -587,6 +587,7 @@ func ipPacketsToRequest(packets []*packet.IPPacket) *client.EventsIPRequest {
 			DstIP:     ippacket.DstIP,
 			DstPort:   ippacket.DstPort,
 			Protocol:  ippacket.Protocol,
+			Ja3:       ippacket.Ja3,
 		}
 		switch ippacket.Direction {
 		case packet.DirectionIn:

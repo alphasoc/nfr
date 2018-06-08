@@ -38,6 +38,7 @@ type Event struct {
 	Protocol string `json:"proto"`
 	BytesIn  int    `json:"bytesIn"`
 	BytesOut int    `json:"bytesOut"`
+	Ja3      string `json:"ja3"`
 
 	// dns event fileds
 	Query      string `json:"query"`
@@ -102,6 +103,7 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 			alert.Events[i].Protocol = resp.Alerts[i].IPEvent.Protocol
 			alert.Events[i].BytesIn = resp.Alerts[i].IPEvent.BytesIn
 			alert.Events[i].BytesOut = resp.Alerts[i].IPEvent.BytesOut
+			alert.Events[i].Ja3 = resp.Alerts[i].IPEvent.Ja3
 		}
 
 		for _, group := range m.groups.FindGroupsBySrcIP(alert.Events[i].SrcIP) {
