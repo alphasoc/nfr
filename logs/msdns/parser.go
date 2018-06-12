@@ -69,6 +69,10 @@ var numToDotRe = regexp.MustCompile(`\(\d+\)`)
 // ParseLineDNS parse single log line with dns data.
 func (*Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
 	s := strings.Fields(line)
+	if len(s) == 16 && (s[2] == "AM" || s[2] == "PM") {
+		s = append(s[:3], s[4:]...)
+	}
+
 	if len(s) != 15 || s[3] != "PACKET" || s[6] != "Rcv" || s[9] != "Q" {
 		return nil, nil
 	}

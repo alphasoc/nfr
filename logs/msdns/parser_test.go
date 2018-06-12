@@ -8,6 +8,12 @@ import (
 	"time"
 )
 
+func TestReaderReadDNSNonExistingFiel(t *testing.T) {
+	if _, err := NewFileParser("non-existing-log.json"); err == nil {
+		t.Fatal("NewFileParser should return error")
+	}
+}
+
 func TestReaderReadDNS(t *testing.T) {
 	const (
 		filename   = "msdns.log"
@@ -43,13 +49,9 @@ Message logging key (for packets - other items use a subset of these fields):
 2017-01-01 00:00:00 01A0 EVENT   The DNS server has started.
 2017-01-01 00:00:00 0DB8 PACKET  0000000001962BB0 UDP Rcv 10.0.0.1   0030   Q [0001   D   NOERROR] A      (8)alphasoc(3)com(0)
 2017-01-01 00:00:00 0DB8 PACKET  0000000001962BB0 UDP Snd 127.0.0.1  0030   Q [0001   D   NOERROR] A      (8)alphasoc(3)com(0)
-2017-01-01 00:00:00 0DB8 PACKET  0000000001962BB0 TCP Rcv 10.0.0.2   0030   Q [0001   D   NOERROR] AAAA   (8)alphasoc(3)net(0)
+2017-01-01 00:00:00 AM 0DB8 PACKET  0000000001962BB0 TCP Rcv 10.0.0.2   0030   Q [0001   D   NOERROR] AAAA   (8)alphasoc(3)net(0)
 `
 	)
-
-	if _, err := NewFileParser("non-existing-log.json"); err == nil {
-		t.Fatal("NewFileParser should return error")
-	}
 
 	if err := ioutil.WriteFile(filename, []byte(logcontent), os.ModePerm); err != nil {
 		t.Fatalf("write msdns log file failed - %s", err)
