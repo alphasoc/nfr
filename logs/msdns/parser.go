@@ -16,6 +16,14 @@ import (
 
 // A Parser parses and reads network events from msdns logs.
 type Parser struct {
+	// TimeFormat used for parsing timestamp.
+	// If not set, will accept the following format:
+	//   2006-01-02 3:04:05 PM
+	//   2006/01/02 3:04:05 PM
+	//   2006-01-02 15:04:05
+	//   2006/01/02 15:04:05
+	TimeFormat string
+
 	r io.ReadCloser
 }
 
@@ -66,34 +74,81 @@ func (*Parser) ReadIP() ([]*packet.IPPacket, error) {
 
 var numToDotRe = regexp.MustCompile(`\(\d+\)`)
 
-// ParseLineDNS parse single log line with dns data.
-func (*Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
-	s := strings.Fields(line)
-	if len(s) == 16 && (s[2] == "AM" || s[2] == "PM") {
-		s = append(s[:3], s[4:]...)
+func guessTimeFormat(s string) string {
+	if len(s) < 10 {
+		return ""
 	}
 
-	if len(s) != 15 || s[3] != "PACKET" || s[6] != "Rcv" || s[9] != "Q" {
+	sep := s[4]                  // date separator
+	ampm := (s[len(s)-1] == 'M') // use 12h clock (AM/PM)
+
+	switch true {
+	case sep == '-' && ampm:
+		return "2006-01-02 3:04:05 PM"
+	case sep == '-' && !ampm:
+		return "2006-01-02 15:04:05"
+	case sep == '/' && ampm:
+		return "2006/01/02 3:04:05 PM"
+	case sep == '/' && !ampm:
+		return "2006/01/02 15:04:05"
+	}
+
+	return ""
+}
+
+// ParseLineDNS parse single log line with dns data.
+func (p *Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
+	s := strings.Fields(line)
+
+	if len(s) < 15 {
 		return nil, nil
 	}
 
-	timestamp, err := time.Parse("2006-01-02 15:04:05", s[0]+" "+s[1])
+	// find Context field, which can be 4th or 5th field,
+	// depends if timestamp consists of 2 or 3 fields.
+	contextIdx := 0
+	switch "PACKET" {
+	case s[3]:
+		contextIdx = 3
+	case s[4]:
+		contextIdx = 4
+	default:
+		return nil, nil
+	}
+
+	ts := strings.Join(s[:contextIdx-1], " ")
+	s = s[contextIdx:]
+
+	// fields are now starting with Context, expect 12 fields
+	if len(s) != 12 || s[3] != "Rcv" || s[6] != "Q" {
+		return nil, nil
+	}
+
+	timeFormat := p.TimeFormat
+	if timeFormat == "" {
+		timeFormat = guessTimeFormat(ts)
+	}
+	if timeFormat == "" {
+		return nil, fmt.Errorf("Unknown time format for timestamp: %s", ts)
+	}
+
+	timestamp, err := time.Parse(timeFormat, ts)
 	if err != nil {
 		return nil, err
 	}
 
-	srcIP := net.ParseIP(s[7])
+	srcIP := net.ParseIP(s[4])
 	if err != nil {
 		return nil, fmt.Errorf("invalid source ip at line %s", line)
 	}
 
 	return &packet.DNSPacket{
 		DstPort:    0,
-		Protocol:   strings.ToLower(s[5]),
+		Protocol:   strings.ToLower(s[2]),
 		Timestamp:  timestamp,
 		SrcIP:      srcIP,
-		RecordType: s[13],
-		FQDN:       strings.Trim(numToDotRe.ReplaceAllString(s[14], "."), "."),
+		RecordType: s[10],
+		FQDN:       strings.Trim(numToDotRe.ReplaceAllString(s[11], "."), "."),
 	}, nil
 }
 

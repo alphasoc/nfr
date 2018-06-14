@@ -45,11 +45,11 @@ Message logging key (for packets - other items use a subset of these fields):
       14     ResponseCode ]
       15     Question Type
       16     Question Name
-2017-01-01 00:00:00 01A0 EVENT   The DNS server did not detect any zones of either primary or secondary type during initialization. It will not be authoritative for any zones, and it will run as a caching-only server until a zone is loaded manually or by Active Directory replication. For more information, see the online Help.
-2017-01-01 00:00:00 01A0 EVENT   The DNS server has started.
-2017-01-01 00:00:00 0DB8 PACKET  0000000001962BB0 UDP Rcv 10.0.0.1   0030   Q [0001   D   NOERROR] A      (8)alphasoc(3)com(0)
-2017-01-01 00:00:00 0DB8 PACKET  0000000001962BB0 UDP Snd 127.0.0.1  0030   Q [0001   D   NOERROR] A      (8)alphasoc(3)com(0)
-2017-01-01 00:00:00 AM 0DB8 PACKET  0000000001962BB0 TCP Rcv 10.0.0.2   0030   Q [0001   D   NOERROR] AAAA   (8)alphasoc(3)net(0)
+2017-01-02 00:00:00 01A0 EVENT   The DNS server did not detect any zones of either primary or secondary type during initialization. It will not be authoritative for any zones, and it will run as a caching-only server until a zone is loaded manually or by Active Directory replication. For more information, see the online Help.
+2017-01-02 00:00:00 01A0 EVENT   The DNS server has started.
+2017-01-02 21:00:00 0DB8 PACKET  0000000001962BB0 UDP Rcv 10.0.0.1   0030   Q [0001   D   NOERROR] A      (8)alphasoc(3)com(0)
+2017-01-02 00:00:00 0DB8 PACKET  0000000001962BB0 UDP Snd 127.0.0.1  0030   Q [0001   D   NOERROR] A      (8)alphasoc(3)com(0)
+2017/01/02 09:00:00 PM 0DB8 PACKET  0000000001962BB0 TCP Rcv 10.0.0.2   0030   Q [0001   D   NOERROR] AAAA   (8)alphasoc(3)net(0)
 `
 	)
 
@@ -73,7 +73,7 @@ Message logging key (for packets - other items use a subset of these fields):
 		t.Fatalf("reading msdns dns package failed - want: 2, got: %d", len(packets))
 	}
 
-	tc := time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC)
+	tc := time.Date(2017, 1, 2, 21, 0, 0, 0, time.UTC)
 	if !(packets[0].DstPort == 0 &&
 		packets[0].Protocol == "udp" &&
 		packets[0].Timestamp.Equal(tc) &&

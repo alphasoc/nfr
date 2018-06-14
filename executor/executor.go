@@ -567,7 +567,12 @@ func (e *Executor) openFileParser(file, fileFomrat string) (err error) {
 	case "suricata":
 		e.lr, err = suricata.NewFileParser(file)
 	case "msdns":
-		e.lr, err = msdns.NewFileParser(file)
+		var p *msdns.Parser
+		p, err = msdns.NewFileParser(file)
+		if p != nil {
+			p.TimeFormat = e.cfg.Inputs.MSDNSTimeFormat
+		}
+		e.lr = p
 	case "syslog-named":
 		e.lr, err = syslognamed.NewFileParser(file)
 	default:
