@@ -180,6 +180,7 @@ func (e *Executor) monitor() {
 		t, err := tail.TailFile(monitor.File, tail.Config{
 			Follow: true,
 			ReOpen: true,
+			Poll:   !e.cfg.Inputs.UseInotify,
 			Logger: log.StandardLogger(),
 		})
 		if err != nil {
