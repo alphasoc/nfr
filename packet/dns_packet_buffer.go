@@ -35,17 +35,13 @@ packetLoop:
 
 // Packets returns slice of packets and reset the buffer.
 func (b *DNSPacketBuffer) Packets() []*DNSPacket {
-	packets := b.packets[:]
-	b.reset()
+	packets := make([]*DNSPacket, len(b.packets))
+	copy(packets, b.packets)
+	b.packets = b.packets[:0]
 	return packets
 }
 
 // Len returns the number of packets in the buffer.
 func (b *DNSPacketBuffer) Len() int {
 	return len(b.packets)
-}
-
-// reset resets the buffer to be empty.
-func (b *DNSPacketBuffer) reset() {
-	b.packets = b.packets[:0]
 }

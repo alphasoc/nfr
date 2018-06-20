@@ -17,8 +17,9 @@ func (b *IPPacketBuffer) Write(packets ...*IPPacket) {
 
 // Packets returns slice of packets and reset the buffer.
 func (b *IPPacketBuffer) Packets() []*IPPacket {
-	packets := b.packets[:]
-	b.reset()
+	packets := make([]*IPPacket, len(b.packets))
+	copy(packets, b.packets)
+	b.packets = b.packets[:0]
 	return packets
 }
 
