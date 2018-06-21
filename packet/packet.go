@@ -6,7 +6,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/alphasoc/nfr/ja3"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 )
@@ -65,7 +64,7 @@ func NewIPPacket(raw gopacket.Packet) *IPPacket {
 		srcMAC:     ethernet.SrcMAC,
 		Timestamp:  metadata.Timestamp,
 		BytesCount: len(raw.Data()),
-		Ja3:        ja3.Convert(raw),
+		// Ja3:        ja3.Convert(raw),
 	}
 	if lipv4, ok := networkLayer.(gopacket.Layer).(*layers.IPv4); ok {
 		ippacket.SrcIP = lipv4.SrcIP

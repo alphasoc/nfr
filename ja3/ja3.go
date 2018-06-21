@@ -32,6 +32,7 @@ func convert(raw gopacket.Packet) (string, string) {
 		return "", ""
 	}
 
+	// FIXME: panic if len(tcp.LayerPayload()) < 2; fix here or in alphasoc/nfr/gopacket/ssl
 	record := ssl.GetTLSRecord(tcp.LayerPayload())
 	if record == nil {
 		return "", ""
