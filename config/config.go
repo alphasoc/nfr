@@ -239,7 +239,8 @@ func NewDefault() *Config {
 	cfg.Engine.Alerts.PollInterval = 5 * time.Minute
 
 	cfg.Inputs.Sniffer.Enabled = true
-	cfg.Inputs.UseInotify = true // XXX: false on Windows?
+	// Use inotify by default on non-windows OS
+	cfg.Inputs.UseInotify = (runtime.GOOS != "windows")
 
 	cfg.Outputs.Enabled = true
 	cfg.Outputs.File = "stderr"
