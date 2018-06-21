@@ -14,12 +14,14 @@ jobs:
       - run:
           name: build
           command: |
-            GOARCH=amd64 GOOS=linux go build -o nfr-linux-amd64 -ldflags "-X github.com/alphasoc/nfr/version.Version=$(git describe)"
+            GOARCH=amd64 GOOS=linux go build -o /tmp/bin/nfr-linux-amd64 -ldflags "-X github.com/alphasoc/nfr/version.Version=$(git describe)"
+      - store_artifacts:
+          path: /tmp/bin/
+          destination: bin
       - persist_to_workspace:
           root: .
           paths:
             - nfr-linux-amd64
-
   lint:
     docker:
       - image: mozgiii/gometalinter-docker
