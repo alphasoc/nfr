@@ -197,7 +197,9 @@ func (e *Executor) monitor() {
 			case "suricata":
 				parser = suricata.NewParser()
 			case "msdns":
-				parser = msdns.NewParser()
+				p := msdns.NewParser()
+				p.TimeFormat = e.cfg.Inputs.MSDNSTimeFormat
+				parser = p
 			case "syslog-named":
 				parser = syslognamed.NewParser()
 			}
