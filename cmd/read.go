@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	fileFormats  = []string{"bro", "msdns", "pcap", "suricata", "syslog-named"}
+	fileFormats  = []string{"bro", "msdns", "pcap", "suricata", "syslog-named", "edge"}
 	analyzeTypes = []string{"all", "dns", "ip"}
 )
 

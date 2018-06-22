@@ -404,8 +404,10 @@ func (cfg *Config) validate() error {
 			return fmt.Errorf("empty file for monitoring")
 		}
 
-		if monitor.Format != "bro" && monitor.Format != "suricata" && monitor.Format != "msdns" &&
-			monitor.Format != "syslog-named" {
+		switch monitor.Format {
+		case "bro", "suricata", "msdns", "syslog-named":
+			// ok
+		default:
 			return fmt.Errorf("unknown format %s for monitoring", monitor.Format)
 		}
 

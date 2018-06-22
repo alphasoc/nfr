@@ -18,6 +18,7 @@ import (
 	"github.com/alphasoc/nfr/groups"
 	"github.com/alphasoc/nfr/logs"
 	"github.com/alphasoc/nfr/logs/bro"
+	"github.com/alphasoc/nfr/logs/edge"
 	"github.com/alphasoc/nfr/logs/msdns"
 	"github.com/alphasoc/nfr/logs/pcap"
 	"github.com/alphasoc/nfr/logs/suricata"
@@ -578,6 +579,8 @@ func (e *Executor) openFileParser(file, fileFomrat string) (err error) {
 		e.lr = p
 	case "syslog-named":
 		e.lr, err = syslognamed.NewFileParser(file)
+	case "edge":
+		e.lr, err = edge.NewFileParser(file)
 	default:
 		err = errors.New("file format not supported")
 	}
