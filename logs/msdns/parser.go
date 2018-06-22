@@ -132,7 +132,7 @@ func (p *Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
 		return nil, fmt.Errorf("Unknown time format for timestamp: %s", ts)
 	}
 
-	timestamp, err := time.Parse(timeFormat, ts)
+	timestamp, err := time.ParseInLocation(timeFormat, ts, time.Local)
 	if err != nil {
 		return nil, err
 	}
