@@ -27,8 +27,8 @@ func NewJSONFileWriter(file string) (*JSONFileWriter, error) {
 }
 
 // Write writes alerts response to the file in json format.
-func (l *JSONFileWriter) Write(alert *Alert) error {
-	b, err := json.Marshal(alert)
+func (l *JSONFileWriter) Write(event *Event) error {
+	b, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}

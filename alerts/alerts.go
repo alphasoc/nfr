@@ -40,7 +40,7 @@ type Event struct {
 	BytesOut int    `json:"bytesOut"`
 	Ja3      string `json:"ja3"`
 
-	// dns event fileds
+	// dns event fields
 	Query      string `json:"query"`
 	RecordType string `json:"recordType"`
 }
@@ -51,7 +51,6 @@ type Threat struct {
 	Severity    int    `json:"severity"`
 	Description string `json:"desc"`
 	Policy      bool   `json:"policy"`
-	Deprecated  bool   `json:"deprecated"`
 }
 
 // Group describe group event belongs to.
@@ -84,7 +83,6 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 				Severity:    resp.Threats[threat].Severity,
 				Description: resp.Threats[threat].Title,
 				Policy:      resp.Threats[threat].Policy,
-				Deprecated:  false,
 			})
 		}
 

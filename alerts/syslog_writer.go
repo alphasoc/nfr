@@ -25,8 +25,8 @@ func NewSyslogWriter(raddr string) (*SyslogWriter, error) {
 }
 
 // Write writes alert response to the syslog input.
-func (w *SyslogWriter) Write(alert *Alert) error {
-	b, err := json.Marshal(alert)
+func (w *SyslogWriter) Write(event *Event) error {
+	b, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
