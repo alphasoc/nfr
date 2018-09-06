@@ -13,14 +13,12 @@ func ExampleFormatterCEF_dns() {
 		Type:   "dns",
 		Flags:  []string{"c2", "young_domain"},
 		Groups: []Group{Group{Label: "boston"}},
-		Threats: []Threat{
-			Threat{
-				ID:          "c2_comm",
+		Threats: map[string]Threat{
+			"c2_comm": Threat{
 				Severity:    5,
 				Description: "C2 communication",
 			},
-			Threat{
-				ID:          "nevermind",
+			"nevermind": Threat{
 				Severity:    1,
 				Description: "not important",
 			},
@@ -47,14 +45,12 @@ func ExampleFormatterCEF_ip() {
 		Type:   "ip",
 		Flags:  []string{"c2", "young_domain"},
 		Groups: []Group{Group{Label: "boston"}},
-		Threats: []Threat{
-			Threat{
-				ID:          "c2_comm",
+		Threats: map[string]Threat{
+			"c2_comm": Threat{
 				Severity:    5,
 				Description: "C2 communication",
 			},
-			Threat{
-				ID:          "nevermind",
+			"nevermind": Threat{
 				Severity:    1,
 				Description: "not important",
 			},

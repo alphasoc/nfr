@@ -34,9 +34,9 @@ func NewQRadarWriter(raddr string) (*QRadarWriter, error) {
 
 // Write writes alert response to the qradar syslog input.
 func (w *QRadarWriter) Write(event *Event) error {
-	for _, threat := range event.Threats {
+	for tid, threat := range event.Threats {
 		e := leef.NewEvent()
-		e.SetHeader("AlphaSOC", tag, strings.TrimPrefix(version.Version, "v"), threat.ID)
+		e.SetHeader("AlphaSOC", tag, strings.TrimPrefix(version.Version, "v"), tid)
 
 		e.SetSevAttr(threat.Severity * 2)
 		if threat.Policy {

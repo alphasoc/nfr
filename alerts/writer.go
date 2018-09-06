@@ -50,10 +50,10 @@ func (f *FormatterCEF) Format(event *Event) ([]byte, error) {
 		return nil, nil
 	}
 
-	var buf bytes.Buffer
+	threatID, threat := event.topThreat()
 
+	var buf bytes.Buffer
 	l := ceflog.New(&buf, f.vendor, f.product, f.version)
-	threat := event.topThreat()
 
 	// CEF log extensions
 	ext := ceflog.Extension{
@@ -90,7 +90,7 @@ func (f *FormatterCEF) Format(event *Event) ([]byte, error) {
 
 	// write event to buffer
 	l.LogEvent(
-		threat.ID,
+		threatID,
 		threat.Description,
 		ceflog.Severity(threat.Severity*2), // 0-10 scale
 		ext)

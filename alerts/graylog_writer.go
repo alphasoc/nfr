@@ -36,7 +36,7 @@ func NewGraylogWriter(uri string, level int) (*GraylogWriter, error) {
 
 // Write writes alert response to graylog server.
 func (w *GraylogWriter) Write(event *Event) error {
-	for _, threat := range event.Threats {
+	for tid, threat := range event.Threats {
 		m := &gelf.Message{
 			Version:      "1.1",
 			Host:         w.hostname,
@@ -47,7 +47,7 @@ func (w *GraylogWriter) Write(event *Event) error {
 				"severity":     threat.Severity,
 				"policy":       strconv.FormatBool(threat.Policy),
 				"flags":        strings.Join(event.Flags, ","),
-				"threat":       threat.ID,
+				"threat":       tid,
 				"engine_agent": client.DefaultUserAgent,
 			},
 		}
