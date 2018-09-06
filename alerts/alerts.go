@@ -45,6 +45,16 @@ type Event struct {
 	RecordType string `json:"recordType"`
 }
 
+func (e *Event) topThreat() Threat {
+	var top Threat
+	for _, t := range e.Threats {
+		if t.Severity > top.Severity {
+			top = t
+		}
+	}
+	return top
+}
+
 // Threat for event.
 type Threat struct {
 	ID          string `json:"id"`

@@ -91,7 +91,16 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 
 		if cfg.Outputs.Syslog.IP != "" {
 			addr := net.JoinHostPort(cfg.Outputs.Syslog.IP, strconv.FormatInt(int64(cfg.Outputs.Syslog.Port), 10))
-			syslogWriter, err := alerts.NewSyslogWriter(addr)
+			var format alerts.Formatter
+			switch cfg.Outputs.Syslog.Format {
+			case "", "json":
+				format = alerts.FormatterJSON{}
+			case "cef":
+				format = alerts.NewFormatterCEF()
+			default:
+				return nil, fmt.Errorf("invalid syslog format: %s", cfg.Outputs.Syslog.Format)
+			}
+			syslogWriter, err := alerts.NewSyslogWriter(addr, format)
 			if err != nil {
 				return nil, err
 			}
