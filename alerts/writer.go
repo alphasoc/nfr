@@ -57,7 +57,7 @@ func (f *FormatterCEF) Format(event *Event) ([]byte, error) {
 
 	// CEF log extensions
 	ext := ceflog.Extension{
-		{"app", event.Type},
+		{"app", event.EventType},
 		{"start", event.Timestamp.Format(cefTimeFormat)},
 		{"src", event.SrcIP.String()},
 		{"cs1", strings.Join(event.Flags, ",")},
@@ -71,7 +71,7 @@ func (f *FormatterCEF) Format(event *Event) ([]byte, error) {
 		ext = append(ext, ceflog.Pair{"cs2", strings.Join(groups, ",")})
 	}
 
-	switch event.Type {
+	switch event.EventType {
 	case "dns":
 		ext = append(ext, ceflog.Extension{
 			{"query", event.Query},

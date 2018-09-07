@@ -22,10 +22,11 @@ type Alert struct {
 
 // Event from alert.
 type Event struct {
-	Type    string            `json:"type"`
-	Flags   []string          `json:"flags"`
-	Groups  []Group           `json:"groups"`
-	Threats map[string]Threat `json:"threats"`
+	Type      string            `json:"type"`
+	EventType string            `json:"eventType"`
+	Flags     []string          `json:"flags"`
+	Groups    []Group           `json:"groups"`
+	Threats   map[string]Threat `json:"threats"`
 
 	// fileds common for dns and ip event
 	Timestamp time.Time `json:"ts"`
@@ -52,7 +53,7 @@ func (e *Event) topThreat() (string, Threat) {
 	)
 
 	for tid, threat := range e.Threats {
-		if t.Severity > topThreat.Severity {
+		if threat.Severity > topThreat.Severity {
 			topID = tid
 			topThreat = threat
 		}
@@ -89,9 +90,12 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 
 	for i := range resp.Alerts {
 		alert.Events[i] = Event{
-			Type:  "alert",
-			Flags: resp.Alerts[i].Wisdom.Flags,
+			Type:      "alert",
+			EventType: resp.Alerts[i].EventType,
+			Flags:     resp.Alerts[i].Wisdom.Flags,
+			Threats:   make(map[string]Threat),
 		}
+
 		for _, threat := range resp.Alerts[i].Threats {
 			alert.Events[i].Threats[threat] = Threat{
 				Severity:    resp.Threats[threat].Severity,
