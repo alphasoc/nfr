@@ -101,8 +101,10 @@ type Config struct {
 			IP string `yaml:"ip"`
 			// Default: 514
 			Port int `yaml:"port"`
+			// Default: tcp
+			Proto string `yaml:"proto,omitempty"`
 			// Default: json
-			Format string `yaml:"format"`
+			Format string `yaml:"format,omitempty"`
 		} `yaml:"syslog"`
 
 		// File where to store alerts. If not set then no alerts will be retrieved.
@@ -252,6 +254,7 @@ func NewDefault() *Config {
 	cfg.Outputs.Format = "json"
 	cfg.Outputs.Graylog.Level = 1
 	cfg.Outputs.Syslog.Port = 514
+	cfg.Outputs.Syslog.Proto = "tcp"
 	cfg.Outputs.Syslog.Format = "json"
 
 	cfg.Log.File = "stdout"

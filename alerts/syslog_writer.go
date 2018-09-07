@@ -16,8 +16,12 @@ type SyslogWriter struct {
 }
 
 // NewSyslogWriter creates new syslog writer.
-func NewSyslogWriter(raddr string, format Formatter) (*SyslogWriter, error) {
-	w, err := syslog.Dial("tcp", raddr, logalert, tag)
+func NewSyslogWriter(proto, raddr string, format Formatter) (*SyslogWriter, error) {
+	if proto == "" {
+		proto = "tcp"
+	}
+
+	w, err := syslog.Dial(proto, raddr, logalert, tag)
 	if err != nil {
 		return nil, fmt.Errorf("connect to syslog input failed: %s", err)
 	}

@@ -115,7 +115,7 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 				return nil, fmt.Errorf("invalid syslog format: %s", cfg.Outputs.Syslog.Format)
 			}
 
-			syslogWriter, err := alerts.NewSyslogWriter(addr, format)
+			syslogWriter, err := alerts.NewSyslogWriter(cfg.Outputs.Syslog.Proto, addr, format)
 			if err != nil {
 				return nil, err
 			}
