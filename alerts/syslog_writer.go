@@ -3,6 +3,7 @@
 package alerts
 
 import (
+	"bytes"
 	"fmt"
 	"log/syslog"
 )
@@ -31,7 +32,7 @@ func (w *SyslogWriter) Write(event *Event) error {
 		return err
 	}
 
-	return w.w.Alert(string(b))
+	return w.w.Alert(string(bytes.TrimSpace(b)))
 }
 
 // Close closes a connecion to the syslog server.
