@@ -16,14 +16,15 @@ type Writer interface {
 }
 
 type Formatter interface {
-	Format(*Event) ([]byte, error)
+	Format(*Event) ([][]byte, error)
 }
 
 type FormatterJSON struct {
 }
 
-func (FormatterJSON) Format(event *Event) ([]byte, error) {
-	return json.Marshal(event)
+func (FormatterJSON) Format(event *Event) ([][]byte, error) {
+	b, err := json.Marshal(event)
+	return [][]byte{b}, err
 }
 
 type FormatterCEF struct {
@@ -54,15 +55,8 @@ func cefCustomString(id int, label, value string) []ceflog.Pair {
 	}
 }
 
-func (f *FormatterCEF) Format(event *Event) ([]byte, error) {
-	if len(event.Threats) == 0 {
-		return nil, nil
-	}
-
-	threatID, threat := event.topThreat()
-
-	var buf bytes.Buffer
-	l := ceflog.New(&buf, f.vendor, f.product, f.version)
+func (f *FormatterCEF) Format(event *Event) ([][]byte, error) {
+	var res [][]byte
 
 	// CEF log extensions
 	ext := ceflog.Extension{
@@ -99,12 +93,20 @@ func (f *FormatterCEF) Format(event *Event) ([]byte, error) {
 		}...)
 	}
 
-	// write event to buffer
-	l.LogEvent(
-		threatID,
-		threat.Description,
-		ceflog.Severity(threat.Severity*2), // 0-10 scale
-		ext)
+	// Format each threat as a separate event
+	for threatID, threat := range event.Threats {
+		var buf bytes.Buffer
+		l := ceflog.New(&buf, f.vendor, f.product, f.version)
 
-	return buf.Bytes(), nil
+		// write event to buffer
+		l.LogEvent(
+			threatID,
+			threat.Description,
+			ceflog.Severity(threat.Severity*2), // 0-10 scale
+			ext)
+
+		res = append(res, bytes.TrimRight(buf.Bytes(), "\n"))
+	}
+
+	return res, nil
 }

@@ -1,7 +1,6 @@
 package alerts
 
 import (
-	"bytes"
 	"os"
 )
 
@@ -29,17 +28,18 @@ func NewFileWriter(file string, format Formatter) (*FileWriter, error) {
 
 // Write writes alerts response to the file in json format.
 func (l *FileWriter) Write(event *Event) error {
-	b, err := l.format.Format(event)
+	bs, err := l.format.Format(event)
 	if err != nil {
 		return err
 	}
 
-	if _, err = l.f.Write(bytes.TrimSpace(b)); err != nil {
-		return err
+	for n := range bs {
+		if _, err = l.f.Write(append(bs[n], '\n')); err != nil {
+			return err
+		}
 	}
-	_, err = l.f.Write([]byte("\n"))
 
-	return err
+	return nil
 }
 
 // Close closes the file.

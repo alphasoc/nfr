@@ -3,7 +3,6 @@
 package alerts
 
 import (
-	"bytes"
 	"fmt"
 	"log/syslog"
 )
@@ -31,12 +30,18 @@ func NewSyslogWriter(proto, raddr string, format Formatter) (*SyslogWriter, erro
 
 // Write writes alert response to the syslog input.
 func (w *SyslogWriter) Write(event *Event) error {
-	b, err := w.f.Format(event)
+	bs, err := w.f.Format(event)
 	if err != nil {
 		return err
 	}
 
-	return w.w.Alert(string(bytes.TrimSpace(b)))
+	for n := range bs {
+		if err := w.w.Alert(string(bs[n])); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Close closes a connecion to the syslog server.
