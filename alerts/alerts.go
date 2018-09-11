@@ -33,17 +33,17 @@ type Event struct {
 	SrcIP     net.IP    `json:"srcIp"`
 
 	// ip event fileds
-	SrcPort  int    `json:"srcPort"`
-	DstIP    net.IP `json:"destIp"`
-	DstPort  int    `json:"destPort"`
-	Protocol string `json:"proto"`
-	BytesIn  int    `json:"bytesIn"`
-	BytesOut int    `json:"bytesOut"`
-	Ja3      string `json:"ja3"`
+	SrcPort  int    `json:"srcPort,omitempty"`
+	DstIP    net.IP `json:"destIp,omitempty"`
+	DstPort  int    `json:"destPort,omitempty"`
+	Protocol string `json:"proto,omitempty"`
+	BytesIn  int    `json:"bytesIn,omitempty"`
+	BytesOut int    `json:"bytesOut,omitempty"`
+	Ja3      string `json:"ja3,omitempty"`
 
 	// dns event fields
-	Query      string `json:"query"`
-	RecordType string `json:"recordType"`
+	Query      string `json:"query,omitempty"`
+	RecordType string `json:"recordType,omitempty"`
 }
 
 func (e *Event) topThreat() (string, Threat) {
