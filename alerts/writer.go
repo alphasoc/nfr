@@ -3,6 +3,7 @@ package alerts
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"github.com/alphasoc/nfr/version"
 	"github.com/xoebus/ceflog"
 	"strconv"
@@ -45,6 +46,14 @@ var (
 	cefTimeFormat = "Jan 02 2006 15:04:05.000 MST"
 )
 
+func cefCustomString(id int, label, value string) []ceflog.Pair {
+	key := fmt.Sprintf("cs%d", id)
+	return []ceflog.Pair{
+		{key, value},
+		{key + "Label", label},
+	}
+}
+
 func (f *FormatterCEF) Format(event *Event) ([]byte, error) {
 	if len(event.Threats) == 0 {
 		return nil, nil
@@ -58,17 +67,19 @@ func (f *FormatterCEF) Format(event *Event) ([]byte, error) {
 	// CEF log extensions
 	ext := ceflog.Extension{
 		{"app", event.EventType},
-		{"start", event.Timestamp.Format(cefTimeFormat)},
+		{"rt", event.Timestamp.Format(cefTimeFormat)},
 		{"src", event.SrcIP.String()},
-		{"cs1", strings.Join(event.Flags, ",")},
 	}
 
+	if v := strings.Join(event.Flags, ","); v != "" {
+		ext = append(ext, cefCustomString(1, "flags", v)...)
+	}
 	if len(event.Groups) > 0 {
 		groups := make([]string, len(event.Groups))
 		for n := range event.Groups {
 			groups[n] = event.Groups[n].Label
 		}
-		ext = append(ext, ceflog.Pair{"cs2", strings.Join(groups, ",")})
+		ext = append(ext, cefCustomString(2, "groups", strings.Join(groups, ","))...)
 	}
 
 	switch event.EventType {
