@@ -22,36 +22,51 @@ type Alert struct {
 
 // Event from alert.
 type Event struct {
-	Type    string   `json:"type"`
-	Flags   []string `json:"flags"`
-	Groups  []Group  `json:"groups"`
-	Threats []Threat `json:"threats"`
+	Type      string            `json:"type"`
+	EventType string            `json:"eventType"`
+	Flags     []string          `json:"flags"`
+	Groups    []Group           `json:"groups"`
+	Threats   map[string]Threat `json:"threats"`
 
 	// fileds common for dns and ip event
 	Timestamp time.Time `json:"ts"`
 	SrcIP     net.IP    `json:"srcIp"`
 
 	// ip event fileds
-	SrcPort  int    `json:"srcPort"`
-	DstIP    net.IP `json:"destIp"`
-	DstPort  int    `json:"destPort"`
-	Protocol string `json:"proto"`
-	BytesIn  int    `json:"bytesIn"`
-	BytesOut int    `json:"bytesOut"`
-	Ja3      string `json:"ja3"`
+	SrcPort  int    `json:"srcPort,omitempty"`
+	DstIP    net.IP `json:"destIp,omitempty"`
+	DstPort  int    `json:"destPort,omitempty"`
+	Protocol string `json:"proto,omitempty"`
+	BytesIn  int    `json:"bytesIn,omitempty"`
+	BytesOut int    `json:"bytesOut,omitempty"`
+	Ja3      string `json:"ja3,omitempty"`
 
-	// dns event fileds
-	Query      string `json:"query"`
-	RecordType string `json:"recordType"`
+	// dns event fields
+	Query      string `json:"query,omitempty"`
+	RecordType string `json:"recordType,omitempty"`
+}
+
+func (e *Event) topThreat() (string, Threat) {
+	var (
+		topID     string
+		topThreat Threat
+	)
+
+	for tid, threat := range e.Threats {
+		if threat.Severity > topThreat.Severity {
+			topID = tid
+			topThreat = threat
+		}
+	}
+
+	return topID, topThreat
 }
 
 // Threat for event.
 type Threat struct {
-	ID          string `json:"id"`
 	Severity    int    `json:"severity"`
 	Description string `json:"desc"`
 	Policy      bool   `json:"policy"`
-	Deprecated  bool   `json:"deprecated"`
 }
 
 // Group describe group event belongs to.
@@ -75,17 +90,18 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 
 	for i := range resp.Alerts {
 		alert.Events[i] = Event{
-			Type:  "alert",
-			Flags: resp.Alerts[i].Wisdom.Flags,
+			Type:      "alert",
+			EventType: resp.Alerts[i].EventType,
+			Flags:     resp.Alerts[i].Wisdom.Flags,
+			Threats:   make(map[string]Threat),
 		}
+
 		for _, threat := range resp.Alerts[i].Threats {
-			alert.Events[i].Threats = append(alert.Events[i].Threats, Threat{
-				ID:          threat,
+			alert.Events[i].Threats[threat] = Threat{
 				Severity:    resp.Threats[threat].Severity,
 				Description: resp.Threats[threat].Title,
 				Policy:      resp.Threats[threat].Policy,
-				Deprecated:  false,
-			})
+			}
 		}
 
 		switch resp.Alerts[i].EventType {

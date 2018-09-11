@@ -80,8 +80,10 @@ func (p *Poller) do(interval time.Duration, maxTries int) error {
 		newAlerts := p.mapper.Map(alerts)
 
 		for _, w := range p.writers {
-			if err := w.Write(newAlerts); err != nil {
-				return err
+			for _, ev := range newAlerts.Events {
+				if err := w.Write(&ev); err != nil {
+					return err
+				}
 			}
 		}
 

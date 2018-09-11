@@ -14,7 +14,7 @@ func TestPollerDo(t *testing.T) {
 	const fname = "_alerts"
 	defer os.Remove(fname)
 
-	w, err := NewJSONFileWriter(fname)
+	w, err := NewFileWriter(fname, FormatterJSON{})
 	if err != nil {
 		t.Fatal(err)
 	}

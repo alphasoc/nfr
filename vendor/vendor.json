@@ -113,6 +113,12 @@
 			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
+			"checksumSHA1": "t12yTh0Ve/hme/rBlpDB9HzNbbA=",
+			"path": "github.com/xoebus/ceflog",
+			"revision": "9cb6ad8a040b1eed3dccccf637a6902cb36ed58f",
+			"revisionTime": "2018-03-02T01:53:20Z"
+		},
+		{
 			"checksumSHA1": "Y+HGqEkYM15ir+J93MEaHdyFy0c=",
 			"path": "golang.org/x/net/context",
 			"revision": "c9b681d35165f1995d6f3034e61f8761d4b90c99",

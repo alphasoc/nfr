@@ -52,6 +52,19 @@ type Executor struct {
 	mx sync.Mutex
 }
 
+func getFormatter(format string) alerts.Formatter {
+	var f alerts.Formatter
+
+	switch format {
+	case "json":
+		f = alerts.FormatterJSON{}
+	case "cef":
+		f = alerts.NewFormatterCEF()
+	}
+
+	return f
+}
+
 // New creates new executor.
 func New(c client.Client, cfg *config.Config) (*Executor, error) {
 	e := &Executor{
@@ -74,11 +87,17 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 		}
 
 		if cfg.Outputs.File != "" {
-			jsonWriter, err := alerts.NewJSONFileWriter(cfg.Outputs.File)
+			format := getFormatter(cfg.Outputs.Format)
+			if format == nil {
+				return nil, fmt.Errorf("invalid output format: %s", cfg.Outputs.Format)
+			}
+
+			fileWriter, err := alerts.NewFileWriter(cfg.Outputs.File, format)
+
 			if err != nil {
 				return nil, err
 			}
-			e.alertsPoller.AddWriter(jsonWriter)
+			e.alertsPoller.AddWriter(fileWriter)
 		}
 
 		if cfg.Outputs.Graylog.URI != "" {
@@ -91,7 +110,12 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 
 		if cfg.Outputs.Syslog.IP != "" {
 			addr := net.JoinHostPort(cfg.Outputs.Syslog.IP, strconv.FormatInt(int64(cfg.Outputs.Syslog.Port), 10))
-			syslogWriter, err := alerts.NewSyslogWriter(addr)
+			format := getFormatter(cfg.Outputs.Syslog.Format)
+			if format == nil {
+				return nil, fmt.Errorf("invalid syslog format: %s", cfg.Outputs.Syslog.Format)
+			}
+
+			syslogWriter, err := alerts.NewSyslogWriter(cfg.Outputs.Syslog.Proto, addr, format)
 			if err != nil {
 				return nil, err
 			}

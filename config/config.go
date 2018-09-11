@@ -101,12 +101,19 @@ type Config struct {
 			IP string `yaml:"ip"`
 			// Default: 514
 			Port int `yaml:"port"`
+			// Default: tcp
+			Proto string `yaml:"proto,omitempty"`
+			// Default: json
+			Format string `yaml:"format,omitempty"`
 		} `yaml:"syslog"`
 
-		// File where to store alerts. If not set then none alerts will be retrieved.
+		// File where to store alerts. If not set then no alerts will be retrieved.
 		// To print alerts to console use two special outputs: stderr or stdout
 		// Default: "stderr"
 		File string `yaml:"file,omitempty"`
+
+		// Format for the file output; can be json or cef (default is json).
+		Format string `yaml:"format,omitempty"`
 	} `yaml:"outputs"`
 
 	// Log configuration.
@@ -244,8 +251,11 @@ func NewDefault() *Config {
 
 	cfg.Outputs.Enabled = true
 	cfg.Outputs.File = "stderr"
+	cfg.Outputs.Format = "json"
 	cfg.Outputs.Graylog.Level = 1
 	cfg.Outputs.Syslog.Port = 514
+	cfg.Outputs.Syslog.Proto = "tcp"
+	cfg.Outputs.Syslog.Format = "json"
 
 	cfg.Log.File = "stdout"
 	cfg.Log.Level = "info"

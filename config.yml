@@ -103,6 +103,11 @@ outputs:
     # Port for the syslog TCP input
     # Default: 514
     port: 514
+    # Connection protocol.
+    # Default: tcp
+    proto: tcp
+    # Log format (json/cef)
+    format: json
 
   # Graylog server URI where AlphaSOC alerts will be sent in GELF format
   # The AlphaSOC Network Behavior Analytics for Graylog content pack establishes
