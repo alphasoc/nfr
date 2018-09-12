@@ -1,5 +1,5 @@
 # Network Flight Recorder
-**NFR** is a lightweight application which processes network traffic using the [AlphaSOC Analytics Engine.](https://alphasoc.com) NFR can monitor log files on disk (e.g. Microsoft DNS debug logs, Bro IDS logs) or run as a network sniffer under Linux to score traffic. Upon processing the data, alerts are presented in JSON format for escalation.
+**NFR** is a lightweight application which processes network traffic using the [AlphaSOC Analytics Engine.](https://alphasoc.com) NFR can monitor log files on disk (e.g. Microsoft DNS debug logs, Bro IDS logs) or run as a network sniffer under Linux to score traffic. Upon processing the data, alerts are presented in either JSON or CEF format for escalation via syslog.
 
 ## Installation
 [Download NFR from the releases section.](https://github.com/alphasoc/nfr/releases) Once downloaded, run NFR as follows:
