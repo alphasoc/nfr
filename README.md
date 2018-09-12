@@ -114,42 +114,29 @@ You may run `nfr start` via `tmux` or `screen` under Linux, or set up a service 
 ```
 # nfr start 2>&1 >/dev/null | tee /tmp/alerts.json | jq .
 {
-  "follow": "5-dc309",
-  "more": false,
-  "events": [
+  "type": "alert",
+  "eventType": "dns",
+  "flags": [
+    "apt",
+    "freedns"
+  ],
+  "groups": [
     {
-      "type": "alert",
-      "flags": [
-        "c2",
-        "unreachable_domain"
-      ],
-      "groups": [
-        {
-          "label": "default",
-          "desc": "Default test"
-        }
-      ],
-      "threats": [
-        {
-          "id": "c2_communication",
-          "severity": 5,
-          "desc": "C2 communication attempt indicating infection",
-          "policy": false,
-          "deprecated": false
-        }
-      ],
-      "ts": "2018-04-26T11:03:39.724945+02:00",
-      "srcIp": "10.0.2.15",
-      "srcPort": 0,
-      "destIp": "",
-      "destPort": 0,
-      "proto": "",
-      "bytesIn": 0,
-      "bytesOut": 0,
-      "query": "microsoft775.com",
-      "recordType": "A"
+      "label": "default",
+      "desc": "Default"
     }
-  ]
+  ],
+  "threats": {
+    "c2_communication": {
+      "severity": 5,
+      "desc": "C2 communication attempt indicating infection",
+      "policy": false
+    }
+  },
+  "ts": "2018-09-03T09:39:47Z",
+  "srcIp": "10.15.0.4",
+  "query": "microsoft775.com",
+  "recordType": "A"
 }
 ```
 
