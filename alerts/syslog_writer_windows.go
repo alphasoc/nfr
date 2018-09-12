@@ -10,12 +10,12 @@ type SyslogWriter struct {
 }
 
 // NewSyslogWriter creates new syslog writer.
-func NewSyslogWriter(raddr string) (*SyslogWriter, error) {
+func NewSyslogWriter(proto, raddr string, format Formatter) (*SyslogWriter, error) {
 	return nil, errSyslogNotImplemented
 }
 
 // Write writes alert response to the syslog input.
-func (w *SyslogWriter) Write(alert *Alert) error {
+func (w *SyslogWriter) Write(event *Event) error {
 	return errSyslogNotImplemented
 }
 
