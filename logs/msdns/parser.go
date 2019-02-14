@@ -2,7 +2,6 @@ package msdns
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/packet"
 )
 
@@ -65,11 +65,6 @@ func (p *Parser) ReadDNS() ([]*packet.DNSPacket, error) {
 		return nil, err
 	}
 	return packets, nil
-}
-
-// ReadIP reads all ip packets from the file.
-func (*Parser) ReadIP() ([]*packet.IPPacket, error) {
-	return nil, errors.New("msdns read ip packet unimplemented")
 }
 
 var numToDotRe = regexp.MustCompile(`\(\d+\)`)
@@ -152,9 +147,22 @@ func (p *Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
 	}, nil
 }
 
+// ReadIP reads all ip packets from the file.
+func (*Parser) ReadIP() ([]*packet.IPPacket, error) {
+	return nil, nil
+}
+
 // ParseLineIP reads all ip packets from the file.
 func (*Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
-	return nil, errors.New("msdns read ip packet unimplemented")
+	return nil, nil
+}
+
+func (*Parser) ReadHTTP() ([]*client.HTTPEntry, error) {
+	return nil, nil
+}
+
+func (*Parser) ParseLineHTTP(line string) (*client.HTTPEntry, error) {
+	return nil, nil
 }
 
 // Close underlying log file.

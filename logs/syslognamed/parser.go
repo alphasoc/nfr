@@ -2,7 +2,6 @@ package syslognamed
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -11,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/packet"
 )
 
@@ -61,7 +61,7 @@ func (p *Parser) ReadDNS() ([]*packet.DNSPacket, error) {
 
 // ReadIP reads all ip packets from the file.
 func (*Parser) ReadIP() ([]*packet.IPPacket, error) {
-	return nil, errors.New("syslog-named read ip packet unimplemented")
+	return nil, nil
 }
 
 var re = regexp.MustCompile(`(\d+).*named\[\d+\]: queries: info: client (.*)#\d+.*query: (.*) IN (.*) \+`)
@@ -95,7 +95,15 @@ func (*Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
 
 // ParseLineIP reads all ip packets from the file.
 func (*Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
-	return nil, errors.New("syslog-named read ip packet unimplemented")
+	return nil, nil
+}
+
+func (*Parser) ReadHTTP() ([]*client.HTTPEntry, error) {
+	return nil, nil
+}
+
+func (*Parser) ParseLineHTTP(line string) (*client.HTTPEntry, error) {
+	return nil, nil
 }
 
 // Close underlying log file.

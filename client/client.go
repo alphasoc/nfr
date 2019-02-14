@@ -23,6 +23,7 @@ type Client interface {
 	Alerts(string) (*AlertsResponse, error)
 	EventsDNS(*EventsDNSRequest) (*EventsDNSResponse, error)
 	EventsIP(*EventsIPRequest) (*EventsIPResponse, error)
+	EventsHTTP([]*HTTPEntry) (*EventsHTTPResponse, error)
 	KeyRequest() (*KeyRequestResponse, error)
 	KeyReset(*KeyResetRequest) error
 }

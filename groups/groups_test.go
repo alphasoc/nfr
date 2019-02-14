@@ -193,6 +193,51 @@ func TestIsIPWhitelisted(t *testing.T) {
 	}
 }
 
+func TestIsHTTPQueryWhitelisted(t *testing.T) {
+	var testsGroups = []struct {
+		name   string
+		groups []*Group
+
+		urls     []string
+		srcIps   []net.IP
+		expected []bool
+	}{
+		{
+			"exclude domain in url",
+			[]*Group{
+				{
+					Name:            "private network 1",
+					SrcIncludes:     []string{"10.0.0.0/16"},
+					ExcludedDomains: []string{"*.com"},
+				},
+				{
+					Name:            "private network 2",
+					SrcIncludes:     []string{"10.1.0.0/16"},
+					ExcludedDomains: []string{"*.net"},
+				},
+			},
+			[]string{"x.com/p", "https://x.net", "y.com/xyz", "http://y.net/a?x=z"},
+			[]net.IP{net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0), net.IPv4(10, 1, 0, 0), net.IPv4(10, 1, 0, 0)},
+			[]bool{false, true, true, false},
+		},
+	}
+
+	for _, tt := range testsGroups {
+		g := New()
+		for _, group := range tt.groups {
+			if err := g.Add(group); err != nil {
+				t.Fatal(tt.name, err)
+			}
+		}
+		for i := range tt.urls {
+			if name, b := g.IsHTTPQueryWhitelisted(tt.urls[i], tt.srcIps[i]); b != tt.expected[i] {
+				t.Errorf("%s IsDNSQueryWhitelisted(%s, %s) %s %t; expected %t", tt.name,
+					tt.urls[i], tt.srcIps[i], name, b, tt.expected[i])
+			}
+		}
+	}
+}
+
 func TestEmptyGroup(t *testing.T) {
 	var g *Groups
 	if _, b := g.IsDNSQueryWhitelisted("a", net.IPv4(10, 0, 0, 0), net.IPv4(10, 0, 0, 0)); !b {

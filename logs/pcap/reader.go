@@ -1,6 +1,7 @@
 package pcap
 
 import (
+	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/packet"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/pcap"
@@ -45,6 +46,10 @@ func (r *Reader) ReadIP() ([]*packet.IPPacket, error) {
 		}
 	}
 	return packets, nil
+}
+
+func (*Reader) ReadHTTP() ([]*client.HTTPEntry, error) {
+	return nil, nil
 }
 
 // Close underlying log file.

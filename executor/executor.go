@@ -45,6 +45,9 @@ type Executor struct {
 	ipbuf    *packet.IPPacketBuffer
 	ipWriter *packet.Writer
 
+	httpbuf    *packet.HTTPPacketBuffer
+	httpWriter *packet.Writer
+
 	sniffer sniffer.Sniffer
 	lr      logs.FileParser
 
@@ -125,6 +128,7 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 
 	e.dnsbuf = packet.NewDNSPacketBuffer()
 	e.ipbuf = packet.NewIPPacketBuffer()
+	e.httpbuf = packet.NewHTTPPacketBuffer()
 	return e, nil
 }
 
@@ -164,34 +168,35 @@ func (e *Executor) Start() (err error) {
 }
 
 // Send sends dns events from given format file to engine.
-func (e *Executor) Send(file, fileFomrat, fileType string) (err error) {
-	if err = e.openFileParser(file, fileFomrat); err != nil {
+func (e *Executor) Send(file, fileFormat, fileType string) error {
+	if fileType == "all" {
+		for _, ft := range []string{"dns", "ip", "http"} {
+			if err := e.sendOne(file, fileFormat, ft); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return e.sendOne(file, fileFormat, fileType)
+}
+
+func (e *Executor) sendOne(file, fileFormat, fileType string) error {
+	if err := e.openFileParser(file, fileFormat); err != nil {
 		return err
 	}
+	defer e.lr.Close()
 
 	switch fileType {
-	case "all":
-		if err = e.processIPReader(); err != nil {
-			return err
-		}
-
-		// some parser cannot be reset, thus they need to be reopen,
-		// but first close previous one
-		e.lr.Close()
-		if err = e.openFileParser(file, fileFomrat); err != nil {
-			return err
-		}
-
-		err = e.processDNSReader()
 	case "dns":
-		err = e.processDNSReader()
+		return e.processDNSReader()
 	case "ip":
-		err = e.processIPReader()
-	default:
-		return errors.New("file type not supported")
+		return e.processIPReader()
+	case "http":
+		return e.processHTTPReader()
 	}
-	e.lr.Close()
-	return err
+
+	return errors.New("file type not supported")
 }
 
 // monitor monitors log files and send data to engine.
@@ -281,6 +286,31 @@ func (e *Executor) monitor() {
 							go e.sendDNSPackets()
 						}
 					}
+				case "http":
+					if e.cfg.Engine.Analyze.HTTP {
+						dnspacket, err := parser.ParseLineHTTP(line.Text)
+						if err != nil {
+							log.Errorf("file %s: %s", monitor.File, err)
+							continue
+						}
+
+						// some formats have metadata and it returns no error and no packet either
+						if dnspacket == nil {
+							continue
+						}
+
+						if !e.shouldSendHTTPPacket(dnspacket) {
+							continue
+						}
+						e.mx.Lock()
+						e.httpbuf.Write(dnspacket)
+						l := e.httpbuf.Len()
+						e.mx.Unlock()
+						if l >= e.cfg.HTTPEvents.BufferSize {
+							// do not wait for sending packets
+							go e.sendDNSPackets()
+						}
+					}
 				}
 			}
 		}(monitor)
@@ -352,6 +382,34 @@ func (e *Executor) processIPReader() error {
 	return e.sendIPPackets()
 }
 
+func (e *Executor) processHTTPReader() error {
+	if !e.cfg.Engine.Analyze.HTTP {
+		log.Warn("http events processing disabled")
+		return nil
+	}
+
+	httppackets, err := e.lr.ReadHTTP()
+	if err != nil {
+		return err
+	}
+	log.Infof("found %d http packets", len(httppackets))
+
+	for _, httppacket := range httppackets {
+		if !e.shouldSendHTTPPacket(httppacket) {
+			continue
+		}
+
+		e.httpbuf.Write(httppacket)
+		if e.httpbuf.Len() >= e.cfg.HTTPEvents.BufferSize {
+			if err := e.sendHTTPPackets(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return e.sendHTTPPackets()
+}
+
 // startPacketSender periodcly send dns and ip packets to api.
 func (e *Executor) startPacketSender() {
 	if e.cfg.Engine.Analyze.DNS {
@@ -366,6 +424,14 @@ func (e *Executor) startPacketSender() {
 		go func() {
 			for range time.NewTicker(e.cfg.IPEvents.FlushInterval).C {
 				e.sendIPPackets()
+			}
+		}()
+	}
+
+	if e.cfg.Engine.Analyze.HTTP {
+		go func() {
+			for range time.NewTicker(e.cfg.HTTPEvents.FlushInterval).C {
+				e.sendHTTPPackets()
 			}
 		}()
 	}
@@ -422,6 +488,33 @@ func (e *Executor) sendIPPackets() error {
 	}
 
 	log.Infof("%d of %d total ip events were successfully sent for analysis", resp.Accepted, resp.Received)
+	return nil
+}
+
+// sendHTTPPackets sends http packets to api.
+func (e *Executor) sendHTTPPackets() error {
+	// retrive copy of packet and reset the buffer
+	e.mx.Lock()
+	packets := e.httpbuf.Packets()
+	e.mx.Unlock()
+
+	if len(packets) == 0 {
+		return nil
+	}
+
+	log.Infof("sending %d http events for analysis", len(packets))
+	resp, err := e.c.EventsHTTP(packets)
+	if err != nil {
+		log.Errorf("sending %d http events for analysis failed: %s", len(packets), err)
+
+		// write unsaved packets back to buffer
+		e.mx.Lock()
+		e.httpbuf.Write(packets...)
+		e.mx.Unlock()
+		return err
+	}
+
+	log.Infof("%d of %d total http events were successfully sent for analysis", resp.Accepted, resp.Received)
 	return nil
 }
 
@@ -501,6 +594,19 @@ func (e *Executor) shouldSendDNSPacket(p *packet.DNSPacket) bool {
 	name, t := e.groups.IsDNSQueryWhitelisted(p.FQDN, p.SrcIP, nil)
 	if !t {
 		log.Debugf("dns query %s excluded by %s group", p, name)
+	}
+	return t
+}
+
+func (e *Executor) shouldSendHTTPPacket(p *client.HTTPEntry) bool {
+	// no scope groups configured
+	if e.groups == nil {
+		return true
+	}
+
+	name, t := e.groups.IsHTTPQueryWhitelisted(p.URL, p.SrcIP)
+	if !t {
+		log.Debugf("http query from %s to %s excluded by %s group", p.SrcIP, p.URL, name)
 	}
 	return t
 }

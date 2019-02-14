@@ -15,7 +15,7 @@ import (
 
 var (
 	fileFormats  = []string{"bro", "msdns", "pcap", "suricata", "syslog-named", "edge"}
-	analyzeTypes = []string{"all", "dns", "ip"}
+	analyzeTypes = []string{"all", "dns", "ip", "http"}
 )
 
 func newReadCommand() *cobra.Command {

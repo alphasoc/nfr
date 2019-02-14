@@ -2,7 +2,6 @@ package edge
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -10,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/packet"
 )
 
@@ -86,17 +86,25 @@ func (p *Parser) ReadDNS() ([]*packet.DNSPacket, error) {
 
 // ReadIP reads all ip packets from the file.
 func (*Parser) ReadIP() ([]*packet.IPPacket, error) {
-	return nil, errors.New(" read ip packet from edge logs unimplemented")
+	return nil, nil
 }
 
 // ParseLineDNS parse single log line with dns data.
 func (*Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
-	return nil, errors.New("line parser not implemented for edge format")
+	return nil, nil
 }
 
 // ParseLineIP reads all ip packets from the file.
 func (*Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
-	return nil, errors.New("read ip packet from edge logs unimplemented")
+	return nil, nil
+}
+
+func (*Parser) ReadHTTP() ([]*client.HTTPEntry, error) {
+	return nil, nil
+}
+
+func (*Parser) ParseLineHTTP(line string) (*client.HTTPEntry, error) {
+	return nil, nil
 }
 
 // Close underlying log file.

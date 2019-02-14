@@ -3,6 +3,7 @@ package logs
 import (
 	"io"
 
+	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/packet"
 )
 
@@ -10,6 +11,7 @@ import (
 type FileParser interface {
 	ReadDNS() ([]*packet.DNSPacket, error)
 	ReadIP() ([]*packet.IPPacket, error)
+	ReadHTTP() ([]*client.HTTPEntry, error)
 	io.Closer
 }
 
@@ -17,4 +19,5 @@ type FileParser interface {
 type Parser interface {
 	ParseLineDNS(line string) (*packet.DNSPacket, error)
 	ParseLineIP(line string) (*packet.IPPacket, error)
+	ParseLineHTTP(line string) (*client.HTTPEntry, error)
 }

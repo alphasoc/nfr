@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/packet"
 )
 
@@ -235,6 +236,14 @@ func (p *Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
 	}
 
 	return &ippacket, nil
+}
+
+func (*Parser) ReadHTTP() ([]*client.HTTPEntry, error) {
+	return nil, nil
+}
+
+func (*Parser) ParseLineHTTP(line string) (*client.HTTPEntry, error) {
+	return nil, nil
 }
 
 // Close underlying log file.

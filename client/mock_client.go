@@ -33,6 +33,10 @@ func (c *MockAlphaSOCClient) EventsIP(req *EventsIPRequest) (*EventsIPResponse, 
 	return &EventsIPResponse{}, nil
 }
 
+func (c *MockAlphaSOCClient) EventsHTTP(req []*HTTPEntry) (*EventsHTTPResponse, error) {
+	return &EventsHTTPResponse{}, nil
+}
+
 // KeyRequest mock.
 func (c *MockAlphaSOCClient) KeyRequest() (*KeyRequestResponse, error) {
 	return &KeyRequestResponse{}, nil

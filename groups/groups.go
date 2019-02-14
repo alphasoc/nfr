@@ -2,10 +2,14 @@ package groups
 
 import (
 	"net"
+	"regexp"
 	"strings"
 
 	"github.com/alphasoc/nfr/matchers"
 )
+
+// httpRegexp extracts scheme, hostname and port
+var httpRegexp = regexp.MustCompile(`^(?:(.*?)://)?([-a-zA-Z0-9_.]+)(?:[:](\d+))?[^?&#]*`)
 
 // Group is a definition used for whitelising ip and dns traffic.
 type Group struct {
@@ -124,6 +128,52 @@ func (g *Groups) IsDNSQueryWhitelisted(domain string, srcIP, dstIP net.IP) (stri
 
 		// ip is matched, now check if domain is not excluded
 		if matcher.dm.Match(strings.ToLower(domain)) {
+			return name, false
+		}
+
+		// in case of success do not break, because the ip/domain
+		// could be on other lists.
+		ok = true
+	}
+
+	return "", ok
+}
+
+// IsHTTPQueryWhitelisted returns true if dns query doesn't match any of groups.
+func (g *Groups) IsHTTPQueryWhitelisted(url string, srcIP net.IP) (string, bool) {
+	// if there is no group, then every query is whitelisted
+	if g == nil || len(g.ms) == 0 {
+		return "<no-whitelist>", true
+	}
+
+	if url == "" || srcIP == nil {
+		return "<no-data>", false
+	}
+
+	var domain string
+	if p := httpRegexp.FindStringSubmatch(url); p != nil {
+		domain = strings.ToLower(p[2])
+	}
+
+	// ip must be included in at least 1 matcher, while
+	// being not excluded from others groups.
+	// At the same time domain can't be included in
+	// groups excluded domains.
+	var (
+		ok                = false
+		matched, excluded bool
+	)
+	for name, matcher := range g.ms {
+		matched, excluded = matcher.nm.MatchSrcIP(srcIP)
+		if !matched {
+			continue
+		}
+		if excluded {
+			return name, false
+		}
+
+		// ip is matched, now check if domain is not excluded
+		if domain != "" && matcher.dm.Match(domain) {
 			return name, false
 		}
 
