@@ -73,14 +73,14 @@ Message logging key (for packets - other items use a subset of these fields):
 		t.Fatalf("reading msdns dns package failed - want: 2, got: %d", len(packets))
 	}
 
-	tc := time.Date(2017, 1, 2, 21, 0, 0, 0, time.UTC)
+	tc := time.Date(2017, 1, 2, 21, 0, 0, 0, time.Local)
 	if !(packets[0].DstPort == 0 &&
 		packets[0].Protocol == "udp" &&
 		packets[0].Timestamp.Equal(tc) &&
 		packets[0].SrcIP.Equal(net.IPv4(10, 0, 0, 1)) &&
 		packets[0].RecordType == "A" &&
 		packets[0].FQDN == "alphasoc.com") {
-		t.Fatalf("invalid 1st packet %+q", packets[0])
+		t.Errorf("invalid 1st packet %+q", packets[0])
 	}
 
 	if !(packets[1].DstPort == 0 &&
@@ -89,6 +89,6 @@ Message logging key (for packets - other items use a subset of these fields):
 		packets[1].SrcIP.Equal(net.IPv4(10, 0, 0, 2)) &&
 		packets[1].RecordType == "AAAA" &&
 		packets[1].FQDN == "alphasoc.net") {
-		t.Fatalf("invalid 2nd packet %+q", packets[1])
+		t.Errorf("invalid 2nd packet %+q", packets[1])
 	}
 }
