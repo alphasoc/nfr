@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/alphasoc/nfr/client"
 )
 
 func bytesToSortedStrings(bs [][]byte) []string {
@@ -35,10 +37,12 @@ func ExampleFormatterCEF_dns() {
 				Description: "Interesting event",
 			},
 		},
-		Timestamp:  time.Unix(1536242944, 123e6).UTC(),
-		SrcIP:      net.IPv4(1, 2, 3, 4),
-		Query:      "virus.com",
-		RecordType: "A",
+		EventUnified: client.EventUnified{
+			Timestamp: time.Unix(1536242944, 123e6).UTC(),
+			SrcIP:     net.IPv4(1, 2, 3, 4),
+			Query:     "virus.com",
+			QueryType: "A",
+		},
 	})
 
 	if err != nil {
@@ -70,14 +74,16 @@ func ExampleFormatterCEF_ip() {
 				Description: "Interesting event",
 			},
 		},
-		Timestamp: time.Unix(1536242944, 123e6).UTC(),
-		SrcIP:     net.IPv4(1, 2, 3, 4),
-		SrcPort:   16830,
-		DstIP:     net.IPv4(4, 3, 2, 1),
-		DstPort:   443,
-		Protocol:  "tcp",
-		BytesIn:   744,
-		BytesOut:  1376,
+		EventUnified: client.EventUnified{
+			Timestamp: time.Unix(1536242944, 123e6).UTC(),
+			SrcIP:     net.IPv4(1, 2, 3, 4),
+			SrcPort:   16830,
+			DestIP:    net.IPv4(4, 3, 2, 1),
+			DestPort:  443,
+			Proto:     "tcp",
+			BytesIn:   744,
+			BytesOut:  1376,
+		},
 	})
 
 	if err != nil {

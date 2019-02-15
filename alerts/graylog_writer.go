@@ -55,12 +55,12 @@ func (w *GraylogWriter) Write(event *Event) error {
 		m.Extra["original_event"] = event.Timestamp.String()
 		m.Extra["src_ip"] = event.SrcIP
 		m.Extra["query"] = event.Query
-		m.Extra["record_type"] = event.RecordType
+		m.Extra["record_type"] = event.QueryType
 
-		m.Extra["protocol"] = event.Protocol
+		m.Extra["protocol"] = event.Proto
 		m.Extra["src_port"] = event.SrcPort
-		m.Extra["dest_ip"] = event.DstIP
-		m.Extra["dest_port"] = event.DstPort
+		m.Extra["dest_ip"] = event.DestIP
+		m.Extra["dest_port"] = event.DestPort
 		m.Extra["bytes_in"] = event.BytesIn
 		m.Extra["bytes_out"] = event.BytesOut
 		m.Extra["ja3"] = event.Ja3

@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/alphasoc/nfr/version"
-	"github.com/xoebus/ceflog"
 	"strconv"
 	"strings"
+
+	"github.com/alphasoc/nfr/version"
+	"github.com/xoebus/ceflog"
 )
 
 // Writer interface for log api alerts response.
@@ -80,16 +81,16 @@ func (f *FormatterCEF) Format(event *Event) ([][]byte, error) {
 	case "dns":
 		ext = append(ext, ceflog.Extension{
 			{"query", event.Query},
-			{"requestMethod", event.RecordType},
+			{"requestMethod", event.QueryType},
 		}...)
 	case "ip":
 		ext = append(ext, ceflog.Extension{
-			{"spt", strconv.Itoa(event.SrcPort)},
-			{"dst", event.DstIP.String()},
-			{"dpt", strconv.Itoa(event.DstPort)},
-			{"proto", event.Protocol},
-			{"in", strconv.Itoa(event.BytesIn)},
-			{"out", strconv.Itoa(event.BytesOut)},
+			{"spt", strconv.Itoa(int(event.SrcPort))},
+			{"dst", event.DestIP.String()},
+			{"dpt", strconv.Itoa(int(event.DestPort))},
+			{"proto", event.Proto},
+			{"in", strconv.Itoa(int(event.BytesIn))},
+			{"out", strconv.Itoa(int(event.BytesOut))},
 		}...)
 	}
 

@@ -1,9 +1,6 @@
 package alerts
 
 import (
-	"net"
-	"time"
-
 	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/groups"
 )
@@ -22,28 +19,16 @@ type Alert struct {
 
 // Event from alert.
 type Event struct {
-	Type      string            `json:"type"`
-	EventType string            `json:"eventType"`
-	Flags     []string          `json:"flags"`
-	Groups    []Group           `json:"groups"`
-	Threats   map[string]Threat `json:"threats"`
+	// Type is a JSON message type, which currently is always "alert"
+	Type string `json:"type"`
 
-	// fileds common for dns and ip event
-	Timestamp time.Time `json:"ts"`
-	SrcIP     net.IP    `json:"srcIp"`
+	Flags   []string          `json:"flags"`
+	Groups  []Group           `json:"groups"`
+	Threats map[string]Threat `json:"threats"`
 
-	// ip event fileds
-	SrcPort  int    `json:"srcPort,omitempty"`
-	DstIP    net.IP `json:"destIp,omitempty"`
-	DstPort  int    `json:"destPort,omitempty"`
-	Protocol string `json:"proto,omitempty"`
-	BytesIn  int    `json:"bytesIn,omitempty"`
-	BytesOut int    `json:"bytesOut,omitempty"`
-	Ja3      string `json:"ja3,omitempty"`
+	EventType string `json:"eventType"`
 
-	// dns event fields
-	Query      string `json:"query,omitempty"`
-	RecordType string `json:"recordType,omitempty"`
+	client.EventUnified
 }
 
 func (e *Event) topThreat() (string, Threat) {
@@ -89,45 +74,30 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 	}
 
 	for i := range resp.Alerts {
-		alert.Events[i] = Event{
-			Type:      "alert",
-			EventType: resp.Alerts[i].EventType,
-			Flags:     resp.Alerts[i].Wisdom.Flags,
-			Threats:   make(map[string]Threat),
+		ev := Event{
+			Type:         "alert",
+			EventType:    resp.Alerts[i].EventType,
+			Flags:        resp.Alerts[i].Wisdom.Flags,
+			Threats:      make(map[string]Threat),
+			EventUnified: resp.Alerts[i].Event,
 		}
 
 		for _, threat := range resp.Alerts[i].Threats {
-			alert.Events[i].Threats[threat] = Threat{
+			ev.Threats[threat] = Threat{
 				Severity:    resp.Threats[threat].Severity,
 				Description: resp.Threats[threat].Title,
 				Policy:      resp.Threats[threat].Policy,
 			}
 		}
 
-		switch resp.Alerts[i].EventType {
-		case "dns":
-			alert.Events[i].Timestamp = resp.Alerts[i].DNSEvent.Timestamp
-			alert.Events[i].SrcIP = resp.Alerts[i].DNSEvent.SrcIP
-			alert.Events[i].Query = resp.Alerts[i].DNSEvent.Query
-			alert.Events[i].RecordType = resp.Alerts[i].DNSEvent.QType
-		case "ip":
-			alert.Events[i].Timestamp = resp.Alerts[i].IPEvent.Timestamp
-			alert.Events[i].SrcIP = resp.Alerts[i].IPEvent.SrcIP
-			alert.Events[i].SrcPort = resp.Alerts[i].IPEvent.SrcPort
-			alert.Events[i].DstIP = resp.Alerts[i].IPEvent.DstIP
-			alert.Events[i].DstPort = resp.Alerts[i].IPEvent.DstPort
-			alert.Events[i].Protocol = resp.Alerts[i].IPEvent.Protocol
-			alert.Events[i].BytesIn = resp.Alerts[i].IPEvent.BytesIn
-			alert.Events[i].BytesOut = resp.Alerts[i].IPEvent.BytesOut
-			alert.Events[i].Ja3 = resp.Alerts[i].IPEvent.Ja3
-		}
-
-		for _, group := range m.groups.FindGroupsBySrcIP(alert.Events[i].SrcIP) {
-			alert.Events[i].Groups = append(alert.Events[i].Groups, Group{
+		for _, group := range m.groups.FindGroupsBySrcIP(resp.Alerts[i].Event.SrcIP) {
+			ev.Groups = append(alert.Events[i].Groups, Group{
 				Label:       group.Name,
 				Description: group.Label,
 			})
 		}
+
+		alert.Events[i] = ev
 	}
 	return alert
 }

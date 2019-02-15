@@ -49,16 +49,16 @@ func (w *QRadarWriter) Write(event *Event) error {
 
 		e.SetDevTimeFormatAttr("MMM dd yyyy HH:mm:ss")
 		e.SetDevTimeAttr(event.Timestamp.Format("Jan 02 2006 15:04:05"))
-		e.SetProtoAttr(event.Protocol)
+		e.SetProtoAttr(event.Proto)
 		e.SetSrcAttr(event.SrcIP)
 		e.SetSrcAttr(event.SrcIP)
-		e.SetSrcPortAttr(event.SrcPort)
-		e.SetDstAttr(event.DstIP)
-		e.SetDstPortAttr(event.DstPort)
-		e.SetSrcBytesAttr(event.BytesIn)
-		e.SetDstBytesAttr(event.BytesOut)
+		e.SetSrcPortAttr(int(event.SrcPort))
+		e.SetDstAttr(event.DestIP)
+		e.SetDstPortAttr(int(event.DestPort))
+		e.SetSrcBytesAttr(int(event.BytesIn))
+		e.SetDstBytesAttr(int(event.BytesOut))
 		e.SetAttr("query", event.Query)
-		e.SetAttr("recordType", event.RecordType)
+		e.SetAttr("recordType", event.QueryType)
 
 		if err := w.w.Alert(e.String()); err != nil {
 			return err
