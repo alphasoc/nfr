@@ -1,6 +1,6 @@
 version: 2
 jobs:
-  build:
+  build_linux:
     docker:
       - image: circleci/golang:1.11
     working_directory: /go/src/github.com/alphasoc/nfr
@@ -22,6 +22,36 @@ jobs:
           root: /tmp
           paths:
             - bin
+
+  build_linux_el7:
+    docker:
+      - image: centos:centos7
+    working_directory: /root/go/src/github.com/alphasoc/nfr
+    steps:
+      - run:
+          name: install yum packages
+          command: yum install -y git gcc libpcap-devel wget tar
+      - run:
+          name: install golang
+          command: |
+            wget https://dl.google.com/go/go1.11.5.linux-amd64.tar.gz -O /tmp/golang.tar.gz
+            tar -C /usr/local -xzf /tmp/golang.tar.gz
+            ln -s /usr/local/go/bin/go /usr/local/bin/
+      - checkout
+      - run: go install ./...
+      - run: go test -race ./...
+      - run:
+          name: build
+          command: |
+            GOARCH=amd64 GOOS=linux go build -o /tmp/bin/nfr-linux-amd64-el7 -ldflags "-X github.com/alphasoc/nfr/version.Version=$(git describe)"
+      - store_artifacts:
+          path: /tmp/bin/
+          destination: bin
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - bin
+
   lint:
     docker:
       - image: mozgiii/gometalinter-docker
@@ -53,12 +83,17 @@ jobs:
             go get github.com/aktau/github-release
             github-release release --draft --user alphasoc --repo nfr --tag $CIRCLE_TAG
             github-release upload --user alphasoc --repo nfr --tag $CIRCLE_TAG --name nfr-linux-amd64 --file bin/nfr-linux-amd64
+            github-release upload --user alphasoc --repo nfr --tag $CIRCLE_TAG --name nfr-linux-amd64-el7 --file bin/nfr-linux-amd64-el7
 
 workflows:
   version: 2
   build_and_deploy:
     jobs:
-      - build:
+      - build_linux:
+          filters:
+            tags:
+              only: /^v[0-9]+[.].*$/
+      - build_linux_el7:
           filters:
             tags:
               only: /^v[0-9]+[.].*$/
@@ -68,7 +103,8 @@ workflows:
               only: /^v[0-9]+[.].*$/
       - publish:
           requires:
-            - build
+            - build_linux
+            - build_linux_el7
             - lint
           filters:
             tags:
