@@ -208,3 +208,17 @@ ip_events:
     # File in which to store unprocessed IP events on disk
     # Default: (none)
     file:
+
+################################################################################
+# HTTP data processing and queueing configuration
+################################################################################
+
+http_events:
+
+  # NFR buffer size for the IP event queue
+  # Default: 65535
+  buffer_size: 65535
+
+  # Interval for flushing data to Analytics Engine for scoring
+  # Default: 30s
+  flush_interval: 30s

@@ -29,7 +29,7 @@ func NewRootCommand() *cobra.Command {
 	var cmd = &cobra.Command{
 		Use:   "nfr account|listen|read|version",
 		Short: "nfr is main command used to send dns and ip events to AlphaSOC Engine",
-		Long: `Network Flight Recorder (NFR) is an application which captures network traffic 
+		Long: `Network Flight Recorder (NFR) is an application which captures network traffic
 and provides deep analysis and alerting of suspicious events, identifying gaps
 in your security controls, highlighting targeted attacks and policy violations.`,
 		SilenceErrors: true,

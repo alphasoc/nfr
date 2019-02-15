@@ -200,15 +200,6 @@ type Config struct {
 		BufferSize int `yaml:"buffer_size,omitempty"`
 		// Interval for flushing ip events to AlphaSOC Engine. Default: 30s
 		FlushInterval time.Duration `yaml:"flush_interval,omitempty"`
-
-		// Events that were unable to send to AlphaSOC Engine.
-		// If file is set, then unsent events will be saved on disk and send again.
-		// Pcap format is used to store events. You can view it in
-		// programs like tcpdump or whireshark.
-		Failed struct {
-			// File to store ip events. Default: (none)
-			File string `yaml:"file,omitempty"`
-		} `yaml:"failed,omitempty"`
 	} `yaml:"http_events,omitempty"`
 }
 
