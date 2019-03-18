@@ -33,12 +33,17 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-// ErrNoAPIKey is returned when Client method is called without
-// api key set if it's required.
-var ErrNoAPIKey = errors.New("no api key")
+var (
+	// ErrNoAPIKey is returned when Client method is called without
+	// api key set if it's required.
+	ErrNoAPIKey = errors.New("no api key")
 
-// ErrNoRequest is returned when nil request is pass to method.
-var ErrNoRequest = errors.New("request is empty")
+	// ErrNoRequest is returned when nil request is pass to method.
+	ErrNoRequest = errors.New("request is empty")
+
+	// ErrTooManyRequests is returned when API returns "429 Too Many Requests"
+	ErrTooManyRequests = errors.New("too many requests to API")
+)
 
 // DefaultVersion for AlphaSOC API.
 const DefaultVersion = "v1"
@@ -128,8 +133,13 @@ func (c *AlphaSOCClient) do(ctx context.Context, method, path string, query url.
 		return nil, err
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if code := resp.StatusCode; code != http.StatusOK {
 		defer resp.Body.Close()
+
+		if code == http.StatusTooManyRequests {
+			return nil, ErrTooManyRequests
+		}
+
 		var errorResponse ErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errorResponse); err != nil {
 			return nil, err

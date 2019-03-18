@@ -50,7 +50,7 @@ func (p *Poller) SetFollowDataFile(file string) error {
 }
 
 // Do polls alerts within a period specified by the interval argument.
-// The alerts are writtne to writer used to create new poller.
+// The alerts are written to writer used to create new poller.
 // If the error occurrs Do method should be call again.
 func (p *Poller) Do(interval time.Duration) error {
 	return p.do(interval, 0)
@@ -58,20 +58,29 @@ func (p *Poller) Do(interval time.Duration) error {
 
 // do polls alerts. If maxTries <=0 then it polls forever.
 func (p *Poller) do(interval time.Duration, maxTries int) error {
-	p.ticker = time.NewTicker(interval)
-	defer p.stop()
-
 	var tries = 0
-	for range p.ticker.C {
+	var more bool
+
+	for {
+		// if there is more to fetch then don't wait for ticker
+		if !more {
+			time.Sleep(interval)
+		}
+
 		if maxTries > 0 && tries >= maxTries {
 			break
 		}
 		tries++
 
 		alerts, err := p.c.Alerts(p.follow)
-		if err != nil {
+		if err == client.ErrTooManyRequests {
+			time.Sleep(30 * time.Second)
+			more = true
+			continue
+		} else if err != nil {
 			return err
 		}
+		more = alerts.More
 
 		if len(alerts.Alerts) == 0 {
 			continue
