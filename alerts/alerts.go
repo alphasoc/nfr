@@ -19,9 +19,6 @@ type Alert struct {
 
 // Event from alert.
 type Event struct {
-	// Type is a JSON message type, which currently is always "alert"
-	Type string `json:"type"`
-
 	Flags   []string          `json:"flags"`
 	Groups  []Group           `json:"groups"`
 	Threats map[string]Threat `json:"threats"`
@@ -75,7 +72,6 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 
 	for i := range resp.Alerts {
 		ev := Event{
-			Type:         "alert",
 			EventType:    resp.Alerts[i].EventType,
 			Flags:        resp.Alerts[i].Wisdom.Flags,
 			Threats:      make(map[string]Threat),
