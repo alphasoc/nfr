@@ -23,7 +23,6 @@ func ExampleFormatterCEF_dns() {
 	f := NewFormatterCEF()
 
 	bs, err := f.Format(&Event{
-		Type:      "alert",
 		EventType: "dns",
 		Flags:     []string{"c2", "young_domain"},
 		Groups:    []Group{Group{Label: "boston"}},
@@ -60,7 +59,6 @@ func ExampleFormatterCEF_ip() {
 	f := NewFormatterCEF()
 
 	bs, err := f.Format(&Event{
-		Type:      "alert",
 		EventType: "ip",
 		Flags:     []string{"c2", "young_domain"},
 		Groups:    []Group{Group{Label: "boston"}},
