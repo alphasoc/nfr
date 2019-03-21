@@ -19,36 +19,22 @@ type Alert struct {
 
 // Event from alert.
 type Event struct {
-	Flags   []string          `json:"flags"`
-	Groups  []Group           `json:"groups"`
-	Threats map[string]Threat `json:"threats"`
+	Severity int               `json:"severity"`
+	Threats  map[string]Threat `json:"threats"`
+
+	Flags  []string `json:"flags"`
+	Groups []Group  `json:"groups"`
 
 	EventType string `json:"eventType"`
 
 	client.EventUnified
 }
 
-func (e *Event) topThreat() (string, Threat) {
-	var (
-		topID     string
-		topThreat Threat
-	)
-
-	for tid, threat := range e.Threats {
-		if threat.Severity > topThreat.Severity {
-			topID = tid
-			topThreat = threat
-		}
-	}
-
-	return topID, topThreat
-}
-
 // Threat for event.
 type Threat struct {
 	Severity    int    `json:"severity"`
 	Description string `json:"desc"`
-	Policy      bool   `json:"policy"`
+	Policy      bool   `json:"policy,omitempty"`
 }
 
 // Group describe group event belongs to.
@@ -78,11 +64,15 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 			EventUnified: resp.Alerts[i].Event,
 		}
 
-		for _, threat := range resp.Alerts[i].Threats {
-			ev.Threats[threat] = Threat{
-				Severity:    resp.Threats[threat].Severity,
-				Description: resp.Threats[threat].Title,
-				Policy:      resp.Threats[threat].Policy,
+		for _, tid := range resp.Alerts[i].Threats {
+			threat := Threat{
+				Severity:    resp.Threats[tid].Severity,
+				Description: resp.Threats[tid].Title,
+				Policy:      resp.Threats[tid].Policy,
+			}
+			ev.Threats[tid] = threat
+			if threat.Severity > ev.Severity {
+				ev.Severity = threat.Severity
 			}
 		}
 
@@ -95,5 +85,6 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 
 		alert.Events[i] = ev
 	}
+
 	return alert
 }
