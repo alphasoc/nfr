@@ -22,8 +22,8 @@ type Parser struct {
 		separator    string
 		setSeparator string
 		emptyField   string
-		unsetFiled   string
-		fileds       []string
+		unsetField   string
+		fields       []string
 	}
 }
 
@@ -120,36 +120,42 @@ func (p *Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
 	}
 
 	// get values for one entry
-	fileds := strings.Split(line, p.metadata.separator)
-	if len(fileds) != len(p.metadata.fileds) {
+	fields := strings.Split(line, p.metadata.separator)
+	if len(fields) != len(p.metadata.fields) {
 		return nil, fmt.Errorf("bro dns log invalid entry at line: %q", line)
 	}
 
 	var dnspacket packet.DNSPacket
 
-	// parse values based on fileds
-	for i, f := range p.metadata.fileds {
+	// parse values based on fields
+	for i, f := range p.metadata.fields {
 		switch f {
 		case "ts":
-			timestamp, err := parseEpochTime(fileds[i])
+			timestamp, err := parseEpochTime(fields[i])
 			if err != nil {
 				return nil, fmt.Errorf("bro dns log invalid timestamp: %s", err)
 			}
 			dnspacket.Timestamp = timestamp
 		case "id.orig_h":
-			dnspacket.SrcIP = net.ParseIP(fileds[i])
+			dnspacket.SrcIP = net.ParseIP(fields[i])
+		case "id.orig_p":
+			port, err := strconv.ParseUint(fields[i], 10, 16)
+			if err != nil {
+				return nil, fmt.Errorf("conn bro log - invalid port at line: %q: %s", line, err)
+			}
+			dnspacket.SrcPort = int(port)
 		case "query":
-			dnspacket.FQDN = fileds[i]
+			dnspacket.FQDN = fields[i]
 		case "qtype_name":
-			dnspacket.RecordType = fileds[i]
+			dnspacket.RecordType = fields[i]
 		case "id.resp_p":
-			port, err := strconv.ParseInt(fileds[i], 10, 8)
+			port, err := strconv.ParseUint(fields[i], 10, 16)
 			if err != nil {
 				return nil, fmt.Errorf("bro dns log invalid port at line: %q", line)
 			}
 			dnspacket.DstPort = int(port)
 		case "proto":
-			dnspacket.Protocol = strings.ToLower(fileds[i])
+			dnspacket.Protocol = strings.ToLower(fields[i])
 		}
 	}
 
@@ -170,47 +176,47 @@ func (p *Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
 	}
 
 	// get values for one entry
-	fileds := strings.Split(line, p.metadata.separator)
-	if len(fileds) != len(p.metadata.fileds) {
+	fields := strings.Split(line, p.metadata.separator)
+	if len(fields) != len(p.metadata.fields) {
 		return nil, fmt.Errorf("conn bro log - invalid entry at line: %q", line)
 	}
 
 	var ippacket packet.IPPacket
 
-	// parse values based on fileds
-	for i, f := range p.metadata.fileds {
+	// parse values based on fields
+	for i, f := range p.metadata.fields {
 		switch f {
 		case "ts":
-			timestamp, err := parseEpochTime(fileds[i])
+			timestamp, err := parseEpochTime(fields[i])
 			if err != nil {
 				return nil, fmt.Errorf("conn bro log - invalid timestamp: %s", err)
 			}
 			ippacket.Timestamp = timestamp
 		case "id.orig_h":
-			ippacket.SrcIP = net.ParseIP(fileds[i])
+			ippacket.SrcIP = net.ParseIP(fields[i])
 		case "id.orig_p":
-			port, err := strconv.ParseInt(fileds[i], 10, 8)
+			port, err := strconv.ParseUint(fields[i], 10, 16)
 			if err != nil {
 				return nil, fmt.Errorf("conn bro log - invalid port at line: %q", line)
 			}
 			ippacket.SrcPort = int(port)
 		case "id.resp_h":
-			ippacket.DstIP = net.ParseIP(fileds[i])
+			ippacket.DstIP = net.ParseIP(fields[i])
 		case "id.resp_p":
-			port, err := strconv.ParseInt(fileds[i], 10, 8)
+			port, err := strconv.ParseUint(fields[i], 10, 16)
 			if err != nil {
 				return nil, fmt.Errorf("conn bro log - invalid port at line: %q", line)
 			}
 			ippacket.DstPort = int(port)
 		case "proto":
-			ippacket.Protocol = strings.ToLower(fileds[i])
+			ippacket.Protocol = strings.ToLower(fields[i])
 		case "orig_bytes":
 			fallthrough
 		case "orig_ip_bytes":
-			if fileds[i] != p.metadata.unsetFiled {
-				count, err := strconv.ParseInt(fileds[i], 10, 8)
+			if fields[i] != p.metadata.unsetField {
+				count, err := strconv.ParseInt(fields[i], 10, 64)
 				if err != nil {
-					return nil, fmt.Errorf("conn bro log - invalid orig bytes count at line: %q %q %q", line, fileds[i], p.metadata.unsetFiled)
+					return nil, fmt.Errorf("conn bro log - invalid orig bytes count at line: %q %q %q", line, fields[i], p.metadata.unsetField)
 				}
 				if count > 0 {
 					ippacket.BytesCount += int(count)
@@ -220,8 +226,8 @@ func (p *Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
 		case "resp_bytes":
 			fallthrough
 		case "resp_ip_bytes":
-			if fileds[i] != p.metadata.unsetFiled {
-				count, err := strconv.ParseInt(fileds[i], 10, 8)
+			if fields[i] != p.metadata.unsetField {
+				count, err := strconv.ParseInt(fields[i], 10, 64)
 				if err != nil {
 					return nil, fmt.Errorf("conn bro log - invalid resp bytes count at line: %q", line)
 				}
@@ -231,7 +237,7 @@ func (p *Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
 				}
 			}
 		case "ja3":
-			ippacket.Ja3 = fileds[i]
+			ippacket.Ja3 = fields[i]
 		}
 	}
 
@@ -253,7 +259,7 @@ func (p *Parser) Close() error {
 
 // reads metadata from bro file.
 func (p *Parser) readMetadata(line string) error {
-	// sometimes metadata needs to be reload
+	// sometimes metadata needs to be reloaded
 	// if line starts with set_separator then clear metadata separator
 	if strings.HasPrefix(line, "#separator") {
 		p.metadata.separator = " "
@@ -279,9 +285,9 @@ func (p *Parser) readMetadata(line string) error {
 	case "empty_field":
 		p.metadata.emptyField = metadata[1]
 	case "unset_field":
-		p.metadata.unsetFiled = metadata[1]
+		p.metadata.unsetField = metadata[1]
 	case "fields":
-		p.metadata.fileds = strings.Split(metadata[1], p.metadata.separator)
+		p.metadata.fields = strings.Split(metadata[1], p.metadata.separator)
 	}
 
 	return nil
