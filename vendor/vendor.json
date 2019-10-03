@@ -22,28 +22,28 @@
 			"revisionTime": "2017-08-14T20:04:35Z"
 		},
 		{
-			"checksumSHA1": "5HgC7V5oFyE4xPKkx44bgqpo7ps=",
+			"checksumSHA1": "I7I4rckKCb3SLIY2AqfEmJ/maec=",
 			"path": "github.com/google/gopacket",
-			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
-			"revisionTime": "2017-05-03T21:52:36Z"
+			"revision": "2d7fab0d91d6bb77c1df6bdeb222270a2aa13820",
+			"revisionTime": "2019-09-12T17:32:03Z"
 		},
 		{
-			"checksumSHA1": "5WFP+sXGbrIz9aK+fFL5YYD0Dro=",
+			"checksumSHA1": "DT8i0BEPxEqYCbOEQpsT1Ra7o8M=",
 			"path": "github.com/google/gopacket/layers",
-			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
-			"revisionTime": "2017-05-03T21:52:36Z"
+			"revision": "2d7fab0d91d6bb77c1df6bdeb222270a2aa13820",
+			"revisionTime": "2019-09-12T17:32:03Z"
 		},
 		{
-			"checksumSHA1": "gBH+9p7pMzemAVn5WQ6mGtkDg+s=",
+			"checksumSHA1": "OBJjQFIQHP+LXsB6B5nFdmP8qu0=",
 			"path": "github.com/google/gopacket/pcap",
-			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
-			"revisionTime": "2017-05-03T21:52:36Z"
+			"revision": "2d7fab0d91d6bb77c1df6bdeb222270a2aa13820",
+			"revisionTime": "2019-09-12T17:32:03Z"
 		},
 		{
-			"checksumSHA1": "3s4xVMFdqU6YDaNJI7pJiU+o4Lw=",
+			"checksumSHA1": "3OKBo18+LCqNDNwmW4k4AwODQNY=",
 			"path": "github.com/google/gopacket/pcapgo",
-			"revision": "b0b789be7511f047cf2cf6bf9ef61bf83ebfb8c3",
-			"revisionTime": "2017-05-03T21:52:36Z"
+			"revision": "2d7fab0d91d6bb77c1df6bdeb222270a2aa13820",
+			"revisionTime": "2019-09-12T17:32:03Z"
 		},
 		{
 			"checksumSHA1": "P5KyE9QEbAeHLeXzycSF/jS1FIc=",
