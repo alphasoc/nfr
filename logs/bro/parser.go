@@ -52,6 +52,13 @@ func NewFileParser(filename string) (*Parser, error) {
 	return p, nil
 }
 
+func (p *Parser) nonEmpty(f string) string {
+	if f == p.metadata.emptyField || f == p.metadata.unsetField {
+		return ""
+	}
+	return f
+}
+
 // ReadDNS reads all dns packets from the file.
 func (p *Parser) ReadDNS() ([]*packet.DNSPacket, error) {
 	if p.r == nil {
@@ -237,19 +244,114 @@ func (p *Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
 				}
 			}
 		case "ja3":
-			ippacket.Ja3 = fields[i]
+			ippacket.Ja3 = p.nonEmpty(fields[i])
 		}
 	}
 
 	return &ippacket, nil
 }
 
-func (*Parser) ReadHTTP() ([]*client.HTTPEntry, error) {
-	return nil, nil
+func (p *Parser) ReadHTTP() ([]*client.HTTPEntry, error) {
+	if p.r == nil {
+		return nil, fmt.Errorf("bro parser must be created with file reader")
+	}
+
+	var packets []*client.HTTPEntry
+
+	s := bufio.NewScanner(p.r)
+	for s.Scan() {
+		dnspacket, err := p.ParseLineHTTP(string(s.Bytes()))
+		if err != nil {
+			return nil, err
+		}
+		if dnspacket != nil {
+			packets = append(packets, dnspacket)
+		}
+	}
+
+	if err := s.Err(); err != nil {
+		return nil, err
+	}
+	return packets, nil
+
 }
 
-func (*Parser) ParseLineHTTP(line string) (*client.HTTPEntry, error) {
-	return nil, nil
+func (p *Parser) ParseLineHTTP(line string) (*client.HTTPEntry, error) {
+	line = strings.TrimSpace(line)
+	if len(line) == 0 {
+		return nil, nil
+	}
+	if line[0] == '#' {
+		if err := p.readMetadata(line); err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
+
+	// get values for one entry
+	fields := strings.Split(line, p.metadata.separator)
+	if len(fields) != len(p.metadata.fields) {
+		return nil, fmt.Errorf("bro dns log invalid entry at line: %q", line)
+	}
+
+	var (
+		entry     client.HTTPEntry
+		host, uri string
+	)
+
+	// parse values based on fields
+	for i, f := range p.metadata.fields {
+		switch f {
+		case "ts":
+			timestamp, err := parseEpochTime(fields[i])
+			if err != nil {
+				return nil, fmt.Errorf("conn bro log - invalid timestamp: %s", err)
+			}
+			entry.Timestamp = timestamp
+		case "id.orig_h":
+			entry.SrcIP = net.ParseIP(fields[i])
+		case "id.orig_p":
+			port, err := strconv.ParseUint(fields[i], 10, 16)
+			if err != nil {
+				return nil, fmt.Errorf("conn bro log - invalid port at line: %q", line)
+			}
+			entry.SrcPort = uint16(port)
+		case "method":
+			entry.Method = fields[i]
+		case "host":
+			host = fields[i]
+		case "uri":
+			uri = fields[i]
+		case "referrer":
+			entry.Referrer = p.nonEmpty(fields[i])
+		case "user_agent":
+			entry.UserAgent = p.nonEmpty(fields[i])
+		case "request_body_len":
+			count, err := strconv.ParseInt(fields[i], 10, 63)
+			if err != nil {
+				return nil, fmt.Errorf("conn bro log - invalid request_body_len at line: %q %q %q", line, fields[i], p.metadata.unsetField)
+			}
+			entry.BytesOut = count
+		case "response_body_len":
+			count, err := strconv.ParseInt(fields[i], 10, 63)
+			if err != nil {
+				return nil, fmt.Errorf("conn bro log - invalid response_body_len at line: %q %q %q", line, fields[i], p.metadata.unsetField)
+			}
+			entry.BytesIn = count
+		case "status_code":
+			code, err := strconv.ParseUint(fields[i], 10, 16)
+			if err != nil {
+				return nil, fmt.Errorf("conn bro log - invalid status_code at line: %q %q %q", line, fields[i], p.metadata.unsetField)
+			}
+			entry.Status = int(code)
+		case "resp_mime_types":
+			entry.ContentType = p.nonEmpty(fields[i])
+		}
+	}
+
+	entry.URL = fmt.Sprintf("http://%s%s", host, uri)
+
+	return &entry, nil
 }
 
 // Close underlying log file.
