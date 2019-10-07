@@ -154,7 +154,7 @@ func (p *Parser) ParseLineDNS(line string) (*packet.DNSPacket, error) {
 		case "query":
 			dnspacket.FQDN = fields[i]
 		case "qtype_name":
-			dnspacket.RecordType = fields[i]
+			dnspacket.RecordType = p.nonEmpty(fields[i])
 		case "id.resp_p":
 			port, err := strconv.ParseUint(fields[i], 10, 16)
 			if err != nil {

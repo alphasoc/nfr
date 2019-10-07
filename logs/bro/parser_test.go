@@ -23,7 +23,7 @@ func TestReaderReadDNS(t *testing.T) {
 #types	time	string	addr	port	addr	port	enum	count	interval	string	count	string	count	string	count	string	bool	bool	bool	bool	count	vector[string]	vector[interval]	bool
 1483228800.000000	COSwep1PLjkOcNQdoa	10.0.0.1	52213	10.0.0.1	53	udp	53	-	alphasoc.com	-	-	-	A	0	NOERROR	F	F	F	T	0	35.196.211.126	t0.000000	F
 
-1483228800.000000	CDx0B32ubObBNO6lUk	10.0.0.1	52214	10.0.0.1	53	udp	53	-	alphasoc.net	-	-	-	A	0	NOERROR	F	F	F	T	0	35.196.211.126	50.000000	F
+1483228800.000000	CDx0B32ubObBNO6lUk	10.0.0.1	52214	10.0.0.1	53	udp	53	-	alphasoc.net	-	-	-	-	0	NOERROR	F	F	F	T	0	35.196.211.126	50.000000	F
 #close	2017-01-01-00-00-00
 `
 	)
@@ -67,7 +67,7 @@ func TestReaderReadDNS(t *testing.T) {
 		packets[1].Protocol == "udp" &&
 		packets[1].Timestamp.Equal(tc) &&
 		packets[1].SrcIP.Equal(net.IPv4(10, 0, 0, 1)) &&
-		packets[1].RecordType == "A" &&
+		packets[1].RecordType == "" &&
 		packets[1].FQDN == "alphasoc.net") {
 		t.Fatal("invalid 2st packet", packets[1])
 	}
