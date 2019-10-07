@@ -34,7 +34,7 @@ jobs:
       - run:
           name: install golang
           command: |
-            wget https://dl.google.com/go/go1.11.5.linux-amd64.tar.gz -O /tmp/golang.tar.gz
+            wget https://dl.google.com/go/go1.11.11.linux-amd64.tar.gz -O /tmp/golang.tar.gz
             tar -C /usr/local -xzf /tmp/golang.tar.gz
             ln -s /usr/local/go/bin/go /usr/local/bin/
       - checkout

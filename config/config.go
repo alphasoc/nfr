@@ -445,7 +445,10 @@ func (cfg *Config) validate() error {
 				invalidTypeFormat = true
 			}
 		case "http":
-			if monitor.Format != "suricata" {
+			switch monitor.Format {
+			case "suricate", "bro":
+				// ok
+			default:
 				invalidTypeFormat = true
 			}
 		default:

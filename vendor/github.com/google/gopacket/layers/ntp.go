@@ -321,13 +321,13 @@ func (d *NTP) DecodeFromBytes(data []byte, df gopacket.DecodeFeedback) error {
 	// above and the section on endian conventions.
 
 	// The first few fields are all packed into the first 32 bits. Unpack them.
-	f := binary.BigEndian.Uint32(data[0:4])
-	d.LeapIndicator = NTPLeapIndicator((f & 0xC0000000) >> 30)
-	d.Version = NTPVersion((f & 0x38000000) >> 27)
-	d.Mode = NTPMode((f & 0x07000000) >> 24)
-	d.Stratum = NTPStratum((f & 0x00FF0000) >> 16)
-	d.Poll = NTPLog2Seconds((f & 0x0000FF00) >> 8)
-	d.Precision = NTPLog2Seconds((f & 0x000000FF) >> 0)
+	f := data[0]
+	d.LeapIndicator = NTPLeapIndicator((f & 0xC0) >> 6)
+	d.Version = NTPVersion((f & 0x38) >> 3)
+	d.Mode = NTPMode(f & 0x07)
+	d.Stratum = NTPStratum(data[1])
+	d.Poll = NTPLog2Seconds(data[2])
+	d.Precision = NTPLog2Seconds(data[3])
 
 	// The remaining fields can just be copied in big endian order.
 	d.RootDelay = NTPFixed16Seconds(binary.BigEndian.Uint32(data[4:8]))
@@ -357,14 +357,14 @@ func (d *NTP) SerializeTo(b gopacket.SerializeBuffer, opts gopacket.SerializeOpt
 	}
 
 	// Pack the first few fields into the first 32 bits.
-	h := uint32(0)
-	h |= (uint32(d.LeapIndicator) << 30) & 0xC0000000
-	h |= (uint32(d.Version) << 27) & 0x38000000
-	h |= (uint32(d.Mode) << 24) & 0x07000000
-	h |= (uint32(d.Stratum) << 16) & 0x00FF0000
-	h |= (uint32(d.Poll) << 8) & 0x0000FF00
-	h |= (uint32(d.Precision) << 0) & 0x000000FF
-	binary.BigEndian.PutUint32(data[0:4], h)
+	h := uint8(0)
+	h |= (uint8(d.LeapIndicator) << 6) & 0xC0
+	h |= (uint8(d.Version) << 3) & 0x38
+	h |= (uint8(d.Mode)) & 0x07
+	data[0] = byte(h)
+	data[1] = byte(d.Stratum)
+	data[2] = byte(d.Poll)
+	data[3] = byte(d.Precision)
 
 	// The remaining fields can just be copied in big endian order.
 	binary.BigEndian.PutUint32(data[4:8], uint32(d.RootDelay))
