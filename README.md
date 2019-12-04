@@ -55,7 +55,7 @@ If you are running NFR under Linux, use the `sniffer` directive within `/etc/nfr
 ```
 
 ## Processing events from disk
-Use the `monitor` directive within `/etc/nfr/config.yml` to actively read log files from disk. Bro IDS (Zeek) logs both DNS, IP, and HTTP traffic, whereas Suricata only logs DNS traffic. To monitor both Bro `conn.log` and `dns.log` output you can use this configuration:
+Use the `monitor` directive within `/etc/nfr/config.yml` to actively read log files from disk. Bro IDS (Zeek) logs both DNS, IP, and HTTP traffic, whereas Suricata only logs DNS traffic. To monitor both Bro `conn.log`, `dns.log`, and `http.log` output you can use this configuration:
 
 ```
 monitor:
