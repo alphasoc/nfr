@@ -227,7 +227,6 @@ func (p *Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
 				}
 				if count > 0 {
 					ippacket.BytesCount += int(count)
-					ippacket.Direction = packet.DirectionOut
 				}
 			}
 		case "resp_bytes":
@@ -240,7 +239,6 @@ func (p *Parser) ParseLineIP(line string) (*packet.IPPacket, error) {
 				}
 				if count > 0 {
 					ippacket.BytesCount += int(count)
-					ippacket.Direction = packet.DirectionIn
 				}
 			}
 		case "ja3":

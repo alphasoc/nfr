@@ -6,8 +6,6 @@ import (
 	"os"
 	"testing"
 	"time"
-
-	"github.com/alphasoc/nfr/packet"
 )
 
 func TestReaderReadDNS(t *testing.T) {
@@ -119,8 +117,7 @@ func TestReaderReadIP(t *testing.T) {
 		packets[0].DstPort == 22 &&
 		packets[0].Protocol == "udp" &&
 		packets[0].Timestamp.Equal(tc) &&
-		packets[0].BytesCount == 10 &&
-		packets[0].Direction == packet.DirectionOut) {
+		packets[0].BytesCount == 10) {
 		t.Fatal("invalid 1st packet")
 	}
 
@@ -130,8 +127,7 @@ func TestReaderReadIP(t *testing.T) {
 		packets[1].DstPort == 22 &&
 		packets[1].Protocol == "tcp" &&
 		packets[1].Timestamp.Equal(tc) &&
-		packets[1].BytesCount == 20 &&
-		packets[1].Direction == packet.DirectionIn) {
+		packets[1].BytesCount == 20) {
 		t.Fatal("invalid 2nd packet")
 	}
 }
