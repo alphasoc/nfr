@@ -61,7 +61,8 @@ type Alert struct {
 
 	Threats []string `json:"threats"`
 	Wisdom  struct {
-		Flags []string `json:"flags"`
+		Flags  []string `json:"flags"`
+		Labels []string `json:"labels"`
 	} `json:"wisdom"`
 }
 

@@ -23,6 +23,7 @@ type Event struct {
 	Threats  map[string]Threat `json:"threats"`
 
 	Flags  []string `json:"flags"`
+	Labels []string `json:"labels,omitempty"`
 	Groups []Group  `json:"groups"`
 
 	EventType string `json:"eventType"`
@@ -60,6 +61,7 @@ func (m *AlertMapper) Map(resp *client.AlertsResponse) *Alert {
 		ev := Event{
 			EventType:    resp.Alerts[i].EventType,
 			Flags:        resp.Alerts[i].Wisdom.Flags,
+			Labels:       resp.Alerts[i].Wisdom.Labels,
 			Threats:      make(map[string]Threat),
 			EventUnified: resp.Alerts[i].Event,
 		}
