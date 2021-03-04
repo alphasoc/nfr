@@ -2,6 +2,7 @@
 package executor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -15,6 +16,7 @@ import (
 	"github.com/alphasoc/nfr/alerts"
 	"github.com/alphasoc/nfr/client"
 	"github.com/alphasoc/nfr/config"
+	"github.com/alphasoc/nfr/elastic"
 	"github.com/alphasoc/nfr/groups"
 	"github.com/alphasoc/nfr/logs"
 	"github.com/alphasoc/nfr/logs/bro"
@@ -161,9 +163,124 @@ func (e *Executor) Start() (err error) {
 		}
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := &sync.WaitGroup{}
+
+	if e.cfg.Inputs.Elastic.Enabled {
+		e.startElastic(ctx, wg)
+	}
+
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	<-c
+
+	cancel()
+	wg.Wait()
+
+	return nil
+}
+
+func (e *Executor) startElastic(ctx context.Context, wg *sync.WaitGroup) error {
+	cfg := &e.cfg.Inputs.Elastic
+	for searchIdx, search := range cfg.Searches {
+		c, err := elastic.NewClient(cfg)
+		if err != nil {
+			return err
+		}
+
+		go func(idx int, c *elastic.Client, search *elastic.SearchConfig) {
+			wg.Add(1)
+			defer wg.Done()
+
+			ticker := time.NewTicker(time.Duration(search.PollInterval) * time.Second)
+			log := log.WithField("name", fmt.Sprintf("%v-%03d", search.EventType, idx))
+
+			var lastIngested time.Time
+
+			data, err := e.cfg.ReadData(
+				"elastic-" + elastic.ConfigFingerprint(cfg, search))
+			if err != nil {
+				log.Warnf("error reading last checkpoint: %v", err)
+			} else if data != nil {
+				var err error
+				lastIngested, err = time.Parse(time.RFC3339Nano, string(data))
+				if err != nil {
+					log.Warnf("corrupted checkpoint data: %v", err)
+				} else {
+					log.Debugf("resuming reading from: %v", lastIngested)
+				}
+			}
+
+			for {
+				select {
+				case <-ticker.C:
+					log.Debugf("processing %v search", search.EventType)
+					lctx := context.Background()
+					cur, err := c.Fetch(lctx, search, lastIngested)
+					if err != nil {
+						log.Errorf("es query failed: %v", err)
+						continue
+					}
+
+					err = nil
+					var hits []elastic.Hit
+					for {
+						hits, err = cur.Next(lctx)
+						if err != nil {
+							break
+						}
+
+						if len(hits) == 0 {
+							break
+						}
+
+						switch search.EventType {
+						case client.EventTypeDNS:
+							req := &client.EventsDNSRequest{}
+							for _, h := range hits {
+								e, err := h.DecodeDNS(search)
+								if err != nil {
+									log.Debugf("failed to decode dns event: %v", err)
+									continue
+								}
+								req.Entries = append(req.Entries, e)
+							}
+
+							if len(req.Entries) > 0 {
+								asoclient := client.New(e.cfg.Engine.Host, e.cfg.Engine.APIKey)
+								resp, err := asoclient.EventsDNS(req)
+								if err != nil {
+									log.Error("sending dns events: %v", err)
+								} else {
+									lastIngested = cur.NewestIngested()
+									log.WithField("events", resp.Accepted).
+										WithField("lastIngested", lastIngested).Info("telemetry sent")
+
+									if err := e.cfg.WriteData(
+										"elastic-"+elastic.ConfigFingerprint(cfg, search),
+										[]byte(lastIngested.Format(time.RFC3339Nano))); err != nil {
+										log.Errorf("error writing checkpoint: %v", err)
+									}
+								}
+							}
+						}
+					}
+
+					if err != nil {
+						log.Errorf("fetch events: %v", err)
+					}
+
+					if err := cur.Close(); err != nil {
+						log.Warnf("close pit failed: %v", err)
+					}
+				case <-ctx.Done():
+					log.Infof("client done")
+					return
+				}
+			}
+		}(searchIdx, c, search)
+	}
+
 	return nil
 }
 
