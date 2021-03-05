@@ -81,6 +81,100 @@ monitor:
 
 Microsoft DNS (`format: msdns`) and BIND over syslog (`format: syslog-named`) are also supported at this time. Please contact support@alphasoc.com if you have a particular use case and wish to monitor a file format that is not listed here. If you wish to process events from a given PCAP file on disk, please use the `read` command when running NFR.
 
+## Processing events from Elasticsearch
+Use the `elastic` directive within `/etc/nfr/config.yml` to retrieve telemetry from Elasticsearch. Both Elastic Cloud and local deployments are supported. For configuration details, see comments in `config.yml`
+
+If your data is ECS-compliant, configuration is straightforward:
+```yaml
+  elastic:
+    enabled: true
+    hosts:
+      - localhost:9200
+    # If authorization is needed:
+    # api_key: ... # or:
+    # username: admin
+    # password: password
+
+    searches:
+      - event_type: dns
+        indices:
+          - filebeat-*
+        index_schema: ecs
+      - event_type: ip
+        indices:
+          - filebeat-*
+        index_schema: ecs
+      - event_type: http
+        indices:
+          - filebeat-*
+        index_schema: ecs
+```
+
+Currently ECS, Graylog and custom schemas are supported. For custom schemas you can define your own search terms and/or list fields that must be present in a document to be picked by nfr for processing.
+
+Under the hood, nfr periodically runs a search:
+```json
+{
+  "docvalue_fields": [
+    {
+      "field": "@timestamp", // field name defined in config
+      "format": "strict_date_time"
+    },
+    {
+      "field": "event.ingested", // field name defined in config
+      "format": "strict_date_time"
+    }
+  ],
+  "_source": [
+    // configurable field names
+    "source.ip",
+    "source.port",
+    "dns.question.name",
+    "dns.question.type"
+  ],
+  "size": 100,
+  "query": {
+    "bool": {
+      "must": [
+        // configurable field names
+        {"exists": {"field": "source.ip"}},
+        {"exists": {"field": "dns.question.name"}},
+        {"exists": {"field": "dns.question.type"}}
+      ],
+      "filter": [
+        {
+          // configurable filter term
+          "term": {"tags": "zeek.dns"}
+        },
+        {
+          "range": {
+            // automatically inserted to handle pagination
+            "event.ingested": {
+              "gte": "2021-03-05T13:28:49.254Z"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "sort": [
+    {
+      "event.ingested": "asc"
+    },
+    {
+      "_id": "asc"
+    }
+  ],
+  "pit": {
+    "id": "w62xAwU..." // Every search runs inside Point-In-Time
+  },
+  "search_after": [
+    1614950929254,
+    "S8eTAngB14iTwI_2kzVm"
+  ]
+}
+```
+
 ## Monitoring scope
 Use directives within `/etc/nfr/scope.yml` to define the monitoring scope. You can find an example [`scope.yml`](https://github.com/alphasoc/nfr/blob/master/scope.yml) file in the repository's root directory. Network traffic from the IP ranges within scope will be processed by the AlphaSOC Analytics Engine, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
 
