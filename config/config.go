@@ -515,10 +515,17 @@ func validateFilename(file string, noFileOutput bool) error {
 }
 
 // validateDirectory checks if nfr has necessary permissions to the directory.
-func validateDirectory(path string) error {
-	if err := os.MkdirAll(path, 0755); err != nil {
+func validateDirectory(dir string) error {
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
+
+	f, err := os.Create(path.Join(dir, "datadir-permission-test"))
+	if err != nil {
+		return err
+	}
+	f.Close()
+	os.Remove(f.Name())
 
 	return nil
 }
