@@ -28,15 +28,31 @@ type IndexSchema string
 
 // Supported field schemas
 const (
-	IndexSchemaCustom    IndexSchema = "custom"
 	IndexSchemaCorelight IndexSchema = "corelight"
 	IndexSchemaECS       IndexSchema = "ecs"
 )
 
+var defaultMustHaveFields = map[client.EventType]map[IndexSchema][]string{
+	client.EventTypeDNS: {
+		IndexSchemaECS: []string{"@timestamp", "event.ingested", "source.ip", "dns.question.name"},
+	},
+	client.EventTypeIP: {
+		IndexSchemaECS: []string{"@timestamp", "event.ingested", "source.ip", "destination.ip"},
+	},
+	client.EventTypeHTTP: {
+		IndexSchemaECS: []string{"@timestamp", "event.ingested", "source.ip", "url.original"},
+	},
+}
+
 var defaultSearchTerms = map[client.EventType]map[IndexSchema]string{
 	client.EventTypeDNS: {
-		IndexSchemaECS:       `{"dns.type":["question","answer"]}`, // TODO: review
-		IndexSchemaCorelight: `{"_path":"dns"}`,                    // TODO: review
+		IndexSchemaCorelight: `{"term": {"_path":"dns"}}`,
+	},
+	client.EventTypeIP: {
+		IndexSchemaCorelight: `{"term": {"_path":"conn"}}`,
+	},
+	client.EventTypeHTTP: {
+		IndexSchemaCorelight: `{"term": {"_path":"http"}}`,
 	},
 }
 
@@ -49,6 +65,35 @@ var defaultFieldNames = map[client.EventType]map[IndexSchema]FieldNamesConfig{
 			SrcPort:       []string{"source", "port"},
 			Query:         []string{"dns", "question", "name"},
 			QType:         []string{"dns", "question", "type"},
+		},
+	},
+	client.EventTypeIP: {
+		IndexSchemaECS: {
+			EventIngested: "event.ingested",
+			Timestamp:     "@timestamp",
+			SrcIP:         []string{"source", "ip"},
+			SrcPort:       []string{"source", "port"},
+			DstIP:         []string{"destination", "ip"},
+			DstPort:       []string{"destination", "port"},
+			Protocol:      []string{"network", "protocol"},
+			BytesIn:       []string{"destination", "bytes"},
+			BytesOut:      []string{"source", "bytes"},
+		},
+	},
+	client.EventTypeHTTP: {
+		IndexSchemaECS: {
+			EventIngested: "event.ingested",
+			Timestamp:     "@timestamp",
+			SrcIP:         []string{"source", "ip"},
+			SrcPort:       []string{"source", "port"},
+			URL:           []string{"url", "original"},
+			Method:        []string{"http", "request", "method"},
+			StatusCode:    []string{"http", "response", "status_code"},
+			BytesIn:       []string{"destination", "bytes"},
+			BytesOut:      []string{"source", "bytes"},
+			UserAgent:     []string{"user_agent", "original"},
+			ContentType:   []string{"http", "response", "mime_type"},
+			Referrer:      []string{"http", "request", "referrer"},
 		},
 	},
 }
@@ -74,24 +119,27 @@ type FieldNamesConfig struct {
 	BytesOut FieldPath `yaml:"bytes_out"`
 
 	// HTTP
-	URL       FieldPath `yaml:"url"`
-	Method    FieldPath `yaml:"method"`
-	Status    FieldPath `yaml:"status"`
-	UserAgent FieldPath `yaml:"user_agent"`
+	URL         FieldPath `yaml:"url"`
+	Method      FieldPath `yaml:"method"`
+	StatusCode  FieldPath `yaml:"status_code"`
+	UserAgent   FieldPath `yaml:"user_agent"`
+	ContentType FieldPath `yaml:"content_type"`
+	Referrer    FieldPath `yaml:"referrer"`
 }
 
 // SearchConfig contains all necessary information for
 // running a periodic search to retrieve telemetry,
 // extract required fields and send data to AlphaSOC API.
 type SearchConfig struct {
-	EventType    client.EventType  `yaml:"event_type"`
-	Indices      []string          `yaml:"indices"`
-	IndexSchema  IndexSchema       `yaml:"index_schema"`
-	PollInterval float64           `yaml:"poll_interval"`
-	BatchSize    int               `yaml:"batch_size"`
-	PITKeepAlive float64           `yaml:"pit_keep_alive"`
-	SearchTerm   string            `yaml:"search_term"`
-	FieldNames   *FieldNamesConfig `yaml:"field_names"`
+	EventType      client.EventType  `yaml:"event_type"`
+	Indices        []string          `yaml:"indices"`
+	IndexSchema    IndexSchema       `yaml:"index_schema"`
+	PollInterval   float64           `yaml:"poll_interval"`
+	BatchSize      int               `yaml:"batch_size"`
+	PITKeepAlive   float64           `yaml:"pit_keep_alive"`
+	MustHaveFields []string          `yaml:"must_have_fields"`
+	SearchTerm     string            `yaml:"search_term"`
+	FieldNames     *FieldNamesConfig `yaml:"field_names"`
 
 	// Final field names, merged defaults with user-provided.
 	finalFieldNames *FieldNamesConfig
@@ -127,7 +175,7 @@ func (fp *FieldPath) Join() string {
 
 // Validate returns error if the provided field schema is not supported.
 func (fs IndexSchema) Validate() error {
-	if fs != "" && fs != IndexSchemaCustom && fs != IndexSchemaCorelight && fs != IndexSchemaECS {
+	if fs != "" && fs != IndexSchemaCorelight && fs != IndexSchemaECS {
 		return errors.New("field_schema must be [ecs|graylog|custom] or empty")
 	}
 
@@ -209,11 +257,14 @@ func (sc *SearchConfig) Validate() error {
 		return err
 	}
 
-	if sc.FinalSearchTerm() == "" {
-		return errors.New("search term is required")
+	searchTerm := sc.FinalSearchTerm()
+	haveFields := sc.FinalMustHaveFields()
+
+	if searchTerm == "" && len(haveFields) == 0 {
+		return errors.New("search_term and/or must_have_fields are required")
 	}
 
-	if !json.Valid([]byte(sc.FinalSearchTerm())) {
+	if searchTerm != "" && !json.Valid([]byte(sc.FinalSearchTerm())) {
 		return errors.New("search term must be valid json")
 	}
 
@@ -228,6 +279,21 @@ func (sc *SearchConfig) Validate() error {
 	}
 
 	return nil
+}
+
+// FinalMustHaveFields returns fields required to be present in a document
+// containing particular telemetry.
+func (sc *SearchConfig) FinalMustHaveFields() []string {
+	if len(sc.MustHaveFields) > 0 {
+		return sc.MustHaveFields
+	}
+
+	fields, ok := defaultMustHaveFields[sc.EventType]
+	if !ok {
+		return nil
+	}
+
+	return fields[sc.IndexSchema]
 }
 
 // FinalSearchTerm returns the search term set by the user, or
@@ -292,7 +358,7 @@ func (sc *SearchConfig) EventFields() ([]string, error) {
 			fn.DstIP.Join(), fn.DstPort.Join(), fn.Protocol.Join(), fn.BytesIn.Join(), fn.BytesOut.Join())
 	case client.EventTypeHTTP:
 		fields = append(fields,
-			fn.URL.Join(), fn.Method.Join(), fn.Status.Join(), fn.UserAgent.Join())
+			fn.URL.Join(), fn.Method.Join(), fn.StatusCode.Join(), fn.UserAgent.Join())
 	default:
 		return nil, fmt.Errorf("event type %s is not supported", sc.EventType)
 	}
@@ -344,6 +410,9 @@ func (fnc *FieldNamesConfig) Validate(eventType client.EventType) error {
 	return nil
 }
 
+// ConfigFingerprint returns a unique string to identify search config for
+// a given instance. It uses Cloud ID (or hosts), index names and event
+// type to calculate the fingerprint.
 func ConfigFingerprint(c *Config, s *SearchConfig) string {
 	items := []string{c.CloudID, string(s.EventType)}
 	items = append(items, c.Hosts...)

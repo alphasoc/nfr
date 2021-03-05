@@ -119,10 +119,11 @@ inputs:
         # a custom one. Search terms should be a valid JSON compatible with Search API, as
         # it'll be embedded into the 'filter' clause in Query DSL.
         # For details, see https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-bool-query.html
-        # Default search fields for predefined schemas are as follows:
-        # ecs: {"dns.type": ["question", "answer"]}
-        # graylog: TODO!!
         search_terms:
+
+        # The following fields must be present in a document to be retrieved by NFR.
+        must_have_fields:
+          # - @timestamp
 
         # Field names should contain field paths that contain required telemetry data.
         # They can be left empty if index_schema is set. Similarly to search terms, you can
