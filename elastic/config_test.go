@@ -44,7 +44,7 @@ func TestInvalidConfig(t *testing.T) {
 	require.NoError(t, cfg.Validate(), "host is set, expected valid config")
 
 	cfg.APIKey = ""
-	require.Error(t, cfg.Validate(), "both api key and username are empty, which should be invalid")
+	require.NoError(t, cfg.Validate(), "both api key and username are empty, which is valid")
 
 	cfg.Username = "bob"
 	require.NoError(t, cfg.Validate(), "username is set, expected valid config")
@@ -88,14 +88,16 @@ func TestInvalidSearchConfig(t *testing.T) {
 	cfg.IndexSchema = IndexSchemaECS
 	require.NoError(t, cfg.Validate(), "it should validate with correct schema")
 
-	// It should use default search terms for zeek schema
-	require.NotEmpty(t, cfg.FinalSearchTerm(), "it should have default search term for given schema")
+	// It should use default search terms for ecs schema
+	st := cfg.FinalSearchTerm()
+	mhf := cfg.FinalMustHaveFields()
+	require.False(t, st == "" && len(mhf) == 0, "it should have either search term or must have fields for given schema")
 
 	cfg.SearchTerm = "{}"
 	require.Equal(t, cfg.SearchTerm, cfg.FinalSearchTerm(), "custom search term should override default")
 	require.NoError(t, cfg.Validate(), "it should validate with correct schema")
 
-	cfg.IndexSchema = IndexSchemaCustom
+	cfg.IndexSchema = ""
 	cfg.SearchTerm = ""
 	require.Empty(t, cfg.FinalSearchTerm(), "custom schema should have no default search term")
 	require.Error(t, cfg.Validate(), "custom schema should have no default search term")

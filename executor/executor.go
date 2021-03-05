@@ -192,35 +192,31 @@ func (e *Executor) startElastic(ctx context.Context, wg *sync.WaitGroup) error {
 			wg.Add(1)
 			defer wg.Done()
 
-			ticker := time.NewTicker(time.Duration(search.PollInterval) * time.Second)
+			asoclient := client.New(e.cfg.Engine.Host, e.cfg.Engine.APIKey)
 			log := log.WithField("name", fmt.Sprintf("%v-%03d", search.EventType, idx))
+			checkpointFname := "elastic-" + elastic.ConfigFingerprint(cfg, search)
 
-			var lastIngested time.Time
+			// Load last es search checkpoint.
+			lastIngested := e.cfg.LoadTimestamp(checkpointFname, 24*time.Hour)
 
-			data, err := e.cfg.ReadData(
-				"elastic-" + elastic.ConfigFingerprint(cfg, search))
-			if err != nil {
-				log.Warnf("error reading last checkpoint: %v", err)
-			} else if data != nil {
-				var err error
-				lastIngested, err = time.Parse(time.RFC3339Nano, string(data))
-				if err != nil {
-					log.Warnf("corrupted checkpoint data: %v", err)
-				} else {
-					log.Debugf("resuming reading from: %v", lastIngested)
-				}
-
-				yesterday := time.Now().Add(-24 * time.Hour)
-				if lastIngested.Before(yesterday) {
-					lastIngested = yesterday
-					log.Debugf("last checkpoint is too far in the future, setting to -24h")
-				}
-			}
+			// We want the ticker to fire immediately once, and then with the configured
+			// search poll interval.
+			ticker := time.NewTicker(100 * time.Millisecond)
+			firstTick := true
 
 			for {
 				select {
+				case <-ctx.Done():
+					log.Infof("client done")
+					return
 				case <-ticker.C:
 					log.Debugf("processing %v search", search.EventType)
+
+					if firstTick {
+						firstTick = false
+						ticker.Reset(time.Duration(search.PollInterval) * time.Second)
+					}
+
 					lctx := context.Background()
 					cur, err := c.Fetch(lctx, search, lastIngested)
 					if err != nil {
@@ -228,60 +224,126 @@ func (e *Executor) startElastic(ctx context.Context, wg *sync.WaitGroup) error {
 						continue
 					}
 
-					err = nil
-					var hits []elastic.Hit
 					for {
-						hits, err = cur.Next(lctx)
+						hits, err := cur.Next(lctx)
 						if err != nil {
+							log.Errorf("fetch events: %v", err)
 							break
 						}
 
 						if len(hits) == 0 {
+							// No more pages.
 							break
 						}
 
 						switch search.EventType {
 						case client.EventTypeDNS:
+							// Convert []elastic.Hit to client.EventsDNSRequest
 							req := &client.EventsDNSRequest{}
-							for _, h := range hits {
-								e, err := h.DecodeDNS(search)
+							for n, h := range hits {
+								entry, err := h.DecodeDNS(search)
 								if err != nil {
 									log.Debugf("failed to decode dns event: %v", err)
 									continue
 								}
-								req.Entries = append(req.Entries, e)
+
+								if e.cfg.Log.Level == "debug" && n < 5 {
+									log.Debugf("event: %+v", entry)
+								}
+
+								if _, ok := e.groups.IsDNSQueryWhitelisted(entry.Query, entry.SrcIP, nil); ok {
+									req.Entries = append(req.Entries, entry)
+								}
 							}
 
+							// Send events to the API
+							inglog := log.WithField("lastIngested", cur.NewestIngested())
 							if len(req.Entries) > 0 {
-								asoclient := client.New(e.cfg.Engine.Host, e.cfg.Engine.APIKey)
 								resp, err := asoclient.EventsDNS(req)
 								if err != nil {
 									log.Errorf("sending dns events: %v", err)
-								} else {
-									lastIngested = cur.NewestIngested()
-									log.WithField("events", resp.Accepted).
-										WithField("lastIngested", lastIngested).Info("telemetry sent")
+									continue
+								}
+								inglog.WithField("events", resp.Accepted).Info("telemetry sent")
+							} else {
+								inglog.WithField("retrievedEvents", len(hits)).Info("no retrieved events in scope")
+							}
 
-									if err := e.cfg.WriteData(
-										"elastic-"+elastic.ConfigFingerprint(cfg, search),
-										[]byte(lastIngested.Format(time.RFC3339Nano))); err != nil {
-										log.Errorf("error writing checkpoint: %v", err)
-									}
+						case client.EventTypeIP:
+							req := &client.EventsIPRequest{}
+							for n, h := range hits {
+								entry, err := h.DecodeIP(search)
+								if err != nil {
+									log.Debugf("failed to decode ip event: %v", err)
+									continue
+								}
+
+								if e.cfg.Log.Level == "debug" && n < 5 {
+									log.Debugf("event: %+v", entry)
+								}
+
+								if _, ok := e.groups.IsIPWhitelisted(entry.SrcIP, entry.DstIP); ok {
+									req.Entries = append(req.Entries, entry)
 								}
 							}
-						}
-					}
 
-					if err != nil {
-						log.Errorf("fetch events: %v", err)
+							// Send events to the API
+							inglog := log.WithField("lastIngested", cur.NewestIngested())
+							if len(req.Entries) > 0 {
+								resp, err := asoclient.EventsIP(req)
+								if err != nil {
+									log.Errorf("sending dns events: %v", err)
+									continue
+								}
+								inglog.WithField("events", resp.Accepted).Info("telemetry sent")
+							} else {
+								inglog.WithField("retrievedEvents", len(hits)).Info("no retrieved events in scope")
+							}
+
+						case client.EventTypeHTTP:
+							var entries []*client.HTTPEntry
+							for n, h := range hits {
+								entry, err := h.DecodeHTTP(search)
+								if err != nil {
+									log.Debugf("failed to decode ip event: %v", err)
+									continue
+								}
+
+								if e.cfg.Log.Level == "debug" && n < 5 {
+									log.Debugf("event: %+v", entry)
+								}
+
+								if _, ok := e.groups.IsHTTPQueryWhitelisted(entry.URL, entry.SrcIP); ok {
+									entries = append(entries, entry)
+								}
+							}
+
+							// Send events to the API
+							inglog := log.WithField("lastIngested", cur.NewestIngested())
+							if len(entries) > 0 {
+								resp, err := asoclient.EventsHTTP(entries)
+								if err != nil {
+									log.Errorf("sending dns events: %v", err)
+									continue
+								}
+								inglog.WithField("events", resp.Accepted).Info("telemetry sent")
+							} else {
+								inglog.WithField("retrievedEvents", len(hits)).Info("no retrieved events in scope")
+							}
+						}
+
+						// Save checkpoint
+						t := cur.NewestIngested()
+						if err := e.cfg.SaveTimestamp(checkpointFname, t); err != nil {
+							log.Errorf("error writing checkpoint: %v", err)
+						} else {
+							lastIngested = t
+						}
 					}
 
 					if err := cur.Close(); err != nil {
 						log.Warnf("close pit failed: %v", err)
 					}
-				case <-ctx.Done():
-					log.Infof("client done")
-					return
 				}
 			}
 		}(searchIdx, c, search)

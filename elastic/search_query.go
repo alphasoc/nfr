@@ -33,6 +33,7 @@ type SearchQuery struct {
 	Size   int      `json:"size"`
 	Query  struct {
 		Bool struct {
+			Must   []json.RawMessage `json:"must,omitempty"`
 			Filter []json.RawMessage `json:"filter"`
 		} `json:"bool"`
 	} `json:"query"`
@@ -81,18 +82,45 @@ func (ec *EventsCursor) searchQuery() (io.Reader, error) {
 
 	// Define search filter terms. Use defaults or custom, if available.
 	terms := ec.search.FinalSearchTerm()
+	if terms != "" {
+		sq.Query.Bool.Filter = append(sq.Query.Bool.Filter, json.RawMessage(terms))
+	}
 
-	// Wrap the terms into {"terms":<originalterms>} to prepare it to use
-	// in query filter below.
-	wrappedTerms := append([]byte(`{"terms":`), []byte(terms)...)
-	wrappedTerms = json.RawMessage(append(wrappedTerms, []byte(`}`)...))
+	sq.Query.Bool.Filter = append(sq.Query.Bool.Filter, drjson)
 
-	sq.Query.Bool.Filter = []json.RawMessage{
-		wrappedTerms,
-		drjson,
+	sq.Query.Bool.Must, err = mustExistFields(ec.search.FinalMustHaveFields())
+	if err != nil {
+		return nil, err
 	}
 
 	data, _ := json.Marshal(sq)
 
+	// Debug: print resulting search query
+	// pretty, _ := json.MarshalIndent(sq, "", "  ")
+	// fmt.Println(string(pretty))
+
 	return bytes.NewReader(data), nil
+}
+
+// mustExistFields constructs an Elastic Query DSL fragment used in the
+// search query.
+func mustExistFields(fields []string) ([]json.RawMessage, error) {
+	type query struct {
+		Exists struct {
+			Field string `json:"field"`
+		} `json:"exists"`
+	}
+
+	var ret []json.RawMessage
+	for _, f := range fields {
+		q := query{}
+		q.Exists.Field = f
+		data, err := json.Marshal(q)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, data)
+	}
+
+	return ret, nil
 }
