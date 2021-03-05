@@ -72,7 +72,7 @@ jobs:
 
   publish:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.15
     working_directory: /go/src/github.com/alphasoc/nfr
     steps:
       - attach_workspace:
