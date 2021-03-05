@@ -2,7 +2,7 @@ version: 2
 jobs:
   build_linux:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.15
     working_directory: /go/src/github.com/alphasoc/nfr
     steps:
       - checkout
@@ -34,7 +34,7 @@ jobs:
       - run:
           name: install golang
           command: |
-            wget https://dl.google.com/go/go1.11.11.linux-amd64.tar.gz -O /tmp/golang.tar.gz
+            wget https://dl.google.com/go/go1.15.8.linux-amd64.tar.gz -O /tmp/golang.tar.gz
             tar -C /usr/local -xzf /tmp/golang.tar.gz
             ln -s /usr/local/go/bin/go /usr/local/bin/
       - checkout
@@ -72,7 +72,7 @@ jobs:
 
   publish:
     docker:
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.15
     working_directory: /go/src/github.com/alphasoc/nfr
     steps:
       - attach_workspace:
