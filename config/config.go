@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/alphasoc/nfr/elastic"
 	"github.com/alphasoc/nfr/utils"
 	"github.com/pkg/errors"
@@ -622,4 +623,41 @@ func (cfg *Config) ReadData(fname string) ([]byte, error) {
 	defer f.Close()
 
 	return ioutil.ReadAll(f)
+}
+
+// LoadTimestamp loads a timestamp from fname located in the data dir. If maxAge is not zero,
+// and the loaded timestamp is older than maxAge, now()-maxAge is returned. If the file
+// doesn't exist or there's an error, zero time is returned.
+func (cfg *Config) LoadTimestamp(fname string, maxAge time.Duration) time.Time {
+
+	data, err := cfg.ReadData(fname)
+	if err != nil {
+		log.Warnf("error reading last checkpoint: %v", err)
+		return time.Time{}
+	}
+
+	if data == nil {
+		log.Debugf("datafile %v not found, returning zero time", fname)
+		return time.Time{}
+	}
+
+	t, err := time.Parse(time.RFC3339Nano, string(data))
+	if err != nil {
+		log.Warnf("corrupted checkpoint data: %v", err)
+	} else {
+		log.Debugf("resuming reading from: %v", t)
+	}
+
+	yesterday := time.Now().Add(-maxAge)
+	if t.Before(yesterday) {
+		t = yesterday
+		log.Debugf("last checkpoint is too far in the future, setting to -24h")
+	}
+
+	return t
+}
+
+// SaveTimestamp saves a timestamp to a fname located in the data dir.
+func (cfg *Config) SaveTimestamp(fname string, t time.Time) error {
+	return cfg.WriteData(fname, []byte(t.Format(time.RFC3339Nano)))
 }
