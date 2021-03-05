@@ -76,6 +76,11 @@ func (ec *EventsCursor) NewestIngested() time.Time {
 	return ec.newestIngested
 }
 
+// SearchConfig returns the underlying search config.
+func (ec *EventsCursor) SearchConfig() *SearchConfig {
+	return ec.search
+}
+
 // Close closes the point-in-time transaction, if it was open.
 func (ec *EventsCursor) Close() error {
 	if ec.pit != nil {
