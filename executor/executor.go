@@ -209,6 +209,12 @@ func (e *Executor) startElastic(ctx context.Context, wg *sync.WaitGroup) error {
 				} else {
 					log.Debugf("resuming reading from: %v", lastIngested)
 				}
+
+				yesterday := time.Now().Add(-24 * time.Hour)
+				if lastIngested.Before(yesterday) {
+					lastIngested = yesterday
+					log.Debugf("last checkpoint is too far in the future, setting to -24h")
+				}
 			}
 
 			for {
@@ -250,7 +256,7 @@ func (e *Executor) startElastic(ctx context.Context, wg *sync.WaitGroup) error {
 								asoclient := client.New(e.cfg.Engine.Host, e.cfg.Engine.APIKey)
 								resp, err := asoclient.EventsDNS(req)
 								if err != nil {
-									log.Error("sending dns events: %v", err)
+									log.Errorf("sending dns events: %v", err)
 								} else {
 									lastIngested = cur.NewestIngested()
 									log.WithField("events", resp.Accepted).
