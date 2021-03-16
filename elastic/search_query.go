@@ -1,19 +1,18 @@
 package elastic
 
 import (
-	"bytes"
 	"encoding/json"
-	"io"
 	"time"
 )
 
+// DocRangeField is used in DocRange
+type DocRangeField struct {
+	Gte string `json:"gte"`
+}
+
 // DocRange is used in SearchQuery.
 type DocRange struct {
-	Range struct {
-		Event struct {
-			Gte string `json:"gte"`
-		} `json:"event.ingested"`
-	} `json:"range"`
+	Range map[string]DocRangeField `json:"range"`
 }
 
 // DocValueField as defined by the es Search API
@@ -42,7 +41,7 @@ type SearchQuery struct {
 	SearchAfter []interface{}       `json:"search_after,omitempty"`
 }
 
-func (ec *EventsCursor) searchQuery() (io.Reader, error) {
+func (ec *EventsCursor) searchQuery() ([]byte, error) {
 	fn := ec.search.FinalFieldNames()
 
 	sq := SearchQuery{}
@@ -56,9 +55,11 @@ func (ec *EventsCursor) searchQuery() (io.Reader, error) {
 
 	var err error
 
-	sq.DocValueFields = []DocValueField{
-		{Field: fn.Timestamp, Format: "strict_date_time"},
-		{Field: fn.EventIngested, Format: "strict_date_time"},
+	sq.DocValueFields = []DocValueField{{Field: fn.Timestamp, Format: "strict_date_time"}}
+
+	if fn.Timestamp != fn.EventIngested {
+		sq.DocValueFields = append(sq.DocValueFields,
+			DocValueField{Field: fn.EventIngested, Format: "strict_date_time"})
 	}
 
 	// Get the document field names to retrieve (except ts and event.ingested)
@@ -70,12 +71,12 @@ func (ec *EventsCursor) searchQuery() (io.Reader, error) {
 	// Build a time range of events we want to retrieve. If no events where
 	// retrieved ever, let's just ingest the last 10 minutes. Otherwise,
 	// retrieve all events since NewestIngested from the pull job.
-	docrange := DocRange{}
+	docrange := DocRange{Range: make(map[string]DocRangeField)}
 
 	if ec.newestIngested.IsZero() {
-		docrange.Range.Event.Gte = "now-10m"
+		docrange.Range[fn.EventIngested] = DocRangeField{Gte: "now-5m"}
 	} else {
-		docrange.Range.Event.Gte = ec.newestIngested.Format(time.RFC3339Nano)
+		docrange.Range[fn.EventIngested] = DocRangeField{Gte: ec.newestIngested.Format(time.RFC3339Nano)}
 	}
 
 	drjson, _ := json.Marshal(docrange)
@@ -93,13 +94,7 @@ func (ec *EventsCursor) searchQuery() (io.Reader, error) {
 		return nil, err
 	}
 
-	data, _ := json.Marshal(sq)
-
-	// Debug: print resulting search query
-	// pretty, _ := json.MarshalIndent(sq, "", "  ")
-	// fmt.Println(string(pretty))
-
-	return bytes.NewReader(data), nil
+	return json.Marshal(sq)
 }
 
 // mustExistFields constructs an Elastic Query DSL fragment used in the

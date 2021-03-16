@@ -8,6 +8,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"path"
 	"strconv"
 	"sync"
 	"time"
@@ -188,8 +189,8 @@ func (e *Executor) startElastic(ctx context.Context, wg *sync.WaitGroup) error {
 			return err
 		}
 
+		wg.Add(1)
 		go func(idx int, c *elastic.Client, search *elastic.SearchConfig) {
-			wg.Add(1)
 			defer wg.Done()
 
 			asoclient := client.New(e.cfg.Engine.Host, e.cfg.Engine.APIKey)
@@ -224,17 +225,34 @@ func (e *Executor) startElastic(ctx context.Context, wg *sync.WaitGroup) error {
 						continue
 					}
 
+					firstSearchPage := true
 					for {
 						hits, err := cur.Next(lctx)
+
+						if e.cfg.Log.Level == "debug" {
+							fname := "elastic-" + elastic.ConfigFingerprint(cfg, search) + "-search"
+							fullname := path.Join(e.cfg.Data.Dir, fname)
+							if err := cur.DumpLastSearchQuery(fullname); err != nil {
+								log.Debugf("error saving last search query: %v", err)
+							} else {
+								log.Debugf("recent search query saved to %v", fullname)
+							}
+						}
+
 						if err != nil {
 							log.Errorf("fetch events: %v", err)
 							break
 						}
 
 						if len(hits) == 0 {
+							if firstSearchPage {
+								log.Info("search has returned no results")
+							}
 							// No more pages.
 							break
 						}
+
+						firstSearchPage = false
 
 						switch search.EventType {
 						case client.EventTypeDNS:

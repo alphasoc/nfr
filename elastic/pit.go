@@ -21,6 +21,13 @@ type PointInTime struct {
 	KeepAlive string `json:"keep_alive,omitempty"`
 }
 
+// ScrollSearch is a deprecated way of retrieving
+// paginated search results. It is replaced by PointInTime (supported from es 7.10)
+type ScrollSearch struct {
+	Scroll   string `json:"scroll"`
+	ScrollID string `json:"scroll_id"`
+}
+
 // Close closes an open Point-in-time.
 func (p *PointInTime) Close() error {
 	res, err := p.client.ClosePointInTime(

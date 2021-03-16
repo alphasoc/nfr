@@ -23,6 +23,7 @@ type Hit struct {
 // an es search.
 type SearchResult struct {
 	PitID    string `json:"pit_id"`
+	ScrollID string `json:"_scroll_id"`
 	Took     int    `json:"took"`
 	TimedOut bool   `json:"timed_out"`
 	Hits     struct {

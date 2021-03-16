@@ -81,13 +81,7 @@ func (c *Client) Fetch(ctx context.Context, search *SearchConfig, from time.Time
 		return nil, errors.New("search config must not be null")
 	}
 
-	var err error
 	ec := &EventsCursor{client: c.c, search: search, newestIngested: from}
-	ec.pit, err = c.OpenPIT(ctx, ec.search.Indices, time.Duration(search.PITKeepAlive)*time.Second)
-	if err != nil {
-		return nil, errors.Wrap(err, "creating pit")
-	}
-
 	return ec, nil
 }
 

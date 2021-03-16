@@ -1,11 +1,15 @@
 package elastic
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"os"
+	"strconv"
 	"time"
 
 	es7 "github.com/elastic/go-elasticsearch/v7"
+	"github.com/elastic/go-elasticsearch/v7/esapi"
 	"github.com/pkg/errors"
 )
 
@@ -15,22 +19,39 @@ type EventsCursor struct {
 	client         *es7.Client
 	search         *SearchConfig
 	searchAfter    []interface{}
-	pit            *PointInTime
+	pit            *PointInTime // can be used from 7.10 with X-Pack instead of scrollID
+	scrollCursor   []byte       // used for pagination
 	newestIngested time.Time
+
+	// Save search query for debug purposes
+	lastSearchQuery []byte
 }
 
 // Next retrieves the next page of events. If (nil, nil) is returned,
 // there are no new events.
 func (ec *EventsCursor) Next(ctx context.Context) ([]Hit, error) {
-	sq, err := ec.searchQuery()
-	if err != nil {
-		return nil, errors.Wrap(err, "creating search query")
+	var res *esapi.Response
+	var err error
+
+	if ec.scrollCursor != nil {
+		// Use scroll id to retrieve paginated results
+		res, err = ec.client.Scroll(
+			ec.client.Scroll.WithContext(ctx),
+			ec.client.Scroll.WithBody(bytes.NewReader(ec.scrollCursor)))
+	} else {
+		// Scroll ID is empty, create a search with scroll.
+		ec.lastSearchQuery, err = ec.searchQuery()
+		if err != nil {
+			return nil, errors.Wrap(err, "creating search query")
+		}
+
+		res, err = ec.client.Search(
+			ec.client.Search.WithContext(ctx),
+			ec.client.Search.WithIndex(ec.search.Indices...),
+			ec.client.Search.WithBody(bytes.NewReader(ec.lastSearchQuery)),
+			ec.client.Search.WithScroll(time.Duration(ec.search.PITKeepAlive)*time.Second))
 	}
 
-	res, err := ec.client.Search(
-		ec.client.Search.WithContext(ctx),
-		ec.client.Search.WithBody(sq),
-	)
 	if err != nil {
 		return nil, errors.Wrap(err, "doing search")
 	}
@@ -57,6 +78,20 @@ func (ec *EventsCursor) Next(ctx context.Context) ([]Hit, error) {
 	}
 
 	lastHit := hits[len(hits)-1]
+
+	if answer.ScrollID != "" {
+		d := time.Duration(ec.search.PITKeepAlive) * time.Second
+
+		var scroll string
+		if d < time.Millisecond {
+			scroll = strconv.FormatInt(int64(d), 10) + "nanos"
+		} else {
+			scroll = strconv.FormatInt(int64(d)/int64(time.Millisecond), 10) + "ms"
+		}
+
+		marshaled, _ := json.Marshal(ScrollSearch{Scroll: scroll, ScrollID: answer.ScrollID})
+		ec.scrollCursor = marshaled
+	}
 
 	// Update searchAfter for the next page.
 	ec.searchAfter = lastHit.Sort
@@ -88,6 +123,20 @@ func (ec *EventsCursor) Close() error {
 		ec.pit = nil
 		return err
 	}
+
+	return nil
+}
+
+func (ec *EventsCursor) DumpLastSearchQuery(fname string) error {
+	f, err := os.Create(fname)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	var out bytes.Buffer
+	json.Indent(&out, ec.lastSearchQuery, "", "  ")
+	out.WriteTo(f)
 
 	return nil
 }
