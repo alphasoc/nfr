@@ -25,6 +25,10 @@ type EventUnified struct {
 	SrcIP     net.IP    `json:"srcIP"`
 	SrcPort   uint16    `json:"srcPort,omitempty"`
 	SrcHost   string    `json:"srcHost,omitempty"`
+	SrcMac    string    `json:"srcMac,omitempty"`
+	SrcUser   string    `json:"srcUser,omitempty"`
+	SrcID     string    `json:"srcID,omitempty"`
+	ConnID    string    `json:"connID,omitempty"`
 
 	// Bytes transferred
 	BytesIn  int64 `json:"bytesIn,omitempty"`
