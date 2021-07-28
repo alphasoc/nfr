@@ -1,0 +1,67 @@
+archives:
+  -
+    name_template: "{{ .ProjectName }}_{{ .Version }}_debian_{{ .Arch }}"
+
+builds:
+  # You can have multiple builds defined as a yaml list.
+  -
+    id: "debian"
+    goos:
+      - linux
+    # GOARCH to build for.
+    # For more info refer to: https://golang.org/doc/install/source#environment
+    # Defaults are 386, amd64 and arm64.
+    goarch:
+      - amd64
+    ldflags:
+      -X github.com/alphasoc/nfr/version.Version={{ .Version }}
+
+checksum:
+  name_template: "{{ .ProjectName }}_checksums_debian.txt"
+
+nfpms:
+  # note that this is an array of nfpm configs
+  -
+    # Replacements for GOOS and GOARCH in the package name.
+    # Keys should be valid GOOSs or GOARCHs.
+    # Values are the respective replacements.
+    # Default is empty.
+    replacements:
+      amd64: 64-bit
+      darwin: macOS
+    vendor: alphasoc
+    homepage: https://alphasoc.com/
+    maintainer: AlphaSOC <support@alphasoc.com>
+    description: A lightweight application that processes and analyzes network traffic
+                 using the AlphaSOC Analytics Engine.
+    license: CCPL
+    # Formats to be generated.
+    formats:
+      - deb
+    dependencies:
+      - libpcap0.8
+    contents:
+      - src: ./config.yml
+        dst: /etc/nfr/config.yml
+        type: config
+      - src: ./scope.yml
+        dst: /etc/nfr/scope.yml
+        type: config
+      - src: ./nfr.service
+        dst: /etc/systemd/system/nfr.service
+        type: config
+    scripts:
+      postinstall: "scripts/postinst"
+      preremove: "scripts/prerm"
+      postremove: "scripts/postrm"
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_debian_{{ .Arch }}"
+    # Override default /usr/local/bin destination for binaries.
+    bindir: /usr/bin
+
+release:
+  # Disable the actual release.  Done elsewhere.
+  disable: true
+
+# Sign all artifacts.
+signs:
+  - artifacts: all

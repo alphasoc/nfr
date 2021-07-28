@@ -1,0 +1,6 @@
+#!/bin/sh
+
+chmod +x /usr/bin/nfr
+systemctl daemon-reload
+
+exit 0
