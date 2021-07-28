@@ -51,8 +51,8 @@ var (
 func cefCustomString(id int, label, value string) []ceflog.Pair {
 	key := fmt.Sprintf("cs%d", id)
 	return []ceflog.Pair{
-		{key, value},
-		{key + "Label", label},
+		{Key: key, Value: value},
+		{Key: key + "Label", Value: label},
 	}
 }
 
@@ -61,9 +61,9 @@ func (f *FormatterCEF) Format(event *Event) ([][]byte, error) {
 
 	// CEF log extensions
 	ext := ceflog.Extension{
-		{"app", event.EventType},
-		{"rt", event.Timestamp.Format(cefTimeFormat)},
-		{"src", event.SrcIP.String()},
+		{Key: "app", Value: event.EventType},
+		{Key: "rt", Value: event.Timestamp.Format(cefTimeFormat)},
+		{Key: "src", Value: event.SrcIP.String()},
 	}
 
 	if v := strings.Join(event.Flags, ","); v != "" {
@@ -80,17 +80,17 @@ func (f *FormatterCEF) Format(event *Event) ([][]byte, error) {
 	switch event.EventType {
 	case "dns":
 		ext = append(ext, ceflog.Extension{
-			{"query", event.Query},
-			{"requestMethod", event.QueryType},
+			{Key: "query", Value: event.Query},
+			{Key: "requestMethod", Value: event.QueryType},
 		}...)
 	case "ip":
 		ext = append(ext, ceflog.Extension{
-			{"spt", strconv.Itoa(int(event.SrcPort))},
-			{"dst", event.DestIP.String()},
-			{"dpt", strconv.Itoa(int(event.DestPort))},
-			{"proto", event.Proto},
-			{"in", strconv.Itoa(int(event.BytesIn))},
-			{"out", strconv.Itoa(int(event.BytesOut))},
+			{Key: "spt", Value: strconv.Itoa(int(event.SrcPort))},
+			{Key: "dst", Value: event.DestIP.String()},
+			{Key: "dpt", Value: strconv.Itoa(int(event.DestPort))},
+			{Key: "proto", Value: event.Proto},
+			{Key: "in", Value: strconv.Itoa(int(event.BytesIn))},
+			{Key: "out", Value: strconv.Itoa(int(event.BytesOut))},
 		}...)
 	}
 
