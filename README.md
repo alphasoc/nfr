@@ -26,9 +26,9 @@ Use "nfr [command] --help" for more information about a given command.
 ```
 
 ## Configuration
-NFR expects to find its configuration file in `/etc/nfr/config.yml`. You can find an example [`config.yml`](https://github.com/alphasoc/nfr/blob/master/config.yml) file in the repository's root directory. The file defines the AlphaSOC Analytics Engine location and configuration, input preferences (e.g. log files to monitor), output preferences, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/nfr/` directory.
+NFR expects to find its configuration file in `/etc/nfr/config.yml`. If you installed the Debian package, an example `config.yml` would have been installed for you in `/etc/nfr`. Otherwise, you can find the example [`config.yml`](https://github.com/alphasoc/nfr/blob/master/config.yml) file in the repository's root directory. The file defines the AlphaSOC Analytics Engine location and configuration, input preferences (e.g. log files to monitor), output preferences, and other variables. If you already have AlphaSOC API key, update the file with your key and place within the `/etc/nfr/` directory.
 
-If you are a new user, simply run `nfr account register` to create the file and generate an API key, e.g.
+If you are a new user, simply run `nfr account register` (as root) to create the file and generate an API key, e.g.
 
 ```
 # nfr account register
@@ -176,7 +176,7 @@ Under the hood, nfr periodically runs a search:
 ```
 
 ## Monitoring scope
-Use directives within `/etc/nfr/scope.yml` to define the monitoring scope. You can find an example [`scope.yml`](https://github.com/alphasoc/nfr/blob/master/scope.yml) file in the repository's root directory. Network traffic from the IP ranges within scope will be processed by the AlphaSOC Analytics Engine, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
+Use directives within `/etc/nfr/scope.yml` to define the monitoring scope. If you installed the Debian package, an example `scope.yml` would have been installed for you in `/etc/nfr`. Otherwise, you can find the example [`scope.yml`](https://github.com/alphasoc/nfr/blob/master/scope.yml) file in the repository's root directory. Network traffic from the IP ranges within scope will be processed by the AlphaSOC Analytics Engine, and domains that are whitelisted (e.g. internal trusted domains) will be ignored. Adjust `scope.yml` to define the networks and systems that you wish to monitor, and the events to discard, e.g.
 
 ```
 groups:
@@ -240,7 +240,7 @@ You may run `nfr start` via `tmux` or `screen` under Linux, or set up a service 
 ## Running NFR as a service
 
 ### Under Linux
-If you are using a current Linux distribution (e.g. RHEL7, Ubuntu 16), it will have [systemd](https://www.freedesktop.org/wiki/Software/systemd/) installed. Follow these steps as root to run NFR as a service:
+If you are using a current Linux distribution (e.g. RHEL7, Ubuntu 16), it will have [systemd](https://www.freedesktop.org/wiki/Software/systemd/) installed. Follow these steps as root to run NFR as a service. *NOTE*: If you installed the Debian package, you can skip steps 1-3 below.
 
 1. Create the NFR configuration directory and copy `config.yml` and `scope.yml` into it
 
@@ -256,25 +256,7 @@ cp scope.yml /etc/nfr
 cp nfr /usr/local/bin
 chmod a+x /usr/local/bin/nfr
 ```
-
-3. Create the NFR service files for `systemd`
-
-```
-cat > /etc/systemd/system/nfr.service << EOF
-
-[Unit]
-Description=AlphaSOC Network Flight Recorder
-After=network.target
-
-[Service]
-Type=simple
-ExecStart=/usr/local/bin/nfr start
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-EOF
-```
+3. Copy the sample NFR service file [`nfr.service`](https://github.com/alphasoc/nfr/blob/master/nfr.service) to `/etc/systemd/system/`
 
 4. Use `systemctl` to enable NFR, start the service, and review its status
 

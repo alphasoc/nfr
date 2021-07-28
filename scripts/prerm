@@ -1,0 +1,6 @@
+#!/bin/bash
+
+systemctl stop nfr
+systemctl disable nfr
+
+exit 0
