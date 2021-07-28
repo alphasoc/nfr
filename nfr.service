@@ -1,0 +1,11 @@
+[Unit]
+Description=AlphaSOC Network Flight Recorder
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/nfr start
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
