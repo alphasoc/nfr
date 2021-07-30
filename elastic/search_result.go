@@ -63,6 +63,25 @@ func (h *Hit) sourceString(path []string) string {
 	return val
 }
 
+// sourceString is a helper method used for non-required fields in DecodeDNS/IP/HTTP functions.
+func (h *Hit) sourceTimestamp(path []string) time.Time {
+	if len(path) == 0 {
+		return time.Time{}
+	}
+
+	val, err := jsonparser.GetString(h.Source, path...)
+	if err != nil {
+		return time.Time{}
+	}
+
+	ts, err := time.Parse(time.RFC3339Nano, val)
+	if err != nil {
+		return time.Time{}
+	}
+
+	return ts
+}
+
 // sourceInt64 is a helper method used for non-required fields in DecodeDNS/IP/HTTP functions.
 func (h *Hit) sourceInt64(path []string) int64 {
 	if len(path) == 0 {
@@ -211,6 +230,50 @@ func (h *Hit) DecodeHTTP(cfg *SearchConfig) (*client.HTTPEntry, error) {
 	e.UserAgent = h.sourceString(fn.UserAgent)
 	e.ContentType = h.sourceString(fn.ContentType)
 	e.Referrer = h.sourceString(fn.Referrer)
+
+	return e, nil
+}
+
+// DecodeTLS returns client.TLSEntry parsed from the Hit using provided field names.
+func (h *Hit) DecodeTLS(cfg *SearchConfig) (*client.TLSEntry, error) {
+	if cfg.EventType != client.EventTypeTLS {
+		return nil, errors.New("invalid event type in DecodeTLS")
+	}
+
+	fn := cfg.FinalFieldNames()
+	e := &client.TLSEntry{}
+
+	var err error
+	e.Timestamp, err = h.timestamp(fn.Timestamp)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse timestamp")
+	}
+
+	srcip, err := jsonparser.GetString(h.Source, fn.SrcIP...)
+	if err != nil {
+		return nil, errors.Wrap(err, "get src ip field")
+	}
+
+	e.SrcIP = net.ParseIP(srcip)
+	if e.SrcIP == nil {
+		return nil, fmt.Errorf("invalid src ip: %v", srcip)
+	}
+
+	dstip, err := jsonparser.GetString(h.Source, fn.DstIP...)
+	if err == nil {
+		e.DstIP = net.ParseIP(dstip)
+	}
+
+	// Non-required fields don't return errors
+	e.SrcPort = h.sourceUint16(fn.SrcPort)
+	e.DstPort = h.sourceUint16(fn.DstPort)
+	e.CertHash = h.sourceString(fn.CertHash)
+	e.Issuer = h.sourceString(fn.Issuer)
+	e.Subject = h.sourceString(fn.Subject)
+	e.ValidFrom = h.sourceTimestamp(fn.ValidFrom)
+	e.ValidTo = h.sourceTimestamp(fn.ValidTo)
+	e.JA3 = h.sourceString(fn.JA3)
+	e.JA3s = h.sourceString(fn.JA3s)
 
 	return e, nil
 }

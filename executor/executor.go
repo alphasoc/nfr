@@ -348,6 +348,37 @@ func (e *Executor) startElastic(ctx context.Context, wg *sync.WaitGroup) error {
 							} else {
 								inglog.WithField("retrievedEvents", len(hits)).Info("no retrieved events in scope")
 							}
+
+						case client.EventTypeTLS:
+							var entries []*client.TLSEntry
+							for n, h := range hits {
+								entry, err := h.DecodeTLS(search)
+								if err != nil {
+									log.Debugf("failed to decode ip event: %v", err)
+									continue
+								}
+
+								if e.cfg.Log.Level == "debug" && n < 5 {
+									log.Debugf("event: %+v", entry)
+								}
+
+								if _, ok := e.groups.IsIPWhitelisted(entry.SrcIP, entry.DstIP); ok {
+									entries = append(entries, entry)
+								}
+							}
+
+							// Send events to the API
+							inglog := log.WithField("lastIngested", cur.NewestIngested())
+							if len(entries) > 0 {
+								resp, err := asoclient.EventsTLS(entries)
+								if err != nil {
+									log.Errorf("sending dns events: %v", err)
+									continue
+								}
+								inglog.WithField("events", resp.Accepted).Info("telemetry sent")
+							} else {
+								inglog.WithField("retrievedEvents", len(hits)).Info("no retrieved events in scope")
+							}
 						}
 
 						// Save checkpoint

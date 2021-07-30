@@ -8,4 +8,5 @@ const (
 	EventTypeDNS  EventType = "dns"
 	EventTypeIP   EventType = "ip"
 	EventTypeHTTP EventType = "http"
+	EventTypeTLS  EventType = "tls"
 )

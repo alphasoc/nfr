@@ -24,6 +24,7 @@ type Client interface {
 	EventsDNS(*EventsDNSRequest) (*EventsDNSResponse, error)
 	EventsIP(*EventsIPRequest) (*EventsIPResponse, error)
 	EventsHTTP([]*HTTPEntry) (*EventsHTTPResponse, error)
+	EventsTLS([]*TLSEntry) (*EventsTLSResponse, error)
 	KeyRequest() (*KeyRequestResponse, error)
 	KeyReset(*KeyResetRequest) error
 }

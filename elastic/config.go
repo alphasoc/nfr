@@ -42,6 +42,9 @@ var defaultMustHaveFields = map[client.EventType]map[IndexSchema][]string{
 	client.EventTypeHTTP: {
 		IndexSchemaECS: []string{"@timestamp", "event.ingested", "source.ip", "url.original"},
 	},
+	client.EventTypeTLS: {
+		IndexSchemaECS: []string{"@timestamp", "event.ingested", "source.ip"},
+	},
 }
 
 var defaultSearchTerms = map[client.EventType]map[IndexSchema]string{
@@ -53,6 +56,9 @@ var defaultSearchTerms = map[client.EventType]map[IndexSchema]string{
 	},
 	client.EventTypeHTTP: {
 		IndexSchemaCorelight: `{"term": {"_path":"http"}}`,
+	},
+	client.EventTypeTLS: {
+		IndexSchemaCorelight: `{"term": {"_path":"ssl"}}`,
 	},
 }
 
@@ -96,13 +102,30 @@ var defaultFieldNames = map[client.EventType]map[IndexSchema]FieldNamesConfig{
 			Referrer:      []string{"http", "request", "referrer"},
 		},
 	},
+	client.EventTypeTLS: {
+		IndexSchemaECS: {
+			EventIngested: "event.ingested",
+			Timestamp:     "@timestamp",
+			SrcIP:         []string{"source", "ip"},
+			SrcPort:       []string{"source", "port"},
+			DstIP:         []string{"destination", "ip"},
+			DstPort:       []string{"destination", "port"},
+			CertHash:      []string{"tls", "server", "hash", "sha1"},
+			Issuer:        []string{"tls", "server", "issuer"},
+			Subject:       []string{"tls", "server", "subject"},
+			ValidFrom:     []string{"tls", "server", "not_before"},
+			ValidTo:       []string{"tls", "server", "not_after"},
+			JA3:           []string{"tls", "client", "ja3"},
+			JA3s:          []string{"tls", "server", "ja3s"},
+		},
+	},
 }
 
 // FieldNamesConfig is a list of elastic document field names.
 type FieldNamesConfig struct {
 	EventIngested string `yaml:"event_ingested"`
 
-	// DNS, IP, HTTP
+	// DNS, IP, HTTP, TLS
 	Timestamp string    `yaml:"timestamp"`
 	SrcIP     FieldPath `yaml:"src_ip"` // required
 	SrcPort   FieldPath `yaml:"src_port"`
@@ -111,9 +134,11 @@ type FieldNamesConfig struct {
 	Query FieldPath `yaml:"query"` // required
 	QType FieldPath `yaml:"qtype"`
 
+	// IP, TLS
+	DstIP   FieldPath `yaml:"dest_ip"` // required for IP
+	DstPort FieldPath `yaml:"dest_port"`
+
 	// IP
-	DstIP    FieldPath `yaml:"dest_ip"` // required
-	DstPort  FieldPath `yaml:"dest_port"`
 	Protocol FieldPath `yaml:"proto"`
 	BytesIn  FieldPath `yaml:"bytes_in"`
 	BytesOut FieldPath `yaml:"bytes_out"`
@@ -125,6 +150,15 @@ type FieldNamesConfig struct {
 	UserAgent   FieldPath `yaml:"user_agent"`
 	ContentType FieldPath `yaml:"content_type"`
 	Referrer    FieldPath `yaml:"referrer"`
+
+	// TLS
+	CertHash  FieldPath `yaml:"cert_hash"`
+	Issuer    FieldPath `yaml:"issuer"`
+	Subject   FieldPath `yaml:"subject"`
+	ValidFrom FieldPath `yaml:"valid_from"`
+	ValidTo   FieldPath `yaml:"valid_to"`
+	JA3       FieldPath `yaml:"ja3"`
+	JA3s      FieldPath `yaml:"ja3s"`
 }
 
 // SearchConfig contains all necessary information for
@@ -359,6 +393,10 @@ func (sc *SearchConfig) EventFields() ([]string, error) {
 	case client.EventTypeHTTP:
 		fields = append(fields,
 			fn.URL.Join(), fn.Method.Join(), fn.StatusCode.Join(), fn.UserAgent.Join())
+	case client.EventTypeTLS:
+		fields = append(fields,
+			fn.DstIP.Join(), fn.DstPort.Join(), fn.CertHash.Join(), fn.Issuer.Join(),
+			fn.Subject.Join(), fn.ValidFrom.Join(), fn.ValidTo.Join(), fn.JA3.Join(), fn.JA3s.Join())
 	default:
 		return nil, fmt.Errorf("event type %s is not supported", sc.EventType)
 	}

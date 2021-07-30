@@ -37,6 +37,10 @@ func (c *MockAlphaSOCClient) EventsHTTP(req []*HTTPEntry) (*EventsHTTPResponse, 
 	return &EventsHTTPResponse{}, nil
 }
 
+func (c *MockAlphaSOCClient) EventsTLS(req []*TLSEntry) (*EventsTLSResponse, error) {
+	return &EventsTLSResponse{}, nil
+}
+
 // KeyRequest mock.
 func (c *MockAlphaSOCClient) KeyRequest() (*KeyRequestResponse, error) {
 	return &KeyRequestResponse{}, nil

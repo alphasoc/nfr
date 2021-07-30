@@ -18,6 +18,7 @@ var SupportedEventTypes = []client.EventType{
 	client.EventTypeDNS,
 	client.EventTypeIP,
 	client.EventTypeHTTP,
+	client.EventTypeTLS,
 }
 
 // Client is an elasticsearch client capable of pulling telemetry data
