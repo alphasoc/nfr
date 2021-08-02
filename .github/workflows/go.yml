@@ -10,8 +10,16 @@ permissions:
 jobs:
   build-test-vet-release:
     runs-on: ubuntu-latest
+    container: centos:7
     steps:
       -
+        name: Install Build Dependencies
+        run: |
+          yum -y install git
+          yum -y install libpcap-devel
+          yum -y install gcc
+      -
+        # Don't forget to install git on the build host.
         name: Checkout
         uses: actions/checkout@v2
       -
@@ -19,9 +27,6 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
-      -
-        name: Install Build Dependencies
-        run: sudo apt-get install libpcap-dev
       -
         name: Build
         run: go build -v ./...
