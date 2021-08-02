@@ -8,7 +8,79 @@ permissions:
   contents: write
 
 jobs:
-  build-test-vet-release:
+  build-test-vet:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_SUCCESS: false
+    steps:
+      -
+        runs-on: ubuntu-latest
+        container: amd64/ubuntu:latest
+        name: Install Build Dependencies
+        run: sudo apt-get install libpcap-dev
+      -
+        # Don't forget to install git on the build host.
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      -
+        name: Build
+        run: go build -v ./...
+      -
+        name: Test
+        run: go test -v ./...
+      -
+        name: Vet
+        run: go vet -v ./...
+      # -
+      #   name: Success/Faile
+      #   if: always()
+      #   env:
+      #     BUILD_SUCCESS: ${{ job.status }}
+      #   run: echo "BUILD_SUCCESS==$BUILD_SUCCESS"
+  release-deb:
+    needs: build-test-vet
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Install Build Dependencies
+        run: sudo apt-get install libpcap-dev
+      -
+        # Don't forget to install git on the build host.
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      -
+        name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
+      -
+        name: GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
+          distribution: goreleaser
+          version: latest
+          args: release -f ./.goreleaser-deb.yml --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
+          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+  release-centos-7:
+    needs: build-test-vet
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     container: centos:7
     steps:
@@ -28,16 +100,9 @@ jobs:
         with:
           go-version: 1.16
       -
-        name: Build
-        run: go build -v ./...
+        name: Start GPG Agent
+        run: eval $(gpg-agent --daemon -s)
       -
-        name: Test
-        run: go test -v ./...
-      -
-        name: Vet
-        run: go vet -v ./...
-      -
-        if: startsWith(github.ref, 'refs/tags/v') == true
         name: Import GPG key
         id: import_gpg
         uses: crazy-max/ghaction-import-gpg@v3
@@ -45,14 +110,58 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
       -
-        if: startsWith(github.ref, 'refs/tags/v') == true
         name: GoReleaser
         uses: goreleaser/goreleaser-action@v2
         with:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
-          args: release --rm-dist
+          args: release -f ./.goreleaser-el7.yml --rm-dist
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
+          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+  release-centos-latest:
+    needs: build-test-vet
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    container: centos:latest
+    steps:
+      -
+        name: Install Build Dependencies
+        run: |
+          yum -y install dnf-plugins-core
+          yum -y config-manager --set-enabled powertools
+          yum -y install libpcap-devel
+          yum -y install git
+          yum -y install gcc
+      -
+        # Don't forget to install git on the build host.
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      -
+        name: Start GPG Agent
+        run: eval $(gpg-agent --daemon -s)
+      -
+        name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
+      -
+        name: GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
+          distribution: goreleaser
+          version: latest
+          args: release -f ./.goreleaser-el7.yml --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
