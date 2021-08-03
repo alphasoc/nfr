@@ -220,10 +220,15 @@ jobs:
         run: |
           sudo rm -rf deb-artifacts
           sudo rm -rf el-latest-artifacts
+          sudo mv rel /home/runner/work/nfr-rel
       -
         # Don't forget to install git on the build host.
         name: Checkout
         uses: actions/checkout@v2
+      -
+        name: Prep rel location
+        run: |
+          sudo mv /home/runner/work/nfr-rel /home/runner/work/nfr/nfr
       -
         name: Set up Go
         uses: actions/setup-go@v2
@@ -246,7 +251,7 @@ jobs:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
-          args: release -f ./.goreleaser-release.yml
+          args: release -f ./.goreleaser-release.yml --skip-validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution

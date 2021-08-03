@@ -1,3 +1,11 @@
+builds:
+  -
+    ignore:
+      - goos: darwin
+      - goos: linux
+      - goos: windows
+      - goos: freebsd
+
 release:
   # If set to auto, will mark the release as not ready for production
   # in case there is an indicator for this in the tag e.g. v1.0.0-rc1
@@ -24,4 +32,4 @@ release:
   name_template: "{{.ProjectName}}-v{{.Version}}"
 
   extra_files:
-    - glob: ./rel/*
+    - glob: ./nfr-rel/*
