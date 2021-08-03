@@ -9,18 +9,11 @@ permissions:
 
 jobs:
   build-test-vet:
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        cont: ["amd64/ubuntu:latest", "centos:7", "centos:latest"]
-    runs-on: ${{ matrix.os }}
-    container: ${{ matrix.cont }}
-    env:
-      BUILD_SUCCESS: false
+    runs-on: ubuntu-latest
     steps:
       -
         name: Install Build Dependencies
-        run: apt-get install libpcap-dev
+        run: sudo apt-get install libpcap-dev
       -
         # Don't forget to install git on the build host.
         name: Checkout
@@ -39,14 +32,8 @@ jobs:
       -
         name: Vet
         run: go vet -v ./...
-      # -
-      #   name: Success/Faile
-      #   if: always()
-      #   env:
-      #     BUILD_SUCCESS: ${{ job.status }}
-      #   run: echo "BUILD_SUCCESS==$BUILD_SUCCESS"
   release-deb:
-    needs: build-test-vet
+    #needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -76,13 +63,19 @@ jobs:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
-          args: release -f ./.goreleaser-deb.yml --rm-dist
+          args: release -f ./.goreleaser-deb.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
           # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+      -
+        name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: deb-artifacts
+          path: dist
   release-centos-7:
-    needs: build-test-vet
+    #needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     container: centos:7
@@ -119,13 +112,20 @@ jobs:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
-          args: release -f ./.goreleaser-el7.yml --rm-dist
+          args: release -f ./.goreleaser-el7.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
           # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+      -
+        name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: el7-artifacts
+          path: dist
+
   release-centos-latest:
-    needs: build-test-vet
+    #needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     container: centos:latest
@@ -164,7 +164,89 @@ jobs:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
-          args: release -f ./.goreleaser-el7.yml --rm-dist
+          args: release -f ./.goreleaser-el8.yml
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
+          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+      -
+        name: Upload Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: el-latest-artifacts
+          path: dist
+
+  release-artifacts:
+    needs: [release-deb, release-centos-latest]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: Download All Artifacts
+        uses: actions/download-artifact@v2
+      -
+        name: Display
+        run: |
+          pwd
+          ls -R
+      -
+        name: Copy CHANGELOG and Checksums
+        run: |
+          sudo mkdir rel
+          sudo mv deb-artifacts/CHANGELOG.md rel/
+          sudo mv deb-artifacts/*checksums* rel/
+          sudo mv el-latest-artifacts/*checksums* rel/
+          #for f in deb-artifacts/*_checksums*; do name=$(basename $f); sudo mv $f rel/${.*}-deb.${name##*}; done
+          #for f in el-latest-artifacts/*_checksums*; do name=$(basename $f); sudo mv $f rel/${.*}-el8.${name##*}; done
+      -
+        name: Copy Binaries
+        run: |
+          sudo mv deb-artifacts/*.tar.gz* rel/
+          sudo mv deb-artifacts/*.deb** rel/
+          sudo mv el-latest-artifacts/*.tar.gz* rel/
+          sudo mv el-latest-artifacts/*.rpm* rel/
+          #for f in deb-artifacts/*_linux_*; do [ -f $f ] && sudo cp $f rel/$(basename $f)-DEB; done
+          #for f in deb-artifacts/*_windows_*; do [ -f $f ] && sudo cp $f rel/$(basename $f)-DEB; done
+          #for f in el-latest-artifacts/*_linux_*; do [ -f $f ] && sudo cp $f rel/$(basename $f)-EL8; done
+      -
+        name: Display Again        
+        run: |
+          pwd
+          ls -R
+          cat rel/CHANGELOG.md
+          cat rel/*_checksums*
+      -
+        name: Cleanup
+        run: |
+          sudo rm -rf deb-artifacts
+          sudo rm -rf el-latest-artifacts
+      -
+        # Don't forget to install git on the build host.
+        name: Checkout
+        uses: actions/checkout@v2
+      -
+        name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.16
+      -
+        name: Start GPG Agent
+        run: eval $(gpg-agent --daemon -s)
+      -
+        name: Import GPG key
+        id: import_gpg
+        uses: crazy-max/ghaction-import-gpg@v3
+        with:
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
+      -
+        name: GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          # either 'goreleaser' (default) or 'goreleaser-pro'
+          distribution: goreleaser
+          version: latest
+          args: release -f ./.goreleaser-release.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution

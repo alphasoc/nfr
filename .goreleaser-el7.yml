@@ -1,3 +1,10 @@
+archives:
+  -
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_el7"
+
+checksum:
+    name_template: "{{ .ProjectName }}_checksums_el7.txt"
+  
 builds:
   # You can have multiple builds defined as a yaml list.
   -
@@ -31,7 +38,6 @@ nfpms:
       - rpm
     dependencies:
       - libpcap
-    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     contents:
       - src: ./config.yml
         dst: /etc/nfr/config.yml
@@ -46,6 +52,7 @@ nfpms:
       postinstall: "scripts/postinst"
       preremove: "scripts/prerm"
       postremove: "scripts/postrm"
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_el7"
 
 release:
   # If set to auto, will mark the release as not ready for production
@@ -71,6 +78,7 @@ release:
   # You can change the name of the release.
   # Default is `{{.Tag}}` on OSS and `{{.PrefixedTag}}` on Pro.
   name_template: "{{.ProjectName}}-v{{.Version}}"
+  disable: true
 
 # Sign all artifacts.
 signs:
