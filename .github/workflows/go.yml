@@ -9,15 +9,18 @@ permissions:
 
 jobs:
   build-test-vet:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        cont: ["amd64/ubuntu:latest", "centos:7", "centos:latest"]
+    runs-on: ${{ matrix.os }}
+    container: ${{ matrix.cont }}
     env:
       BUILD_SUCCESS: false
     steps:
       -
-        runs-on: ubuntu-latest
-        container: amd64/ubuntu:latest
         name: Install Build Dependencies
-        run: sudo apt-get install libpcap-dev
+        run: apt-get install libpcap-dev
       -
         # Don't forget to install git on the build host.
         name: Checkout
