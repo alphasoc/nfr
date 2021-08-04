@@ -15,7 +15,7 @@ builds:
       - amd64
 
 checksum:
-    name_template: "{{ .ProjectName }}_checksums_centos8.txt"
+  name_template: "{{ .ProjectName }}_checksums_centos8.txt"
       
 nfpms:
   # note that this is an array of nfpm configs

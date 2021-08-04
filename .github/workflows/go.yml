@@ -33,10 +33,10 @@ jobs:
         name: Vet
         run: go vet -v ./...
 
-  # Debian releaser.  For tags starting with 'v' only.  Note that the actual release
+  # Debian builder.  For tags starting with 'v' only.  Note that the actual release
   # portion of this job (configured via .goreleaser-deb.yml) is disabled.  Artifacts
   # are built and uploaded for later use.
-  release-deb:
+  build-debian:
     needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -77,62 +77,65 @@ jobs:
         with:
           name: deb-artifacts
           path: dist
-  # Centos7 releaser.  For tags starting with 'v' only.  Note that the actual release
+
+  # Centos7 builder.  For tags starting with 'v' only.  Note that the actual release
   # portion of this job (configured via .goreleaser-centos7.yml) is disabled.  Artifacts
   # are built and uploaded for later use.
-  release-centos-7:
-    needs: build-test-vet
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    container: centos:7
-    steps:
-      -
-        name: Install Build Dependencies
-        run: |
-          yum -y install git
-          yum -y install libpcap-devel
-          yum -y install gcc
-      -
-        name: Checkout
-        uses: actions/checkout@v2
-      -
-        name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.16
-      -
-        name: Start GPG Agent
-        run: eval $(gpg-agent --daemon -s)
-      -
-        name: Import GPG key
-        id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v3
-        with:
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
-      -
-        name: GoReleaser
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          # either 'goreleaser' (default) or 'goreleaser-pro'
-          distribution: goreleaser
-          version: latest
-          args: release -f ./.goreleaser-centos7.yml
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
-          # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
-      -
-        name: Upload Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: centos7-artifacts
-          path: dist
+  # TODO: disabled for now - gpg outdated; doesn't support --with-keygrip used by
+  # ghaction-import-gpg.  Disabling for now.
+  # build-centos-7:
+  #   needs: build-test-vet
+  #   if: startsWith(github.ref, 'refs/tags/v')
+  #   runs-on: ubuntu-latest
+  #   container: centos:7
+  #   steps:
+  #     -
+  #       name: Install Build Dependencies
+  #       run: |
+  #         yum -y install git
+  #         yum -y install libpcap-devel
+  #         yum -y install gcc
+  #     -
+  #       name: Checkout
+  #       uses: actions/checkout@v2
+  #     -
+  #       name: Set up Go
+  #       uses: actions/setup-go@v2
+  #       with:
+  #         go-version: 1.16
+  #     -
+  #       name: Start GPG Agent
+  #       run: eval $(gpg-agent --daemon -s)
+  #     -
+  #       name: Import GPG key
+  #       id: import_gpg
+  #       uses: crazy-max/ghaction-import-gpg@v3
+  #       with:
+  #         gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+  #         passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
+  #     -
+  #       name: GoReleaser
+  #       uses: goreleaser/goreleaser-action@v2
+  #       with:
+  #         # either 'goreleaser' (default) or 'goreleaser-pro'
+  #         distribution: goreleaser
+  #         version: latest
+  #         args: release -f ./.goreleaser-centos7.yml
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #         # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
+  #         # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
+  #     -
+  #       name: Upload Artifacts
+  #       uses: actions/upload-artifact@v2
+  #       with:
+  #         name: centos7-artifacts
+  #         path: dist
 
-  # Centos8 releaser.  For tags starting with 'v' only.  Note that the actual release
+  # Centos8 builder.  For tags starting with 'v' only.  Note that the actual release
   # portion of this job (configured via .goreleaser-centos8.yml) is disabled.  Artifacts
   # are built and uploaded for later use.
-  release-centos-8:
+  build-centos-8:
     needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -185,8 +188,8 @@ jobs:
 
   # The actual release job.  Performs no actual build, save for generating a changelog.
   release-artifacts:
-    # TODO: release-centos-7 is broken due to an outdated gpg package.
-    needs: [release-deb, release-centos-8]
+    # TODO: build-centos-7 is broken due to an outdated gpg package.
+    needs: [build-debian, build-centos-8]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -235,6 +238,7 @@ jobs:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
+          # Skip validation, as ./rel will cause git to be 'dirty'.
           args: release -f ./.goreleaser-release.yml --skip-validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
