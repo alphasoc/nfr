@@ -1,3 +1,4 @@
+# Don't build anything.
 builds:
   -
     ignore:
@@ -32,4 +33,4 @@ release:
   name_template: "{{.ProjectName}}-v{{.Version}}"
 
   extra_files:
-    - glob: ./nfr-rel/*
+    - glob: ./rel/*

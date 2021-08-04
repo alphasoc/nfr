@@ -1,10 +1,7 @@
 archives:
   -
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_el7"
+    name_template: "{{ .ProjectName }}_{{ .Version }}_centos8_{{ .Arch }}"
 
-checksum:
-    name_template: "{{ .ProjectName }}_checksums_el7.txt"
-  
 builds:
   # You can have multiple builds defined as a yaml list.
   -
@@ -17,6 +14,9 @@ builds:
     goarch:
       - amd64
 
+checksum:
+    name_template: "{{ .ProjectName }}_checksums_centos8.txt"
+      
 nfpms:
   # note that this is an array of nfpm configs
   -
@@ -52,7 +52,7 @@ nfpms:
       postinstall: "scripts/postinst"
       preremove: "scripts/prerm"
       postremove: "scripts/postrm"
-    file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}_el7"
+    file_name_template: "{{ .PackageName }}_{{ .Version }}_centos8_{{ .Arch }}"
 
 release:
   # If set to auto, will mark the release as not ready for production

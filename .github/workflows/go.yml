@@ -8,6 +8,7 @@ permissions:
   contents: write
 
 jobs:
+  # Basic build/test/vet on Ubuntu.
   build-test-vet:
     runs-on: ubuntu-latest
     steps:
@@ -15,7 +16,6 @@ jobs:
         name: Install Build Dependencies
         run: sudo apt-get install libpcap-dev
       -
-        # Don't forget to install git on the build host.
         name: Checkout
         uses: actions/checkout@v2
       -
@@ -32,8 +32,12 @@ jobs:
       -
         name: Vet
         run: go vet -v ./...
+
+  # Debian releaser.  For tags starting with 'v' only.  Note that the actual release
+  # portion of this job (configured via .goreleaser-deb.yml) is disabled.  Artifacts
+  # are built and uploaded for later use.
   release-deb:
-    #needs: build-test-vet
+    needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -41,7 +45,6 @@ jobs:
         name: Install Build Dependencies
         run: sudo apt-get install libpcap-dev
       -
-        # Don't forget to install git on the build host.
         name: Checkout
         uses: actions/checkout@v2
       -
@@ -74,8 +77,11 @@ jobs:
         with:
           name: deb-artifacts
           path: dist
+  # Centos7 releaser.  For tags starting with 'v' only.  Note that the actual release
+  # portion of this job (configured via .goreleaser-centos7.yml) is disabled.  Artifacts
+  # are built and uploaded for later use.
   release-centos-7:
-    #needs: build-test-vet
+    needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     container: centos:7
@@ -87,7 +93,6 @@ jobs:
           yum -y install libpcap-devel
           yum -y install gcc
       -
-        # Don't forget to install git on the build host.
         name: Checkout
         uses: actions/checkout@v2
       -
@@ -112,7 +117,7 @@ jobs:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
-          args: release -f ./.goreleaser-el7.yml
+          args: release -f ./.goreleaser-centos7.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
@@ -121,11 +126,14 @@ jobs:
         name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: el7-artifacts
+          name: centos7-artifacts
           path: dist
 
-  release-centos-latest:
-    #needs: build-test-vet
+  # Centos8 releaser.  For tags starting with 'v' only.  Note that the actual release
+  # portion of this job (configured via .goreleaser-centos8.yml) is disabled.  Artifacts
+  # are built and uploaded for later use.
+  release-centos-8:
+    needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     container: centos:latest
@@ -139,7 +147,6 @@ jobs:
           yum -y install git
           yum -y install gcc
       -
-        # Don't forget to install git on the build host.
         name: Checkout
         uses: actions/checkout@v2
       -
@@ -164,7 +171,7 @@ jobs:
           # either 'goreleaser' (default) or 'goreleaser-pro'
           distribution: goreleaser
           version: latest
-          args: release -f ./.goreleaser-el8.yml
+          args: release -f ./.goreleaser-centos8.yml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
@@ -173,11 +180,13 @@ jobs:
         name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: el-latest-artifacts
+          name: centos8-artifacts
           path: dist
 
+  # The actual release job.  Performs no actual build, save for generating a changelog.
   release-artifacts:
-    needs: [release-deb, release-centos-latest]
+    # TODO: release-centos-7 is broken due to an outdated gpg package.
+    needs: [release-deb, release-centos-8]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
@@ -185,65 +194,40 @@ jobs:
         name: Download All Artifacts
         uses: actions/download-artifact@v2
       -
-        name: Display
-        run: |
-          pwd
-          ls -R
-      -
-        name: Copy CHANGELOG and Checksums
+        name: Copy Checksums
         run: |
           sudo mkdir rel
-          sudo mv deb-artifacts/CHANGELOG.md rel/
           sudo mv deb-artifacts/*checksums* rel/
-          sudo mv el-latest-artifacts/*checksums* rel/
-          #for f in deb-artifacts/*_checksums*; do name=$(basename $f); sudo mv $f rel/${.*}-deb.${name##*}; done
-          #for f in el-latest-artifacts/*_checksums*; do name=$(basename $f); sudo mv $f rel/${.*}-el8.${name##*}; done
+          # sudo mv centos7-artifacts/*checksums* rel/
+          sudo mv centos8-artifacts/*checksums* rel/
       -
-        name: Copy Binaries
+        # Copies signatures also.
+        name: Copy Packages and Archives
         run: |
           sudo mv deb-artifacts/*.tar.gz* rel/
-          sudo mv deb-artifacts/*.deb** rel/
-          sudo mv el-latest-artifacts/*.tar.gz* rel/
-          sudo mv el-latest-artifacts/*.rpm* rel/
-          #for f in deb-artifacts/*_linux_*; do [ -f $f ] && sudo cp $f rel/$(basename $f)-DEB; done
-          #for f in deb-artifacts/*_windows_*; do [ -f $f ] && sudo cp $f rel/$(basename $f)-DEB; done
-          #for f in el-latest-artifacts/*_linux_*; do [ -f $f ] && sudo cp $f rel/$(basename $f)-EL8; done
+          sudo mv deb-artifacts/*.deb* rel/
+          # sudo mv centos7-artifacts/*.tar.gz* rel/
+          # sudo mv centos7-artifacts/*.rpm* rel/
+          sudo mv centos8-artifacts/*.tar.gz* rel/
+          sudo mv centos8-artifacts/*.rpm* rel/
       -
-        name: Display Again        
+        # Needed because the below checkout destroys /home/runner/work/nfr, and the
+        # checkout is needed by the GoReleaser step.
+        name: Save Release Directory
         run: |
-          pwd
-          ls -R
-          cat rel/CHANGELOG.md
-          cat rel/*_checksums*
+          sudo mv rel /home/runner/work
       -
-        name: Cleanup
-        run: |
-          sudo rm -rf deb-artifacts
-          sudo rm -rf el-latest-artifacts
-          sudo mv rel /home/runner/work/nfr-rel
-      -
-        # Don't forget to install git on the build host.
         name: Checkout
         uses: actions/checkout@v2
       -
-        name: Prep rel location
+        name: Restore Release Directory
         run: |
-          sudo mv /home/runner/work/nfr-rel /home/runner/work/nfr/nfr
+          sudo mv /home/runner/work/rel /home/runner/work/nfr/nfr
       -
         name: Set up Go
         uses: actions/setup-go@v2
         with:
           go-version: 1.16
-      -
-        name: Start GPG Agent
-        run: eval $(gpg-agent --daemon -s)
-      -
-        name: Import GPG key
-        id: import_gpg
-        uses: crazy-max/ghaction-import-gpg@v3
-        with:
-          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
-          passphrase: ${{ secrets.GPG_PRIVATE_KEY_PASSPHRASE }}
       -
         name: GoReleaser
         uses: goreleaser/goreleaser-action@v2
