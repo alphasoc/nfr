@@ -5,7 +5,7 @@ archives:
 builds:
   # You can have multiple builds defined as a yaml list.
   -
-    id: "el7"
+    id: "centos8"
     goos:
       - linux
     # GOARCH to build for.
@@ -55,29 +55,7 @@ nfpms:
     file_name_template: "{{ .PackageName }}_{{ .Version }}_centos8_{{ .Arch }}"
 
 release:
-  # If set to auto, will mark the release as not ready for production
-  # in case there is an indicator for this in the tag e.g. v1.0.0-rc1
-  # If set to true, will mark the release as not ready for production.
-  # Default is false.
-  prerelease: auto
-  # If set to true, will not auto-publish the release.
-  # Default is false.
-  draft: true
-  # Header template for the release body.
-  header: |
-    ## NFR Release - {{ time "2006-02-01" }}
-
-    Welcome to this new release!
-
-  # Footer template for the release body.
-  footer: |
-    ## Enjoy!
-
-    Those were the changes on {{ .Tag }}!
-
-  # You can change the name of the release.
-  # Default is `{{.Tag}}` on OSS and `{{.PrefixedTag}}` on Pro.
-  name_template: "{{.ProjectName}}-v{{.Version}}"
+  # Disable the actual release.  Done elsewhere.
   disable: true
 
 # Sign all artifacts.

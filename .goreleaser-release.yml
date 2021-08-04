@@ -1,4 +1,4 @@
-# Don't build anything.
+# Don't build anything.  Just relelase.
 builds:
   -
     ignore:
@@ -31,6 +31,6 @@ release:
   # You can change the name of the release.
   # Default is `{{.Tag}}` on OSS and `{{.PrefixedTag}}` on Pro.
   name_template: "{{.ProjectName}}-v{{.Version}}"
-
+  # Where all the files to be released live.
   extra_files:
     - glob: ./rel/*
