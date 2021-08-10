@@ -14,7 +14,7 @@ jobs:
     steps:
       -
         name: Install Build Dependencies
-        run: sudo apt-get install libpcap-dev
+        run: sudo apt-get -y install libpcap-dev
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -36,14 +36,14 @@ jobs:
   # Debian builder.  For tags starting with 'v' only.  Note that the actual release
   # portion of this job (configured via .goreleaser-deb.yml) is disabled.  Artifacts
   # are built and uploaded for later use.
-  build-debian:
+  debian-build-test:
     needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       -
         name: Install Build Dependencies
-        run: sudo apt-get install libpcap-dev
+        run: sudo apt-get -y install libpcap-dev
       -
         name: Checkout
         uses: actions/checkout@v2
@@ -72,6 +72,12 @@ jobs:
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
           # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
       -
+        name: Test Install
+        run: sudo apt-get -y install ./dist/*.deb
+      -
+        name: Test Run
+        run: nfr -h
+      -
         name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
@@ -81,7 +87,7 @@ jobs:
   # Centos builder.  For tags starting with 'v' only.  Note that the actual release
   # portion of this job (configured via .goreleaser-centos.yml) is disabled.  Artifacts
   # are built and uploaded for later use.
-  build-centos:
+  centos-build-test:
     needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -126,16 +132,40 @@ jobs:
           # Your GoReleaser Pro key, if you are using the 'goreleaser-pro' distribution
           # GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
       -
+        name: Test Install
+        run: yum -y install ./dist/*.rpm
+      -
+        name: Test Run
+        run: nfr -h
+      -
         name: Upload Artifacts
         uses: actions/upload-artifact@v2
         with:
           name: centos-artifacts
           path: dist
 
+  centos7-test:
+    needs: centos-build-test
+    runs-on: ubuntu-latest
+    container: centos:7
+    steps:
+      -
+        name: Download CentOS Artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: centos-artifacts
+          path: centos-artifacts
+      -
+        name: Test Install
+        run: yum -y install centos-artifacts/*.rpm
+      -
+        name: Test Run
+        run: nfr -h
+
   # Windows builder.  For tags starting with 'v' only.  Note that the actual release
   # portion of this job (configured via .goreleaser-win.yml) is disabled.  Artifacts
   # are built and uploaded for later use.
-  build-windows:
+  windows-build:
     needs: build-test-vet
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
@@ -179,7 +209,7 @@ jobs:
 
   # The actual release job.  Performs no actual build, save for generating a changelog.
   release-artifacts:
-    needs: [build-debian, build-centos, build-windows]
+    needs: [debian-build-test, centos-build-test, windows-build, centos7-test]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
