@@ -97,7 +97,7 @@ jobs:
         name: Install Build Dependencies
         run: |
           yum -y install dnf-plugins-core
-          yum -y config-manager --set-enabled powertools
+          yum -y install epel-release
           yum -y install libpcap-devel
           yum -y install git
           yum -y install gcc
