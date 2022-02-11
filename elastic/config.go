@@ -165,15 +165,16 @@ type FieldNamesConfig struct {
 // running a periodic search to retrieve telemetry,
 // extract required fields and send data to AlphaSOC API.
 type SearchConfig struct {
-	EventType      client.EventType  `yaml:"event_type"`
-	Indices        []string          `yaml:"indices"`
-	IndexSchema    IndexSchema       `yaml:"index_schema"`
-	PollInterval   float64           `yaml:"poll_interval"`
-	BatchSize      int               `yaml:"batch_size"`
-	PITKeepAlive   float64           `yaml:"pit_keep_alive"`
-	MustHaveFields []string          `yaml:"must_have_fields"`
-	SearchTerm     string            `yaml:"search_term"`
-	FieldNames     *FieldNamesConfig `yaml:"field_names"`
+	EventType       client.EventType  `yaml:"event_type"`
+	Indices         []string          `yaml:"indices"`
+	IndexSchema     IndexSchema       `yaml:"index_schema"`
+	PollInterval    float64           `yaml:"poll_interval"`
+	BatchSize       int               `yaml:"batch_size"`
+	PITKeepAlive    float64           `yaml:"pit_keep_alive"`
+	MustHaveFields  []string          `yaml:"must_have_fields"`
+	SearchTerm      string            `yaml:"search_term"`
+	TimestampFormat string            `yaml:"timestamp_format"`
+	FieldNames      *FieldNamesConfig `yaml:"field_names"`
 
 	// Final field names, merged defaults with user-provided.
 	finalFieldNames *FieldNamesConfig

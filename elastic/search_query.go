@@ -7,7 +7,8 @@ import (
 
 // DocRangeField is used in DocRange
 type DocRangeField struct {
-	Gte string `json:"gte"`
+	Gte    string `json:"gte"`
+	Format string `json:"format,omitempty"`
 }
 
 // DocRange is used in SearchQuery.
@@ -76,7 +77,16 @@ func (ec *EventsCursor) searchQuery() ([]byte, error) {
 	if ec.newestIngested.IsZero() {
 		docrange.Range[fn.EventIngested] = DocRangeField{Gte: "now-5m"}
 	} else {
-		docrange.Range[fn.EventIngested] = DocRangeField{Gte: ec.newestIngested.Format(time.RFC3339Nano)}
+		drf := DocRangeField{Gte: ec.newestIngested.Format(time.RFC3339Nano)}
+		// Add a timestamp format to the query if configured.  Added in response to a
+		// case where the ingested timestamp lacked milliseconds.  The search query,
+		// to prevent a date field parse error, needed an explicitly set timestamp
+		// format of 'strict_date_time_no_millis'.  Thus it was decided to make this
+		// configurable.
+		if ec.search.TimestampFormat != "" {
+			drf.Format = ec.search.TimestampFormat
+		}
+		docrange.Range[fn.EventIngested] = drf
 	}
 
 	drjson, _ := json.Marshal(docrange)
