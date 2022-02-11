@@ -125,6 +125,11 @@ inputs:
         must_have_fields:
           # - @timestamp
 
+        # A timestamp format (ie. strict_date_time_no_millis) can be specified, and will be
+        # added to search queries when appropriate.  It's advised to leave this unset unless
+        # you have reason to set a specific format.
+        # timestamp_format:
+
         # Field names should contain field paths that contain required telemetry data.
         # They can be left empty if index_schema is set. Similarly to search terms, you can
         # override some of all of mappings by setting the fields below.
@@ -145,6 +150,10 @@ inputs:
         indices:
           # - filebeat-*
         index_schema: ecs
+        # A timestamp format (ie. strict_date_time_no_millis) can be specified, and will be
+        # added to search queries when appropriate.  It's advised to leave this unset unless
+        # you have reason to set a specific format.
+        # timestamp_format:
         field_names:
           # Event timestamp (required).
           # timestamp:
@@ -168,6 +177,10 @@ inputs:
         indices:
           # - filebeat-*
         index_schema: ecs
+        # A timestamp format (ie. strict_date_time_no_millis) can be specified, and will be
+        # added to search queries when appropriate.  It's advised to leave this unset unless
+        # you have reason to set a specific format.
+        # timestamp_format:
         field_names:
           # Event timestamp (required).
           # timestamp:
@@ -189,6 +202,10 @@ inputs:
         indices:
           # - filebeat-*
         index_schema: ecs
+        # A timestamp format (ie. strict_date_time_no_millis) can be specified, and will be
+        # added to search queries when appropriate.  It's advised to leave this unset unless
+        # you have reason to set a specific format.
+        # timestamp_format:
         field_names:
           # Event timestamp (required).
           # timestamp:
