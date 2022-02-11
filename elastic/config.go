@@ -126,9 +126,10 @@ type FieldNamesConfig struct {
 	EventIngested string `yaml:"event_ingested"`
 
 	// DNS, IP, HTTP, TLS
-	Timestamp string    `yaml:"timestamp"`
-	SrcIP     FieldPath `yaml:"src_ip"` // required
-	SrcPort   FieldPath `yaml:"src_port"`
+	Timestamp       string    `yaml:"timestamp"`
+	TimestampFormat string    `yaml:"timestamp_format"`
+	SrcIP           FieldPath `yaml:"src_ip"` // required
+	SrcPort         FieldPath `yaml:"src_port"`
 
 	// DNS
 	Query FieldPath `yaml:"query"` // required

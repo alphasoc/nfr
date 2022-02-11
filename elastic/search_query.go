@@ -7,7 +7,8 @@ import (
 
 // DocRangeField is used in DocRange
 type DocRangeField struct {
-	Gte string `json:"gte"`
+	Gte    string `json:"gte"`
+	Format string `json:"format,omitempty"`
 }
 
 // DocRange is used in SearchQuery.
@@ -76,7 +77,11 @@ func (ec *EventsCursor) searchQuery() ([]byte, error) {
 	if ec.newestIngested.IsZero() {
 		docrange.Range[fn.EventIngested] = DocRangeField{Gte: "now-5m"}
 	} else {
-		docrange.Range[fn.EventIngested] = DocRangeField{Gte: ec.newestIngested.Format(time.RFC3339Nano)}
+		drf := DocRangeField{Gte: ec.newestIngested.Format(time.RFC3339Nano)}
+		if ec.search.FieldNames != nil && len(ec.search.FieldNames.TimestampFormat) > 0 {
+			drf.Format = ec.search.FieldNames.TimestampFormat
+		}
+		docrange.Range[fn.EventIngested] = drf
 	}
 
 	drjson, _ := json.Marshal(docrange)
