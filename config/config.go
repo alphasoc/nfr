@@ -39,7 +39,7 @@ type Config struct {
 	// AlphaSOC server configuration
 	Engine struct {
 		// AlphaSOC host server.
-		// Default: https://api.alpahsoc.net
+		// Default: https://api.alphasoc.net
 		Host string `yaml:"host,omitempty"`
 
 		// AlphaSOC api key. Required for start sending dns queries.
