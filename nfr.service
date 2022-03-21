@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/nfr start
+ExecStart=/usr/bin/nfr start
 Restart=always
 
 [Install]
