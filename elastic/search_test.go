@@ -13,7 +13,7 @@ func ipProtoParse(val string) string {
 		ID:     "eFVpenwBwORpcXQ7osoi",
 		Source: []byte(src),
 	}
-	return getProtocol(&h, []string{"_source", "proto"})
+	return h.sourceProtocol([]string{"_source", "proto"})
 }
 
 func TestIPProtoParsing(t *testing.T) {
