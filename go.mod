@@ -17,9 +17,9 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/stretchr/testify v1.4.0
 	github.com/twmb/murmur3 v1.1.5
-	github.com/valyala/fasthttp v1.21.0
+	github.com/valyala/fasthttp v1.34.0
 	github.com/xoebus/ceflog v0.0.0-20180302015320-9cb6ad8a040b
-	golang.org/x/net v0.0.0-20201016165138-7b1cca2348c0
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
