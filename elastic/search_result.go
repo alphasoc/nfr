@@ -4,11 +4,18 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/alphasoc/nfr/client"
 	"github.com/buger/jsonparser"
 	"github.com/pkg/errors"
+)
+
+const (
+	// Protocol Numbers: https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
+	ProtoTCP = 6
+	ProtoUDP = 17
 )
 
 // Hit is a single document returned within an es search.
@@ -110,6 +117,66 @@ func (h *Hit) sourceUint16(path []string) uint16 {
 	return uint16(val)
 }
 
+// sourceUint8 is a helper method used for non-required fields in DecodeDNS/IP/HTTP functions.
+func (h *Hit) sourceUint8(path []string) uint8 {
+	if len(path) == 0 {
+		return 0
+	}
+
+	val := h.sourceInt64(path)
+	if val < 0 || val > 255 {
+		return 0
+	}
+
+	return uint8(val)
+}
+
+// protoFromNum returns a protocol string derived from protoNum (ie. "tcp" or "udp"),
+// otherwise it returns a string representation of the protoNum itself.
+func protoFromNum(protoNum uint8) string {
+	switch protoNum {
+	case ProtoTCP:
+		return "tcp"
+	case ProtoUDP:
+		return "udp"
+	default:
+		// We don't know what it is... at least return the number so that we may choose
+		// to add a mapping for the protocol.
+		return strconv.Itoa(int(protoNum))
+	}
+}
+
+// sourceProtocol tries to obtain a protocol from an elastic document, returning its string
+// representation.  If the found protocol is numeric (ie. 6 or "6"), it will be converted
+// to a non-numeric string (ie. "tcp" or "udp") if known, or will be converted to a numeric
+// string (ie. "3") if not known.  If the found protocol is not numeric, it will be returned
+// as is (ie. "tcp" or "udp" or "foo").  An empty string indicates an error, or simply the
+// fact that no protocol was supplied.
+func (h *Hit) sourceProtocol(path []string) string {
+	// See if the protocol is a uint8 assigned internet protocol number.  This number may
+	// be represented as a string.
+	protoNum := h.sourceUint8(path)
+	// sourceUint8 will return a 0 on error.  On 0, try for a string.
+	if protoNum != 0 {
+		return protoFromNum(protoNum)
+	}
+	protoStr := h.sourceString(path)
+	// Couldn't obtain a protocol string.  Nothing left to do.
+	if protoStr == "" {
+		return ""
+	}
+	// If protoStr represents a number...
+	if pNum, e := strconv.Atoi(protoStr); e == nil {
+		// Not a uint8.
+		if pNum < 0 || pNum > 255 {
+			return ""
+		}
+		return protoFromNum(uint8(pNum))
+	}
+	// ... otherwise return as is.
+	return protoStr
+}
+
 // DecodeDNS returns client.DNSEntry parsed from the Hit using provided field names.
 func (h *Hit) DecodeDNS(cfg *SearchConfig) (*client.DNSEntry, error) {
 	if cfg.EventType != client.EventTypeDNS {
@@ -184,7 +251,7 @@ func (h *Hit) DecodeIP(cfg *SearchConfig) (*client.IPEntry, error) {
 	// Non-required fields don't return errors
 	e.SrcPort = int(h.sourceUint16(fn.SrcPort))
 	e.DstPort = int(h.sourceUint16(fn.DstPort))
-	e.Protocol = h.sourceString(fn.Protocol)
+	e.Protocol = h.sourceProtocol(fn.Protocol)
 	e.BytesIn = int(h.sourceInt64(fn.BytesIn))
 	e.BytesOut = int(h.sourceInt64(fn.BytesOut))
 
