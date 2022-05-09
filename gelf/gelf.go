@@ -2,6 +2,7 @@ package gelf
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net"
 	"net/url"
@@ -11,7 +12,10 @@ import (
 
 // Gelf client.
 type Gelf struct {
-	conn net.Conn
+	// URI (ie tcp://127.0.0.1:12201) will get parsed into scheme and host.
+	uriScheme string // ie. scheme == tcp
+	uriHost   string // ie. 127.0.0.1:12201
+	conn      net.Conn
 }
 
 // Message for graylog server.
@@ -41,21 +45,48 @@ func New(uri string) (*Gelf, error) {
 		return nil, fmt.Errorf("unsupported scheme %s", parsedURI.Scheme)
 	}
 
-	conn, err := net.Dial(parsedURI.Scheme, parsedURI.Host)
-	if err != nil {
+	g := Gelf{conn: nil, uriScheme: parsedURI.Scheme, uriHost: parsedURI.Host}
+	if err := g.Connect(); err != nil {
 		return nil, err
-
 	}
-	return &Gelf{conn: conn}, nil
+	return &g, nil
 }
 
 // Close the connection to the server.
 func (g *Gelf) Close() error {
-	return g.conn.Close()
+	if g.conn != nil {
+		return g.conn.Close()
+	}
+	return nil
+}
+
+// Connect dials the graylog services, stores the connection instance and returns an error.
+func (g *Gelf) Connect() error {
+	var err error
+	g.conn, err = net.Dial(g.uriScheme, g.uriHost)
+	return err
 }
 
 // Send message to the server.
 func (g *Gelf) Send(m *Message) error {
+	if g.conn == nil {
+		var addr net.Addr
+		// Disregard the error; it's a best effort case for logging.
+		if g.uriScheme == "tcp" {
+			addr, _ = net.ResolveTCPAddr(g.uriScheme, g.uriHost)
+		} else if g.uriScheme == "udp" {
+			addr, _ = net.ResolveUDPAddr(g.uriScheme, g.uriHost)
+		} else {
+			// Leave addr unitialized.
+		}
+		return &net.OpError{
+			Op:     "send",
+			Net:    g.uriScheme,
+			Source: nil,
+			Addr:   addr,
+			Err:    errors.New("not connected to graylog service")}
+	}
+
 	b, err := json.Marshal(m)
 	if err != nil {
 		return err

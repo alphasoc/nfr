@@ -16,6 +16,12 @@ type Writer interface {
 	Write(*Event) error
 }
 
+type NetworkWriter interface {
+	Writer
+	Connect() error
+	Close() error
+}
+
 type Formatter interface {
 	Format(*Event) ([][]byte, error)
 }

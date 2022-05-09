@@ -111,7 +111,7 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 			if err != nil {
 				return nil, err
 			}
-			e.alertsPoller.AddWriter(graylogWriter)
+			e.alertsPoller.AddNetWriter(graylogWriter)
 		}
 
 		if cfg.Outputs.Syslog.IP != "" {
@@ -125,7 +125,7 @@ func New(c client.Client, cfg *config.Config) (*Executor, error) {
 			if err != nil {
 				return nil, err
 			}
-			e.alertsPoller.AddWriter(syslogWriter)
+			e.alertsPoller.AddNetWriter(syslogWriter)
 		}
 	}
 

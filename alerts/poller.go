@@ -2,7 +2,9 @@
 package alerts
 
 import (
+	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 type Poller struct {
 	c          client.Client
 	writers    []Writer
+	netWriters []NetworkWriter
 	ticker     *time.Ticker
 	follow     string
 	followFile string
@@ -32,6 +35,11 @@ func NewPoller(c client.Client, mapper *AlertMapper) *Poller {
 // AddWriter adds writer to poller.
 func (p *Poller) AddWriter(w Writer) {
 	p.writers = append(p.writers, w)
+}
+
+// AddNetWriter adds a NetworkWriter to poller.
+func (p *Poller) AddNetWriter(nw NetworkWriter) {
+	p.netWriters = append(p.netWriters, nw)
 }
 
 // SetFollowDataFile sets file for storing follow id.
@@ -91,6 +99,24 @@ func (p *Poller) do(interval time.Duration, maxTries int) error {
 		for _, w := range p.writers {
 			for _, ev := range newAlerts.Events {
 				if err := w.Write(&ev); err != nil {
+					return err
+				}
+			}
+		}
+		for _, w := range p.netWriters {
+			for _, ev := range newAlerts.Events {
+				// If the write failed due to a network error, reset the connection.
+				if err := w.Write(&ev); err != nil {
+					if _, ok := err.(net.Error); ok {
+						// Reconnect.
+						_ = w.Close()
+						connectErr := w.Connect()
+						// Append connectErr to original error.
+						if connectErr != nil {
+							err = fmt.Errorf("%v: %v", err, connectErr)
+						}
+					}
+					// Next pass through we should have a functional connection.
 					return err
 				}
 			}

@@ -23,7 +23,7 @@ type GraylogWriter struct {
 func NewGraylogWriter(uri string, level int) (*GraylogWriter, error) {
 	g, err := gelf.New(uri)
 	if err != nil {
-		return nil, fmt.Errorf("connect to graylog send input failed: %s", err)
+		return nil, fmt.Errorf("failed creating graylog writer: %s", err)
 	}
 
 	hostname, _ := os.Hostname()
@@ -69,6 +69,10 @@ func (w *GraylogWriter) Write(event *Event) error {
 		}
 	}
 	return nil
+}
+
+func (w *GraylogWriter) Connect() error {
+	return w.g.Connect()
 }
 
 // Close closes a connecion with the graylog server.
