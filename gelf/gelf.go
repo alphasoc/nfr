@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
-	"net/url"
 
 	"github.com/Jeffail/gabs"
 )
@@ -27,21 +26,8 @@ type Message struct {
 }
 
 // New returns GELF client.
-func New(uri string) (*Gelf, error) {
-	parsedURI, err := url.Parse(uri)
-	if err != nil {
-		return nil, err
-	}
-
-	if _, _, err = net.SplitHostPort(parsedURI.Host); err != nil {
-		return nil, err
-	}
-
-	if parsedURI.Scheme != "udp" && parsedURI.Scheme != "tcp" {
-		return nil, fmt.Errorf("unsupported scheme %s", parsedURI.Scheme)
-	}
-
-	conn, err := net.Dial(parsedURI.Scheme, parsedURI.Host)
+func NewConnected(scheme, uri string) (*Gelf, error) {
+	conn, err := net.Dial(scheme, uri)
 	if err != nil {
 		return nil, err
 
@@ -51,7 +37,10 @@ func New(uri string) (*Gelf, error) {
 
 // Close the connection to the server.
 func (g *Gelf) Close() error {
-	return g.conn.Close()
+	if g.conn != nil {
+		return g.conn.Close()
+	}
+	return nil
 }
 
 // Send message to the server.
