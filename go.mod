@@ -19,7 +19,7 @@ require (
 	github.com/twmb/murmur3 v1.1.5
 	github.com/valyala/fasthttp v1.34.0
 	github.com/xoebus/ceflog v0.0.0-20180302015320-9cb6ad8a040b
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/net v0.7.0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
