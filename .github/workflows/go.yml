@@ -22,7 +22,7 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.21
       -
         name: Build
         run: go build -v ./...
@@ -51,7 +51,7 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.21
       -
         name: Import GPG key
         id: import_gpg
@@ -109,7 +109,7 @@ jobs:
   #       name: Set up Go
   #       uses: actions/setup-go@v2
   #       with:
-  #         go-version: 1.16
+  #         go-version: 1.21
   #     -
   #       name: Start GPG Agent
   #       run: eval $(gpg-agent --daemon -s)
@@ -178,7 +178,7 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.21
       -
         name: Start GPG Agent
         run: eval $(gpg-agent --daemon -s)
@@ -247,7 +247,7 @@ jobs:
         name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.21
       -
         name: GoReleaser
         uses: goreleaser/goreleaser-action@v2
