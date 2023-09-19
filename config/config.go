@@ -314,7 +314,7 @@ func (cfg *Config) HasOutputs() bool {
 
 // HasInputs returns true if at least one input is configured and enabled.
 func (cfg *Config) HasInputs() bool {
-	return cfg.Inputs.Sniffer.Enabled || len(cfg.Inputs.Monitors) > 0
+	return cfg.Inputs.Sniffer.Enabled || len(cfg.Inputs.Monitors) > 0 || cfg.Inputs.Elastic.Enabled
 }
 
 // load config from content.
