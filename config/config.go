@@ -218,12 +218,7 @@ type Config struct {
 // then it tries to read from default location, if this fails, then
 // default config is returned.
 func New(file ...string) (*Config, error) {
-	var (
-		cfg     = NewDefault()
-		content []byte
-		err     error
-	)
-
+	cfg := NewDefault()
 	if len(file) > 1 {
 		panic("config: too many files")
 	}
@@ -234,14 +229,9 @@ func New(file ...string) (*Config, error) {
 	}
 
 	if filename != "" {
-		content, err = ioutil.ReadFile(file[0])
-		if err != nil {
-			return nil, fmt.Errorf("config: can't read file %s", err)
+		if err := cfg.load(filename); err != nil {
+			return nil, fmt.Errorf("config: can't load file %w", err)
 		}
-	}
-
-	if err := cfg.load(content); err != nil {
-		return nil, fmt.Errorf("config: can't load file %s", err)
 	}
 
 	if err := cfg.loadScopeConfig(); err != nil {
@@ -328,8 +318,20 @@ func (cfg *Config) HasInputs() bool {
 }
 
 // load config from content.
-func (cfg *Config) load(content []byte) error {
-	return yaml.Unmarshal(content, cfg)
+func (cfg *Config) load(filename string) error {
+	f, err := os.Open(filename)
+	if err != nil {
+		return fmt.Errorf("opening config: %w", err)
+	}
+	defer f.Close()
+
+	dec := yaml.NewDecoder(f)
+	dec.KnownFields(true)
+	if err := dec.Decode(cfg); err != nil {
+		return fmt.Errorf("parsing config: %w", err)
+	}
+
+	return nil
 }
 
 func (cfg *Config) validate() error {
@@ -554,13 +556,16 @@ func (cfg *Config) loadScopeConfig() (err error) {
 			},
 		}
 	} else {
-		content, err := ioutil.ReadFile(cfg.Scope.File)
+		scopeFile, err := os.Open(cfg.Scope.File)
 		if err != nil {
-			return fmt.Errorf("scope config: %s ", err)
+			return fmt.Errorf("opening scope config: %w", err)
 		}
+		defer scopeFile.Close()
 
-		if err := yaml.Unmarshal(content, &cfg.ScopeConfig); err != nil {
-			return fmt.Errorf("parse scope config: %s ", err)
+		cfgDecoder := yaml.NewDecoder(scopeFile)
+		cfgDecoder.KnownFields(true)
+		if err := cfgDecoder.Decode(&cfg.ScopeConfig); err != nil {
+			return fmt.Errorf("parsing scope config: %w", err)
 		}
 	}
 
