@@ -230,7 +230,7 @@ func New(file ...string) (*Config, error) {
 
 	if filename != "" {
 		if err := cfg.load(filename); err != nil {
-			return nil, fmt.Errorf("config: can't load file %w", err)
+			return nil, fmt.Errorf("config: can't load file: %w", err)
 		}
 	}
 
