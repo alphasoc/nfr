@@ -22,6 +22,9 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	if !cfg.Engine.Analyze.IP {
 		t.Fatalf("analyze ip set to false")
 	}
+	if cfg.Inputs.Sniffer.Enabled {
+		t.Fatalf("sniffer is enabled")
+	}
 	if cfg.Outputs.File != "stderr" {
 		t.Fatalf("invalid output file - got %s; expected %s", cfg.Outputs.File, "stderr")
 	}
