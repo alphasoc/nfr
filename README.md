@@ -160,9 +160,6 @@ Under the hood, nfr periodically runs a search:
   "sort": [
     {
       "event.ingested": "asc"
-    },
-    {
-      "_id": "asc"
     }
   ],
   "pit": {

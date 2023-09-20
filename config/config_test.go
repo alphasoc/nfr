@@ -4,8 +4,12 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 func checkDefaults(t *testing.T, cfg *Config) {
@@ -17,6 +21,9 @@ func checkDefaults(t *testing.T, cfg *Config) {
 	}
 	if !cfg.Engine.Analyze.IP {
 		t.Fatalf("analyze ip set to false")
+	}
+	if cfg.Inputs.Sniffer.Enabled {
+		t.Fatalf("sniffer is enabled")
 	}
 	if cfg.Outputs.File != "stderr" {
 		t.Fatalf("invalid output file - got %s; expected %s", cfg.Outputs.File, "stderr")
@@ -110,6 +117,29 @@ dns_events:
 	}
 }
 
+func TestReadConfigStrict(t *testing.T) {
+	// apiKey instead of api_key
+	var content = []byte(`
+engine:
+  host: https://api.alphasoc.net
+  apiKey: test-api-key`)
+
+	f, err := os.OpenFile(path.Join(t.TempDir(), "nfr-config"), os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(content); err != nil {
+		t.Fatal(err)
+	}
+
+	var want *yaml.TypeError
+	if _, err := New(f.Name()); !errors.As(err, &want) {
+		t.Errorf("invalid error type - got %T; expected %T", err, want)
+	}
+}
+
 func TestReadScope(t *testing.T) {
 	var content = []byte(`
 groups:
@@ -167,5 +197,43 @@ groups:
 	}
 	if len(private.TrustedDomains) != 1 {
 		t.Fatal("invalid private group domains exclude")
+	}
+}
+
+func TestReadScopeStrict(t *testing.T) {
+	// group instead of groups
+	var content = []byte(`
+group:
+  private:
+    in_scope:
+      - 10.0.0.0/8
+    out_scope:
+      - 10.1.0.0/16
+    trusted_ips:
+      - 11.0.0.0/8
+    trusted_domains:
+      - alphasoc.com
+  public:
+    in_scope:
+      - 0.0.0.0/0
+    trusted_domains:
+      - "*.io"`)
+
+	f, err := os.OpenFile(path.Join(t.TempDir(), "nfr-scope"), os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	if _, err := f.Write(content); err != nil {
+		t.Fatal(err)
+	}
+
+	var cfg Config
+	cfg.Scope.File = f.Name()
+
+	var want *yaml.TypeError
+	if err := cfg.loadScopeConfig(); !errors.As(err, &want) {
+		t.Errorf("invalid error type - got %T; expected %T", err, want)
 	}
 }

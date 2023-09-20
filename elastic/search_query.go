@@ -7,7 +7,7 @@ import (
 
 // DocRangeField is used in DocRange
 type DocRangeField struct {
-	Gte    string `json:"gte"`
+	Gt     string `json:"gt"`
 	Format string `json:"format,omitempty"`
 }
 
@@ -49,7 +49,6 @@ func (ec *EventsCursor) searchQuery() ([]byte, error) {
 	sq.Size = ec.search.BatchSize
 	sq.Sort = []map[string]string{
 		{fn.EventIngested: "asc"},
-		{"_id": "asc"},
 	}
 	sq.PIT = ec.pit
 	sq.SearchAfter = ec.searchAfter
@@ -75,9 +74,9 @@ func (ec *EventsCursor) searchQuery() ([]byte, error) {
 	docrange := DocRange{Range: make(map[string]DocRangeField)}
 
 	if ec.newestIngested.IsZero() {
-		docrange.Range[fn.EventIngested] = DocRangeField{Gte: "now-5m"}
+		docrange.Range[fn.EventIngested] = DocRangeField{Gt: "now-5m"}
 	} else {
-		drf := DocRangeField{Gte: ec.newestIngested.Format(time.RFC3339Nano)}
+		drf := DocRangeField{Gt: ec.newestIngested.Format(time.RFC3339Nano)}
 		// Add a timestamp format to the query if configured.  Added in response to a
 		// case where the ingested timestamp lacked milliseconds.  The search query,
 		// to prevent a date field parse error, needed an explicitly set timestamp
