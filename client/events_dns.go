@@ -11,7 +11,7 @@ import (
 // DNSEntry is single dns entry for analize.
 type DNSEntry struct {
 	Timestamp time.Time `json:"ts"`
-	SrcIP     net.IP    `json:"srcIp"`
+	SrcIP     net.IP    `json:"srcIP"`
 	Query     string    `json:"query"`
 	QType     string    `json:"qtype"`
 }

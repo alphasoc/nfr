@@ -11,10 +11,10 @@ import (
 // TLSEntry is single dns entry for analize.
 type TLSEntry struct {
 	Timestamp time.Time `json:"ts"`
-	SrcIP     net.IP    `json:"srcIp"`
+	SrcIP     net.IP    `json:"srcIP"`
 	SrcPort   uint16    `json:"srcPort"`
 
-	DstIP   net.IP `json:"destIp,omitempty"`
+	DstIP   net.IP `json:"destIP,omitempty"`
 	DstPort uint16 `json:"destPort,omitempty"`
 
 	CertHash  string    `json:"certHash,omitempty"`

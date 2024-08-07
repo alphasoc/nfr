@@ -11,9 +11,9 @@ import (
 // IPEntry is single ip entry for analize.
 type IPEntry struct {
 	Timestamp time.Time `json:"ts"`
-	SrcIP     net.IP    `json:"srcIp"`
+	SrcIP     net.IP    `json:"srcIP"`
 	SrcPort   int       `json:"srcPort"`
-	DstIP     net.IP    `json:"destIp"`
+	DstIP     net.IP    `json:"destIP"`
 	DstPort   int       `json:"destPort"`
 	Protocol  string    `json:"proto"`
 	BytesIn   int       `json:"bytesIn"`

@@ -11,7 +11,7 @@ import (
 // HTTPEntry is single dns entry for analize.
 type HTTPEntry struct {
 	Timestamp time.Time `json:"ts"`
-	SrcIP     net.IP    `json:"srcIp"`
+	SrcIP     net.IP    `json:"srcIP"`
 	SrcPort   uint16    `json:"srcPort"`
 
 	URL      string `json:"url"`
